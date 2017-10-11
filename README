@@ -1,0 +1,19 @@
+#########################################################################################################
+#                                                                                                       #
+#      Library, Simulation and Tests for Point-like Neuron with Bilinear Dentritic Integration          #
+#                                                                                                       #
+#########################################################################################################
+
+Using Software NEURON(yale) -v 7.5, Python 2.7.13, GCC 4.9.2, Boost Library and MATLAB R2015b
+
+    Library build up in ./Library
+    Simulation in ./src                  # with linear interpolation from Library
+    Frequency test in ./FreqLimit        # exact 
+    Gain Curve
+    Spike time matching
+    ISI
+    Power Spectrum
+
+    *To use different conductance shape, edit alphaE.mod and alphaI.mod in./src/HOC/, then run nrnivmodl in ./src/HOC and copy the new folder with libnrnmech.la to ./
+
+

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+theme='cK-test'
+if [ -d "./$theme" ]; then
+    rm -r $theme/*
+else
+    mkdir $theme
+fi
+cp confirmK.py $theme
+cp neuroAlter.py $theme
+cp n128.py $theme
+cp -R x86_64 $theme/
+cp confirmK.slurm $theme
+cd $theme
+#sbatch confirmK.slurm

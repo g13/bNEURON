@@ -1,0 +1,11 @@
+python -m py_compile n128.py
+python -m py_compile neuroAlter.py
+#g++ -std=c++11 -fmax-errors=2 -g -msse4.2 -march=westmere -fPIC -fno-omit-frame-pointer singleNeuron.cpp -lboost_program_options -lpython2.7 -lm -lmat -lmx -o sN
+#g++ -std=c++11 -fmax-errors=2 -g -msse4.2 -march=westmere -fPIC -fno-omit-frame-pointer nsynNeuron.cpp -lboost_program_options -lpython2.7 -lm -lmat -lmx -o sN
+#g++ -std=c++11 -fmax-errors=2 -O2 -msse4.2 -march=westmere -fPIC -fno-omit-frame-pointer nsynTest.cpp -lboost_program_options -lpython2.7 -lm -lmat -lmx -o sN
+#g++ -std=c++11 -fmax-errors=2 -g -msse4.2 -march=westmere -fPIC -fno-omit-frame-pointer nsynTest.cpp -lboost_program_options -lmat -lmx -o sN
+#g++ -std=c++11 -fmax-errors=2 -g -msse4.2 -march=westmere -fPIC -fno-omit-frame-pointer nsynT.cpp -lboost_program_options -lmat -lmx -o sN
+#g++ -DMX_COMPAT_32 -D_GNU_SOURCE -fPIC -fmax-errors=2 -fno-omit-frame-pointer -pthread -std=c++11 -DNDEBUG test.cpp -static-libstdc++ -static-libgcc -shared -lboost_program_options -lpython2.7 -lm -lmat -lmx -o sN
+
+g++ -std=c++11 -fmax-errors=2 -g -msse4.2 -march=westmere -fPIC -fno-omit-frame-pointer nsynBeta.cpp -lboost_program_options -lpython2.7 -lm -lmat -lmx -o bsN
+#g++ test.cpp
