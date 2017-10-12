@@ -76,8 +76,8 @@ int main(int argc, char **argv)
 		("lib_file,L",po::value<string>(&lib_file),"neuron library")
 		("para_file,p",po::value<string>(&para_file),"parameter file")
         ("seed,s",po::value<unsigned int>(&seed),"seeding")
-		("theme",po::value<string>(&theme),"parameter file")
-		("rate", po::value<vector<double>>()->multitoken()->composing(), "poisson rate array")
+		("theme,m",po::value<string>(&theme),"parameter file")
+		("rate,r", po::value<vector<double>>()->multitoken()->composing(), "poisson rate array")
 		("vThres", po::value<double>(), "NEURON vThres")
 		("vRest", po::value<double>(), "NEURON vRest")
         ("sampleStep", po::value<double>(&sampleStep), "sampling step for jump data")
@@ -126,6 +126,7 @@ int main(int argc, char **argv)
 
     double tstep = neuroLib.tstep;
     cout << "using tstep: " << tstep << " ms" << endl;
+    cout << "E rate " << r[0] << ", I rate " << r[1] << endl;
     Py_Initialize();
     cout << "Python " << endl;
     _import_array();

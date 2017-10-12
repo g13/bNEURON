@@ -14,6 +14,7 @@ Using Software NEURON(yale) -v 7.5, Python 2.7.13, GCC 4.9.2, Boost Library and 
     ISI
     Power Spectrum
 
+    ./compile                            # compiles ./src
     *To use different conductance shape, edit alphaE.mod and alphaI.mod in./src/HOC/, then run nrnivmodl in ./src/HOC and copy the new folder with libnrnmech.la to ./
 
 
