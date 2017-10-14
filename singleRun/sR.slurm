@@ -15,7 +15,7 @@ module load matlab
 
 date
 
-./bsN -t $theme > blog 2>&1 && matlab -r "bnsynCompare;exit;"
+./sR -m $theme -v $v0 -r $rE -r $rI -t $t --tref=$tref -s $seed -L $lib blog 2>&1 && matlab -r "bnsynCompare;exit;"
 
 date
 hostname

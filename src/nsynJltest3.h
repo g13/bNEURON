@@ -6,7 +6,7 @@
 #include "nNeuroLib.h"
 #include "nNeuroSt2.h"
 #include "neuroTest.h"
-#include "nsynJtest2.h"
+#include "nsynJtest3.h"
 namespace jl{
     bool debug = true;
     bool debug2 = true;
