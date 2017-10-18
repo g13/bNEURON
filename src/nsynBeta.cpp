@@ -292,7 +292,7 @@ int main(int argc, char **argv)
  
     cout << " bilinear begin" << endl;
     clock_gettime(clk_id,&tpS);
-          nc = bilinear_nSyn(biV, neuroLib, neuron, run_t, ignore_t, tsp_bi, vCrossb, vBackb, cell, neuron.ei);
+          nc = bilinear_nSyn(biV, neuroLib, neuron, run_t, ignore_t, tsp_bi, vCrossb, vBackb, neuron.ei);
     clock_gettime(clk_id,&tpE);
     cpu_t_bilinear = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
     cout << "bilinear est. ended, took " << cpu_t_bilinear << "s" << endl;
@@ -313,7 +313,7 @@ int main(int argc, char **argv)
     neuron.vThres = vCrossb;
 
     cout << " jBilinear begin" << endl;
-    nc = nsyn_jBilinear(neuron, neuroLib, inputb, jndb, crossb, run_t, jbv, corrSize, tsp_jbi, vBackb, cell, neuron.ei);
+    nc = nsyn_jBilinear(neuron, neuroLib, inputb, jndb, crossb, run_t, jbv, corrSize, tsp_jbi, vBackb, neuron.ei);
 
     clock_gettime(clk_id,&tpE);
     cpu_t_jbilinear = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
@@ -330,7 +330,7 @@ int main(int argc, char **argv)
     Cross crossl(nt,v0);
     neuron.vThres = vCrossl;
     
-    nc = nsyn_jLinear(neuron, neuroLib, inputl, jndl, crossl, run_t, jlv, corrSize, tsp_jli, vBackl, cell, neuron.ei);
+    nc = nsyn_jLinear(neuron, neuroLib, inputl, jndl, crossl, run_t, jlv, corrSize, tsp_jli, vBackl, neuron.ei);
 
     clock_gettime(clk_id,&tpE);
     cpu_t_jlinear = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
@@ -342,7 +342,7 @@ int main(int argc, char **argv)
     clock_gettime(clk_id,&tpS);
     nc = 0;
 
-    nc = linear_nSyn(liV, neuroLib, neuron, run_t, ignore_t, tsp_li, vCrossl, vBackl, cell, neuron.ei);
+    nc = linear_nSyn(liV, neuroLib, neuron, run_t, ignore_t, tsp_li, vCrossl, vBackl, neuron.ei);
 
     clock_gettime(clk_id,&tpE);
     cpu_t_linear = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
@@ -352,7 +352,7 @@ int main(int argc, char **argv)
     cout << endl;
     cout << " bilinear0 begin: " << endl;
     clock_gettime(clk_id,&tpS);
-        nc = bilinear0_nSyn(biV0, neuroLib, neuron, run_t, ignore_t, tsp_bi0, vCrossb, vBackb, cell, neuron.ei);
+        nc = bilinear0_nSyn(biV0, neuroLib, neuron, run_t, ignore_t, tsp_bi0, vCrossb, vBackb, neuron.ei);
     clock_gettime(clk_id,&tpE);
     cpu_t_bilinear0 = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
     cout << "bilinear0 est. ended, took " << cpu_t_bilinear0 << "s" << endl;

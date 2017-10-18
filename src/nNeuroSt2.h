@@ -1,6 +1,7 @@
 #ifndef NNS_H
 #define NNS_H
 #include "nNeuroLib.h"
+#include "typedefs.h"
 #include <vector>
 #include <random>
 #include <fstream>

@@ -1,7 +1,7 @@
 #ifndef NEUROALTER_H
 #define NEUROALTER_H
 #include <Python.h>
-#include "nNeuroSt.h"
+#include "nNeuroSt2.h"
 #include "typedefs.h"
 #include <vector>
 #include <iostream>

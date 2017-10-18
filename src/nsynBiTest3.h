@@ -3,7 +3,6 @@
 #include <cmath>
 #include <vector>
 #include "typedefs.h"
-#include "neuroTest.h"
 #include "nNeuroSt2.h"
 #include "nNeuroLib.h"
 namespace sB{
@@ -211,7 +210,7 @@ inline void interpVinit(std::vector<double> &v, size vs,  double **vLeak, double
         v[vs+k] = vLeak[i][k] + r*(vLeak[j][k]-vLeak[i][k]);
 }
 
-unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, Cell &cell, vector<bool> &ei){
+unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei){
     double vTarget, dtTarget, dtTarget1;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
     double tstep = neuroLib.tstep;
@@ -430,7 +429,7 @@ unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, d
     return spikeCount;
 }
 
-unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, Cell &cell, vector<bool> &ei){
+unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei){
     double vTarget, dtTarget;
     size tl, vs, ve, vc, i, j, k, ith_old, ith;
     double tstep = neuroLib.tstep;
@@ -602,7 +601,7 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
     return spikeCount;
 }
 
-unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, Cell &cell, vector<bool> &ei){
+unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei){
     double vTarget, dtTarget, dtTarget1;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
     double tstep = neuroLib.tstep;

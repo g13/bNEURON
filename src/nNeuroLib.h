@@ -1,9 +1,13 @@
 #ifndef NNL_H
 #define NNL_H
+#include "mex.h"
 #include "matFunc.h"
+#include "typedefs.h"
 #include <cmath>
+#include <cstring>
 using std::cout;
 using std::endl;
+using std::memcpy;
 
 typedef struct nNeuroLib
 {

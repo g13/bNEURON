@@ -5,7 +5,6 @@
 #include "typedefs.h"
 #include "nNeuroLib.h"
 #include "nNeuroSt2.h"
-#include "neuroTest.h"
 #include "nsynJtest3.h"
 namespace jl{
     bool debug = true;
@@ -371,7 +370,7 @@ namespace jl{
     }
 }
 
-unsigned int nsyn_jLinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, std::vector<double> &v, size corrSize, std::vector<double> &tsp, double vStop, Cell &cell, vector<bool> &ei) {
+unsigned int nsyn_jLinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, std::vector<double> &v, size corrSize, std::vector<double> &tsp, double vStop, vector<bool> &ei) {
     size i, i_prior_cross;
     double iend = end_t/neuroLib.tstep;
     unsigned int nc_old, nc = 0;
