@@ -71,7 +71,7 @@ int main(int argc, char **argv)
         config_file_options("config file"),
         Generic("options");
     cmd_line_options.add_options()
-        ("config_file,c", po::value<string>(&config_file)->default_value("init.cfg"),"config filename");
+        ("config_file,c", po::value<string>(&config_file)->default_value("sR_init.cfg"),"config filename");
 	Generic.add_options()
 		("lib_file,L",po::value<string>(&lib_file),"neuron library")
 		("para_file,p",po::value<string>(&para_file),"parameter file")
