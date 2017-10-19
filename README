@@ -5,6 +5,7 @@
 #########################################################################################################
 
 Using Software NEURON(yale) -v 7.5, Python 2.7.13, GCC 4.9.2, Boost Library and MATLAB R2015b
+Plus bad practice of .cpp .h combination
 
     Library build up in ./Library
     Simulation in ./src                  # with linear interpolation from Library

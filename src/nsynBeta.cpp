@@ -149,7 +149,9 @@ int main(int argc, char **argv)
     vector<double> max_rate,rate;
     for (i=0; i<r.size(); i++) {
         r[i] = r[i]/1000;
+        cout << r[i] << endl;
     }
+    cout << r.size() << endl;
     vector<double> rm(r.begin(),r.end());
     assert(r.size()==2 && r[0]>=0.0 && r[1] >= 0.0);
     for (i=0; i<neuroLib.nSyn; i++) {

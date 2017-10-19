@@ -9,8 +9,10 @@ v0=1
 tref=13
 seed=193864
 
+datafdr='../../data'
 dir0='singleRun'
 dir1=$dir0'/'$theme
+lib=$datafdr'/'$lib
 if [ -d "$dir1" ]; then
     rm -r $dir1/*
 else
@@ -24,9 +26,21 @@ else
 fi
 cp base/neuroAlter.py $dir1
 cp $dir0/sR.slurm $dir1
+cp $dir0/sR_init.cfg $dir1
+cp $dir0/sR $dir1
+cp $dir0/bnsynCompare.m $dir1
 cp -R x86_64 $dir1
 
 cd $dir1
 
-sbatch --export=theme=$theme,v0=$v0,rE=$rE,rI=$rI,t=$t,tref=$tref,seed=$seed,lib=$lib sR.slurm
-
+#sbatch --export=theme=$theme,v0=$v0,rE=$rE,rI=$rI,t=$t,tref=$tref,seed=$seed,lib=$lib sR.slurm
+export lib
+export v0
+export theme
+export rE
+export rI
+export t
+export tref
+export seed
+sbatch --export=ALL sR.slurm
+#sbatch sR.slurm
