@@ -3,9 +3,9 @@
 #SBATCH --ntasks=1
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=1
-#SBATCH --time=0:15:00
+#SBATCH --time=0:10:00
 #SBATCH -o brun_%A.out
-#SBATCH --job-name=brun
+#SBATCH --job-name=sR
 
 module purge
 module load python
@@ -15,7 +15,9 @@ module load matlab
 
 date
 
-./sR -m $theme -v $v0 -r $rE -r $rI -t $t --tref=$tref -s $seed -L $lib blog 2>&1 && matlab -r "bnsynCompare;exit;"
+#echo $lib
+#echo ${lib:3}
+./sR #-m $theme -v $v0 -r $rE -r $rI -t $t --tref=$tref -s $seed -L $lib #&& matlab -r "bnsynCompare($theme,$rE,$rI,$lib,$seed,$t);exit;"
 
 date
 hostname
