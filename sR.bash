@@ -33,7 +33,6 @@ cp -R x86_64 $dir1
 
 cd $dir1
 
-#sbatch --export=theme=$theme,v0=$v0,rE=$rE,rI=$rI,t=$t,tref=$tref,seed=$seed,lib=$lib sR.slurm
 export lib
 export v0
 export theme
@@ -43,4 +42,3 @@ export t
 export tref
 export seed
 sbatch --export=ALL sR.slurm
-#sbatch sR.slurm
