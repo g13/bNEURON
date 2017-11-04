@@ -71,18 +71,19 @@ int main(int argc, char **argv)
         config_file_options("config file"),
         Generic("options");
     cmd_line_options.add_options()
-        ("config_file,c", po::value<string>(&config_file)->default_value("sR_init.cfg"),"config filename");
-	Generic.add_options()
+        ("config_file,c", po::value<string>(&config_file)->default_value("sR_init.cfg"),"config filename")
+		("run_t,t", po::value<double>(&run_t), "sim time")
+        ("vinit,v", po::value<unsigned int>(&vinit), "index of intial voltage in vRange")
 		("lib_file,L",po::value<string>(&lib_file),"neuron library")
 		("para_file,p",po::value<string>(&para_file),"parameter file")
         ("seed,s",po::value<unsigned int>(&seed),"seeding")
 		("theme,m",po::value<string>(&theme),"parameter file")
-		("rate,r", po::value<vector<double>>()->multitoken()->composing(), "poisson rate array")
+		("ratec,r", po::value<vector<double>>()->multitoken()->composing(), "poisson rate array in cmdline");
+	Generic.add_options()
+		("ratef", po::value<vector<double>>()->multitoken()->composing(), "poisson rate array in config file")
 		("vThres", po::value<double>(), "NEURON vThres")
 		("vRest", po::value<double>(), "NEURON vRest")
         ("sampleStep", po::value<double>(&sampleStep), "sampling step for jump data")
-		("run_t,t", po::value<double>(&run_t), "sim time")
-        ("vinit,v", po::value<unsigned int>(&vinit), "index of intial voltage in vRange")
         ("tref",po::value<double>(&tref),"refractory period")
         ("trans",po::value<double>(&trans),"transient VClamp time")
         ("trans0",po::value<double>(&trans0),"default transient VClamp time")
@@ -115,7 +116,16 @@ int main(int argc, char **argv)
     vT = vm["vThres"].as<double>();
     vRest = vm["vRest"].as<double>();
 
-    vector<double> r = vm["rate"].as<vector<double>>();
+    vector<double> rc = vm["ratec"].as<vector<double>>();
+	vector<double> rf = vm["ratef"].as<vector<double>>();
+	vector<double> r;
+	if (rc.size()==2) {
+		r.assign(rc.begin(),rc.end());
+	} else {
+		assert(rc.size()==0);
+		r.assign(rf.begin(),rf.end());
+	}
+	assert(r[0]>=0.0 && r[1] >= 0.0);
     if (!seed) seed = seed0;
     string prefix = "E"+to_string(static_cast<int>(r[0]))+"-I"+to_string(static_cast<int>(r[1]))+"-corrL"+to_string(static_cast<int>(neuroLib.tol_tb-ignore_t))+"-"+to_string(static_cast<int>(run_t))+"-"+to_string(static_cast<unsigned int>(seed));
     theme = "-" + theme;
@@ -153,7 +163,6 @@ int main(int argc, char **argv)
     }
     cout << r.size() << endl;
     vector<double> rm(r.begin(),r.end());
-    assert(r.size()==2 && r[0]>=0.0 && r[1] >= 0.0);
     for (i=0; i<neuroLib.nSyn; i++) {
         if (neuroLib.ei[i]) {
             max_rate.push_back(rm[0]);
