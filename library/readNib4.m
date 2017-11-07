@@ -103,5 +103,5 @@ function readNib4(dir)
     %hold on
     %plot(t,sPSP(:,1,1,1));
     %plot(t,kv(:,2,1,2,2,1));
-    save([theme,'-NEURON'],'kv0','kv','sPSP','tmax','vleakage','dendvleak','sf','bf','fireCap','dendv','loc','pos','n','gList','dtRange','vRange','tstep','-v7.3');
+    save(['../data/',theme,'-NEURON'],'kv0','kv','sPSP','tmax','vleakage','dendvleak','sf','bf','fireCap','dendv','loc','pos','n','gList','dtRange','vRange','tstep','-v7.3');
 end

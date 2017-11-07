@@ -200,7 +200,7 @@ print "v0 == ",v0
 #dt = 2
 #seed = int(time.mktime(datetime.now().timetuple())) 
 #print "seed = ", seed
-nloc = 4
+nloc = 2
 run_t = 240
 #run_t = 22
 tstep = 0.1

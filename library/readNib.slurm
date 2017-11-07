@@ -11,7 +11,6 @@ module load matlab
 
 date
 
-#theme=stem-L13dt-dend-I
 theme=mpiTest-massive
 echo $theme
 matlab -nodesktop -nosplash -r "readNib4('$theme');exit;"

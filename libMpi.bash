@@ -1,26 +1,28 @@
 #!/bin/bash
 n128=0
+dir0=library
 theme='mpiTest-active-debug'
+dir=$dir0/$theme
 
-if [ -d "./$theme" ]; then
-    rm -r $theme/*
+if [ -d "./$dir" ]; then
+    rm -r $dir/*
 else
-    mkdir $theme
+    mkdir $dir
 fi
 
 if [ "$n128" == "0" ]; then
-    cp n128.py_pas $theme/n128.py
+    cp base/n128.py_pas $dir/n128.py
 else
-    cp n128.py_active $theme/n128.py
+    cp base/n128.py_active $dir/n128.py
 fi
-cp getNib_mpi.slurm $theme
-cp getNib_mpi_0.slurm $theme
-cp neuroAlter.py $theme
-cp getNib_mpi.py $theme
-cp -R x86_64 $theme/
+cp $dir0/getNib_mpi.py $dir
+cp $dir0/getNib_mpi.slurm $dir
+cp $dir0/getNib_mpi_0.slurm $dir
+cp base/neuroAlter.py $dir
+cp -R x86_64 $dir
 
-cd $theme
+cd $dir
 python -m py_compile getNib_mpi.py
-
-sbatch --export=theme=$theme getNib_mpi.slurm
-sbatch --export=theme=$theme getNib_mpi_0.slurm
+export theme
+sbatch --export=ALL getNib_mpi.slurm
+sbatch --export=ALL getNib_mpi_0.slurm

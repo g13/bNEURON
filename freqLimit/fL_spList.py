@@ -1,7 +1,6 @@
 import numpy as np
 import os, time, sys
 from neuroAlter import *
-from getPSP import write_one
 from shutil import copy
 from datetime import datetime
 from matplotlib import pyplot
@@ -10,6 +9,9 @@ matplotlib.use('Agg')
 
 f=open('sOlog','w')
 
+def write_one(data_filename,data,mode='ab'):
+    with open(data_filename,mode) as data_file:
+        data.tofile(data_file)
 class receptor(object):
     def __init__(self, a, b, c, d, cm):
         self.a = a

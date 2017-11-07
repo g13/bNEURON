@@ -4,7 +4,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=6G
 #SBATCH --time=8:00:00
-#SBATCH -a 1-15
+#SBATCH -a 1-3
 #SBATCH -o cK_%A_%a.out
 #SBATCH --job-name=cK
 #SBATCH --mail-type=END,FAIL
@@ -16,7 +16,7 @@ module list
 date
 
 v0=-74
-dV=1
+dV=4
 seed=238660
 dt=0
 #dtRange = np.array([0,4,8,12,20,30,70,130,210],dtype='float')

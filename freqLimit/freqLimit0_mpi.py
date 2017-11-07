@@ -9,6 +9,9 @@ from matplotlib import pyplot
 import matplotlib
 matplotlib.use('Agg')
 
+def write_one(data_filename,data,mode='ab'):
+    with open(data_filename,mode) as data_file:
+        data.tofile(data_file)
 def shift(v, rdt):
     if rdt > 0:
         for i in xrange(v.size):

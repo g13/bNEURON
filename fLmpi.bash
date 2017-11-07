@@ -2,29 +2,31 @@
 
 mode=0
 n128=0
+dir0='freqLimit'
 theme='fL10-n'$n128-'m'$mode-p
 ## p-preset; r-random
+dir=$dir0'/'$theme
 
-if [ -d "./$theme" ]; then
-    rm -r $theme/*
+if [ -d "./$dir" ]; then
+    rm -r $dir/*
 else
-    mkdir $theme
+    mkdir $dir
 fi
-cp freqMpi.slurm $theme
+cp $dir0/freqMpi.slurm $dir
 if [ "$mode" == "0" ]; then
-    cp freqLimit0_mpi.py $theme
+    cp $dir0/freqLimit0_mpi.py $dir
 else
-    cp freqLimit_mpi.py $theme
+    cp $dir0/freqLimit_mpi.py $dir
 fi
 if [ "$n128" == "0" ]; then
-    cp n128.py_pas $theme/n128.py
+    cp base/n128.py_pas $dir/n128.py
 else
-    cp n128.py_active $theme/n128.py
+    cp base/n128.py_active $dir/n128.py
 fi
-cp neuroAlter.py $theme
-cp getPSP.py $theme
-cp -R x86_64 $theme/
+cp base/neuroAlter.py $dir
+cp -R x86_64 $dir
 
-cd $theme
+cd $dir
 
-sbatch --export=mode=$mode freqMpi.slurm
+export mode
+sbatch --export=ALL freqMpi.slurm
