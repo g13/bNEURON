@@ -11,27 +11,27 @@ seed=193864
 
 datafdr='../../data'
 dir0='singleRun'
-dir1=$dir0'/'$theme
+dir=$dir0'/'$theme
 lib=$datafdr'/'$lib
-if [ -d "$dir1" ]; then
-    rm -r $dir1/*
+if [ -d "$dir" ]; then
+    rm -r $dir/*
 else
-    mkdir $dir1
+    mkdir $dir
 fi
 
 if [ "$n128" == "0" ]; then
-    cp base/n128.py_pas $dir1/n128.py
+    cp base/n128.py_pas $dir/n128.py
 else
-    cp base/n128.py_active $dir1/n128.py
+    cp base/n128.py_active $dir/n128.py
 fi
-cp base/neuroAlter.py $dir1
-cp $dir0/sR.slurm $dir1
-cp $dir0/sR_init.cfg $dir1
-cp $dir0/sR $dir1
-cp $dir0/bnsynCompare.m $dir1
-cp -R x86_64 $dir1
+cp base/neuroAlter.py $dir
+cp $dir0/sR.slurm $dir
+cp $dir0/sR_init.cfg $dir
+cp $dir0/sR $dir
+cp $dir0/bnsynCompare.m $dir
+cp -R x86_64 $dir
 
-cd $dir1
+cd $dir
 
 export lib
 export v0
