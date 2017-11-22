@@ -199,6 +199,9 @@ int input_args::read(int argc, char **argv) {
                 if (!tVarLevels && dtVarLevels) {
                     inputMode = "p-dt";
                 }
+                if (tVarLevels && dtVarLevels) {
+                    inputMode = "p-Tdt";
+                }
                 column.push_back(nInput);
             }
             if (!read_input_table(inputFn, column, input)) {
@@ -275,16 +278,19 @@ int read_input_table(string tableFn, vector<unsigned long> column, vector<vector
         tableFile.seekg(0,tableFile.beg);
         cout << " file size: " << fSize << " bytes" << endl;
         if (column.size() == 1 && arr.size() == 0) {
-            cout << "uniform column table not knowing rows " << endl;
-            for (int i=0; i<arr.size(); i++) {
+            cout << "uniform columns of " << column[0] << " not knowing rows " << endl;
+            int ii = 0;
+            while (tableFile.tellg() < fSize) {
                 arr.push_back(vector<double>(column[0],0));
-                tableFile.read((char*)(&arr[i][0]),sizeof(double)*column[i]);
-                cout << i << ": " << arr[i][0];
-                for (int j=1; j<column[i]; j++) {
-                    cout << ", " << arr[i][j]; 
+                tableFile.read((char*)(&arr[ii][0]),sizeof(double)*column[0]);
+                cout << ii << ": " << arr[ii][0];
+                for (int j=1; j<column[0]; j++) {
+                    cout << ", " << arr[ii][j]; 
                 }
                 cout << endl;
+                ii = ii + 1;
             }
+            assert(tableFile.tellg() == fSize);
         } else {
             cout << arr.size() << " rows"<< endl;
             if (column.size() == 0) {

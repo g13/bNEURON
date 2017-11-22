@@ -4,9 +4,10 @@ nInput = 10;
 inputFn = 'inputTable.bin';
 %levelsFn = '';
 levelsFn = 'levels.bin';
-%pVar = true;
-pVar = false;
-tVar = true;
+pVar = true;
+%pVar = false;
+%tVar = true;
+tVar = false;
 %extendVar = true;
 extendVar = false;
 dtVarLevels = true;
@@ -57,6 +58,7 @@ if ~isempty(inputFn)
         for i=1:nLevel
             if (~tVarLevels && ~dtVarLevels)
                 t = 0:dt:runTime;
+                % p %parameters can still be changed with extendVar
             else 
                 if tVarLevels && dtVarLevels
                     t = 0:dt(i):runTime(i);
@@ -73,8 +75,22 @@ if ~isempty(inputFn)
         end
     else
         p.w = 1;
-        p.b = 1;
-        for i=1:nInput
+        p.b = 0.5;
+        if ~tVar
+            if extendVar
+                for i=1:nLevel
+                    posR = (1:nInput)+nLevel;
+                    fwrite(fid,posR,'double');
+                end
+            else
+                posR = 1:nInput;
+                fwrite(fid,posR,'double');
+            end
+        else
+            for i=1:nInput     
+                input = inputF(p,t);
+                fwrite(fid,input,'double');
+            end
         end
     end
     fclose(fid);
@@ -99,6 +115,6 @@ else
 end
 if irregInputLevels, sirregInputLevels = ' --irregInputLevels'; else sirregInputLevels = ''; end
 themeOpt = [' -m ', theme];
-nInput = [' --nInput ', num2str(nInput)];
-cmd = ['./test', themeOpt, spVar, stVar, sextendVar, sirregInputLevels, sdtVarLevels, stVarLevels, inputFopt, levelsFopt];
-system(cmd);
+snInput = [' --nInput ', num2str(nInput)];
+cmd = ['./test', themeOpt, snInput, spVar, stVar, sextendVar, sirregInputLevels, sdtVarLevels, stVarLevels, inputFopt, levelsFopt]
+ret = system(cmd)
