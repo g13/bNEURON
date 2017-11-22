@@ -13,7 +13,7 @@ input_args::input_args() {
     pVar = false;
     extendVar = false;
     initialGenerics.add_options()
-        ("configFn,c", po::value<string>(&configFn)->default_value("config"),"filename of configuration");
+        ("configFn,c", po::value<string>(&configFn)->default_value("input.cfg"),"filename of configuration");
     configFileOptions.add_options()
         ("theme,m", po::value<string>(&theme), "theme of simulation")
         ("irregInputLevels", "irregular input levels")
@@ -69,11 +69,11 @@ int input_args::read(int argc, char **argv) {
             }
         }
     }
-    if (vm.count("tVarLevel")) {
+    if (vm.count("tVarLevels")) {
         vars.push_back(runTime);
         tVarLevels = true;
         if (vm.count("runTime")) {
-            cout << " using tVarLevel flag, ignoring runTime" << endl;
+            cout << " using tVarLevels flag, ignoring runTime" << endl;
         }
     } else {
         if (!vm.count("runTime")) {
@@ -87,11 +87,11 @@ int input_args::read(int argc, char **argv) {
             }
         }
     }
-    if (vm.count("dtVar")) {
+    if (vm.count("dtVarLevels")) {
         vars.push_back(tstep);
         dtVarLevels = true;
         if (vm.count("dt")) {
-            cout << " using dtVar flag, ignoring single dt" << endl;
+            cout << " using dtVarLevels flag, ignoring single dt" << endl;
         }
     } else {
         if (!vm.count("dt")) {
@@ -109,12 +109,31 @@ int input_args::read(int argc, char **argv) {
         if (!read_input_table(inputLevelsFn,column,vars)) {
             return 0;
         } else {
-            cout << "# input levels: " << inputLevel.size() << endl;
-            if (tVarLevels) {
-                assert(runTime.size()==inputLevel.size());
-            }
-            if (dtVarLevels) {
-                assert(tstep.size()==inputLevel.size());
+            cout << "# input levels: " << vars[0].size() << endl;
+            if (irregInputLevels) {
+                inputLevel = vars[0];
+                if (tVarLevels) {
+                    runTime = vars[1];
+                    assert(runTime.size()==inputLevel.size());
+                    if (dtVarLevels) {
+                        tstep = vars[2];
+                        assert(tstep.size()==inputLevel.size());
+                    }
+                }
+            } else {
+                if (tVarLevels) {
+                    runTime = vars[0];
+                    assert(runTime.size()==inputLevel.size());
+                    if (dtVarLevels) {
+                        tstep = vars[1];
+                        assert(tstep.size()==inputLevel.size());
+                    }
+                } else {
+                    if (dtVarLevels) {
+                        tstep = vars[0];
+                        assert(tstep.size()==inputLevel.size());
+                    }
+                }
             }
         }
         vars.clear();
@@ -152,6 +171,9 @@ int input_args::read(int argc, char **argv) {
             }
             if (!tVarLevels && dtVarLevels) {
                 inputMode = "t-dt";
+            }
+            if (tVarLevels && dtVarLevels) {
+                inputMode = "t-Tdt";
             }
             for (int i=0; i<inputLevel.size(); i++) {
                 column.push_back(round(runTime[i]/tstep[i]));
@@ -244,11 +266,16 @@ int read_input_table(string tableFn, vector<unsigned long> column, vector<vector
     // arr are arrays needing to be fed.
     ifstream tableFile;
     tableFile.open(tableFn, ios::binary);
-    streampos fBegin, fEnd;
+    cout << " reading from file " << tableFn << endl;
+    int fSize;
     unsigned long length;
     if (tableFile) {
+        tableFile.seekg(0,tableFile.end);
+        fSize = tableFile.tellg();
+        tableFile.seekg(0,tableFile.beg);
+        cout << " file size: " << fSize << " bytes" << endl;
         if (column.size() == 1 && arr.size() == 0) {
-            // uniform column table not knowing rows
+            cout << "uniform column table not knowing rows " << endl;
             for (int i=0; i<arr.size(); i++) {
                 arr.push_back(vector<double>(column[0],0));
                 tableFile.read((char*)(&arr[i][0]),sizeof(double)*column[i]);
@@ -259,18 +286,15 @@ int read_input_table(string tableFn, vector<unsigned long> column, vector<vector
                 cout << endl;
             }
         } else {
-            // rows known
+            cout << arr.size() << " rows"<< endl;
             if (column.size() == 0) {
-                // known # rows, get uniform columns
-                tableFile.seekg(0,ios::end);
-                fEnd = tableFile.tellg();
-                tableFile.seekg(0,ios::beg);
-                fBegin = tableFile.tellg();
-                length = (fEnd - fBegin)/(sizeof(double)*arr.size());
+                length = fSize/(sizeof(double)*arr.size());
                 column.assign(arr.size(),length);
+                cout <<  " derived uniform columns of " << length << endl;
             } else {
                 if (column.size() == 1 && arr.size() > 1) {
                     column.assign(arr.size(),column[0]);
+                    cout <<  " uniform " << length << " columns" << endl;
                 }
             } // else non-uniform columns
             assert( column.size() == arr.size() );
