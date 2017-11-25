@@ -31,7 +31,6 @@ int main(int argc, char **argv)
     //feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
     // prhs[] ~ lib_file, para_file, ith, run_t, ignore_t, vinit
     ofstream tIncome_file, raster_file, data_file, jND_file;
-    ifstream cfg_file;
     string lib_file, para_file;
     mxArray *para ;
     double cpu_t_sim, cpu_t_bilinear, cpu_t_linear, cpu_t_bilinear0;

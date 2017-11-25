@@ -24,7 +24,7 @@ echo $rI
 echo $t
 echo $tref
 echo $seed
-./sR -m $theme -v $v0 -r $rE -r $rI -t $t --tref=$tref -s $seed -L $lib && matlab -r "bnsynCompare('$theme',$rE,$rI,'$lib',$seed,$t);exit;"
+./sR -m $theme -v $v0 -r $rE -r $rI -t $t --tref=$tref -s $seed -l $lib && matlab -r "bnsynCompare('$theme',$rE,$rI,'$lib',$seed,$t);exit;"
 
 date
 hostname

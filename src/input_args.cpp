@@ -2,8 +2,6 @@
 #include <cstdlib>
 #include <cmath>
 using std::ifstream;
-using std::streampos;
-using std::ios;
 
 input_args::input_args() {
     irregInputLevels = false;
@@ -12,6 +10,7 @@ input_args::input_args() {
     tVar = false;
     pVar = false;
     extendVar = false;
+    withDend = false;
     initialGenerics.add_options()
         ("configFn,c", po::value<string>(&configFn)->default_value("input.cfg"),"filename of configuration");
     configFileOptions.add_options()
@@ -27,7 +26,12 @@ input_args::input_args() {
         ("tVar", " use temporally variable input")
         ("pVar", " use positionally variable input")
         ("extendVar", " extend pVar or tVar to other input levels")
-        ("inputFn", po::value<string>(&inputFn),"filename of variable input table (need to set tVar or pVar flag)");
+        ("inputFn", po::value<string>(&inputFn),"filename of variable input table (need to set tVar or pVar flag)")
+        ("nNeuron", po::value<unsigned long>(&nNeuron)->default_value(1),"number of neurons in simulation")
+        ("withDend", "input direct on neuron's dendrites")
+        ("conFn", po::value<string>(&conFn), "presynaptic connections binary data,repeat{pre;preID;(#dend;dendID);}")
+        ("strFn", po::value<string>(&strFn), " connection strength binary data file, must match with conFn")
+        ("seed", po::value<unsigned long>(&seed), " seed for the simulation");
     cmdLineOptions.add(configFileOptions);
     cmdLineOptions.add(initialGenerics);
 }
@@ -263,58 +267,27 @@ int input_args::read(int argc, char **argv) {
             }
         }
     }
-    return 1;
-}
-int read_input_table(string tableFn, vector<unsigned long> column, vector<vector<double>> &arr) {
-    // arr are arrays needing to be fed.
-    ifstream tableFile;
-    tableFile.open(tableFn, ios::binary);
-    cout << " reading from file " << tableFn << endl;
-    int fSize;
-    unsigned long length;
-    if (tableFile) {
-        tableFile.seekg(0,tableFile.end);
-        fSize = tableFile.tellg();
-        tableFile.seekg(0,tableFile.beg);
-        cout << " file size: " << fSize << " bytes" << endl;
-        if (column.size() == 1 && arr.size() == 0) {
-            cout << "uniform columns of " << column[0] << " not knowing rows " << endl;
-            int ii = 0;
-            while (tableFile.tellg() < fSize) {
-                arr.push_back(vector<double>(column[0],0));
-                tableFile.read((char*)(&arr[ii][0]),sizeof(double)*column[0]);
-                cout << ii << ": " << arr[ii][0];
-                for (int j=1; j<column[0]; j++) {
-                    cout << ", " << arr[ii][j]; 
-                }
-                cout << endl;
-                ii = ii + 1;
-            }
-            assert(tableFile.tellg() == fSize);
+    if (vm.count("conFn")) {
+        assert(nNeuron > 1);
+        int skipping = 1;
+        if (vm.count("withDend")) {
+            withDend = true;
+            skipping = 2;     
+        }
+        if (!vm.count("strFn")) {
+            cout << "data of strength of connection also need to be provided." << endl;
+            return 0;
         } else {
-            cout << arr.size() << " rows"<< endl;
-            if (column.size() == 0) {
-                length = fSize/(sizeof(double)*arr.size());
-                column.assign(arr.size(),length);
-                cout <<  " derived uniform columns of " << length << endl;
-            } else {
-                if (column.size() == 1 && arr.size() > 1) {
-                    column.assign(arr.size(),column[0]);
-                    cout <<  " uniform " << length << " columns" << endl;
-                }
-            } // else non-uniform columns
-            assert( column.size() == arr.size() );
-            for (int i=0; i<arr.size(); i++) {
-                arr[i].assign(column[i],0);
-                tableFile.read((char*)(&arr[i][0]),sizeof(double)*column[i]);
-                cout << i << ": " << arr[i][0];
-                for (int j=1; j<column[i]; j++) {
-                    cout << ", " << arr[i][j]; 
-                }
-                cout << endl;
+            column.clear();
+            if (!read_input_table(conFn, column, preID)) {
+                return 0;
             }
+            column.clear();
+            if (!read_input_table(strFn, column, preStr)) {
+                return 0;
+            }
+            assert(preStr.size() == preID.size() - skipping*nNeuron);
         }
     }
-    tableFile.close();
     return 1;
 }
