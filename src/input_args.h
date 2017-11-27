@@ -57,7 +57,7 @@ int read_input_table(string tableFn, vector<unsigned long> column, vector<vector
             int ii = 0;
             while (tableFile.tellg() < fSize) {
                 arr.push_back(vector<T>(column[0],0));
-                tableFile.read((char*)(&arr[ii][0]),sizeof(T)*column[0]);
+                tableFile.read((char*)&(arr[ii][0]),sizeof(T)*column[0]);
                 cout << ii << ": " << arr[ii][0];
                 for (int j=1; j<column[0]; j++) {
                     cout << ", " << arr[ii][j]; 
@@ -81,7 +81,7 @@ int read_input_table(string tableFn, vector<unsigned long> column, vector<vector
             assert( column.size() == arr.size() );
             for (int i=0; i<arr.size(); i++) {
                 arr[i].assign(column[i],0);
-                tableFile.read((char*)(&arr[i][0]),sizeof(T)*column[i]);
+                tableFile.read((char*)&(arr[i][0]),sizeof(T)*column[i]);
                 cout << i << ": " << arr[i][0];
                 for (int j=1; j<column[i]; j++) {
                     cout << ", " << arr[i][j]; 
