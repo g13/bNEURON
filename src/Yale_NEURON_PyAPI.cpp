@@ -57,6 +57,7 @@ get_cell::get_cell(SynSet syn) {
         cout << " Houston we lost our module" << endl;
     }
 }
+
 inline void get_gh(vector<double> &spikeTrain, long j0, long j1, double t, double &g, double &h, double t0, double t1, double f) {
     double nextRel, lastRel = -1e23;
     double etd, etr, c, dt, g0;
@@ -108,7 +109,7 @@ void NEURON_cleanup(Cell &cell) {
     Py_CLEAR(cell.Py_vecStimList);
 }
 
-inline unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, bool getDendV = 0, vector<vector<double>> &dendV = dummy_dendV) {
+inline unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, bool getDendV, vector<vector<double>> &dendV) {
 
     PyObject **pRList = new PyObject*[n];
     PyObject *pFunc;
@@ -396,4 +397,3 @@ inline size neuroAlterB(nNS &neuron, nNL &neuroLib, vector<double> &v, vector<do
     assert(neuron.tin[ith] <= t+(lCross-1)*tstep);
     return nc;
 }
-#endif

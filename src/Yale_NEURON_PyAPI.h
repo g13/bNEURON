@@ -6,6 +6,7 @@
 #include <iostream>
 #include <numpy/arrayobject.h>
 #include <cmath>
+
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 using std::vector;
 using std::cout;
@@ -21,7 +22,7 @@ inline void get_gh(vector<double> &spikeTrain, long j0, long j1, double t, doubl
 
 inline void get_RList(vector<vector<double>> &spikeTrain, vector<long> &j0, vector<long> &j1, double t0, vector<vector<double>> &RList, vector<bool> &ei, double* gList);
 
-struct SynSet{
+struct syn_set{
     int *loc;
     double *pos;
     double *gList;
@@ -37,7 +38,7 @@ struct get_cell{
     PyObject *pModule;
     PyObject *Py_loc;
     PyObject *Py_pos;
-    get_cell(synSet syn);
+    get_cell(SynSet syn);
 };
 typedef struct get_cell Cell;
 
