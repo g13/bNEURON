@@ -8,10 +8,11 @@
 #include "nsynJtest3.h"
 #include "nsynJltest3.h"
 #include "nNeuroLib.h"
-#include "nNeuroSt2.h"
+#include "nNeuroSt.h"
 #include "nsynBiTest3.h"
 #include "typedefs.h"
 #include "neuroTest.h"
+#include "input_args_CA1.h"
 #include <fstream>
 #include <iostream>
 
@@ -31,16 +32,12 @@ int main(int argc, char **argv)
     //feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
     // prhs[] ~ lib_file, para_file, ith, run_t, ignore_t, vinit
     ofstream tIncome_file, raster_file, data_file, jND_file;
-    string lib_file, para_file;
     mxArray *para ;
     double cpu_t_sim, cpu_t_bilinear, cpu_t_linear, cpu_t_bilinear0;
     double cpu_t_jbilinear, cpu_t_jlinear;
-    double rLinear;
-    //if (!win) {
-        clockid_t clk_id = CLOCK_PROCESS_CPUTIME_ID;
-        struct timespec tpS, tpE;
-    //}
     unsigned int i,j,k,nt;
+    clockid_t clk_id = CLOCK_PROCESS_CPUTIME_ID;
+    struct timespec tpS, tpE;
     double run_t, ignore_t, tau_ed, tau_er, tau_id, tau_ir;
     double gNa, vNa, gK, vK, gLeak, vLeak, vT, vE, vI, vRest, DeltaT,S;
     double tref, trans, trans0;
