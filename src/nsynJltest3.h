@@ -54,7 +54,7 @@ namespace jl{
                 std::cout << "v1 " << v1 << std::endl;
                 ival++;
             }
-            if (fabs(v1-neuron.vThres)<neuron.v_tol) {
+            if (fabs(v1-neuron.vThres)<neuron.vTol) {
                 v = v1;
                 t_cross = t_cross1;
                 break;
@@ -91,7 +91,7 @@ namespace jl{
             if (debug2) {
                 ival++;
             }
-            if (fabs(v2-neuron.vThres)<neuron.v_tol) {
+            if (fabs(v2-neuron.vThres)<neuron.vTol) {
                 v = v2;
                 t_cross = t_cross2;
                 break;
@@ -170,7 +170,7 @@ namespace jl{
             if (debug) {
                 std::cout << "vmax " << vmax << " > vThres, find t and v for cross" << std::endl;
             }
-            if (fabs(vmax-neuron.vThres)>neuron.v_tol) {
+            if (fabs(vmax-neuron.vThres)>neuron.vTol) {
                 t_cross = interp_for_t_cross(vmax, jnd.v.back(), tmax, jnd.t.back(), head, tail_l, tCross, tol_tl, neuroLib, cross, input, neuron, v_pass);
                 cout << "t_left " << jnd.t.back() << " t_cross " << t_cross << ", t_right " << tmax << endl;
                 cout << "v_left " << jnd.v.back() << " v_cross " << v_pass << ", t_right " << vmax << endl;
@@ -382,7 +382,7 @@ unsigned int nsyn_jLinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cr
     size tail_l = 0;
     size old_tail_l;
     bool crossed, spiked;
-    double tref = neuron.tref/tstep;
+    double tref = neuron.tRef/tstep;
     size i_, j_;
     double r_;
     size ii;
@@ -425,7 +425,7 @@ unsigned int nsyn_jLinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cr
                 tBack = iend;
             }
             vBack = neuron.vRest;
-            tsp.push_back(t_cross*neuroLib.tstep+neuron.tref/2);
+            tsp.push_back(t_cross*neuroLib.tstep+neuron.tRef/2);
             nc_old = nc;
             nc++;
             spiked = nc - nc_old;

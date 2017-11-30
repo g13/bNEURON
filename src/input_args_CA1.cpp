@@ -9,7 +9,7 @@ input_args_CA1::input_args_CA1(){
         ("trans",po::value<double>(&trans),"transient VClamp time")
         ("trans0",po::value<double>(&trans0),"default transient VClamp time")
         ("rLinear",po::value<double>(&rLinear),"linear model spiking threshold")
-        ("rHH", po::value<double>(&rHH), "bilinear model spiking threshold")
+        ("rBiLinear", po::value<double>(&rBiLinear), "bilinear model spiking threshold")
         ("vTol",po::value<double>(&vTol),"crossing threshold tolerance")
         ("vBuffer",po::value<double>(&vBuffer),"return threshold buffer")
         ("dendClampRatio",po::value<double>(&dendClampRatio),"dendrite dV contribution ratio")

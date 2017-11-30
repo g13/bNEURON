@@ -5,6 +5,7 @@
 #include "typedefs.h"
 #include <cmath>
 #include <cstring>
+#include <cassert>
 using std::cout;
 using std::endl;
 using std::memcpy;
@@ -27,6 +28,7 @@ struct nNeuroLib {
     double *pos;
     double *gList;
     bool *ei;
+    int nE, nI;
     //double vReset, vThres;
     double tol_tl;
     double tol_tb;

@@ -87,7 +87,8 @@ struct nNeuroSt{
     vector<bool> ei;
     std::uniform_real_distribution<double> uniform0_1 = std::uniform_real_distribution<double>(0.0,1.0);;
 
-    nNeuroSt(unsigned int seed, int nSyn0, vector<double> &t0, double run_t0, vector<double> &rate, bool *ei0, bool testing, double tstep0);
+    nNeuroSt(unsigned int seed, int nSyn0, bool *ei0, double trans0, double tRef0, double vTol0);
+    void initialize(double run_t0, double tstep0, vector<double> &t0, vector<double> &rate, unsigned int seed=0);
     void getNextInput(vector<double> rate);
     void setInputs(vector<vector<double>> &inputs);
     void writeAndUpdateIn(size i, std::ofstream &tIncome_file);

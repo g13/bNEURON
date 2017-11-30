@@ -214,7 +214,7 @@ unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, d
     double vTarget, dtTarget, dtTarget1;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
     double tstep = neuroLib.tstep;
-    size itref = static_cast<size>(round(neuron.tref/tstep));
+    size itref = static_cast<size>(round(neuron.tRef/tstep));
     size nin = neuron.tin.size();
     size nv = neuroLib.nv;
     size ndt = neuroLib.ndt;
@@ -318,7 +318,7 @@ unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, d
                     }
                     ith_old = ith; 
                     spiked = 1;
-                    tsp.push_back(k*neuroLib.tstep+neuron.tref/2);
+                    tsp.push_back(k*neuroLib.tstep+neuron.tRef/2);
                     vs = k + itref;
                     for (j=0;j<itref;j++) {
                         if (k+j < run_nt) {
@@ -433,7 +433,7 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
     double vTarget, dtTarget;
     size tl, vs, ve, vc, i, j, k, ith_old, ith;
     double tstep = neuroLib.tstep;
-    size itref = static_cast<size>(round(neuron.tref/tstep));
+    size itref = static_cast<size>(round(neuron.tRef/tstep));
     size nin = neuron.tin.size();
     size nv = neuroLib.nv;
     size ndt = neuroLib.ndt;
@@ -507,7 +507,7 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
                     }
                     ith_old = ith; 
                     spiked = 1;
-                    tsp.push_back(k*neuroLib.tstep+neuron.tref/2);
+                    tsp.push_back(k*neuroLib.tstep+neuron.tRef/2);
                     vs = k + itref;
                     for (j=0;j<itref;j++) {
                         if (k+j < run_nt) {
@@ -605,7 +605,7 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
     double vTarget, dtTarget, dtTarget1;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
     double tstep = neuroLib.tstep;
-    size itref = static_cast<size>(round(neuron.tref/tstep));
+    size itref = static_cast<size>(round(neuron.tRef/tstep));
     size nin = neuron.tin.size();
     size nv = neuroLib.nv;
     size ndt = neuroLib.ndt;
@@ -700,7 +700,7 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
                     }
                     ith_old = ith; 
                     spiked = 1;
-                    tsp.push_back(k*neuroLib.tstep+neuron.tref/2);
+                    tsp.push_back(k*neuroLib.tstep+neuron.tRef/2);
                     vs = k + itref;
                     for (j=0;j<itref;j++) {
                         if (k+j < run_nt) {

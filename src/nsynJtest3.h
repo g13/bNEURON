@@ -62,7 +62,7 @@ inline void add_relation_between_new_and_ith_input(Input &input, size inew, size
     input.bir[i].dTijr.push_back(IJR(i_,j_,r_));
     //input.bir[i].Tijr.push_back(IJR(idt,idt+1,t-idt));
 }
-inline double linear_interp_tMax(double ***tMax, struct IJR &v, struct IJR &dT, size i) {
+inline double linear_interp_tMax(double ***tMax, IJR &v, IJR &dT, size i) {
     double base = tMax[v.i][dT.i][i];
     return round(base + v.r *  (tMax[v.j][dT.i][i] -base)
                       + dT.r * (tMax[v.i][dT.j][i] -base));
@@ -82,16 +82,16 @@ inline void add_new_input_info(nNL &neuroLib, Input &input, Cross &cross, double
     input.inTref.push_back(0);
 }
 
-inline double add_vinit_contribution(nNL &neuroLib, struct IJR &v, double dt) { 
+inline double add_vinit_contribution(nNL &neuroLib, IJR &v, double dt) { 
     size i = static_cast<size>(round(dt));
     double base = neuroLib.vLeak[v.i][i];
     return base + v.r * (neuroLib.vLeak[v.j][i] -base);
 }
-inline double linear_interp_leak(double ***PSP, struct IJR &v, size ID, size idt) {
+inline double linear_interp_leak(double ***PSP, IJR &v, size ID, size idt) {
     double base = PSP[v.i][ID][idt];
     return base + v.r *  (PSP[v.j][ID][idt] -base);
 }
-inline double linear_interp_PSP(double ****PSP, struct IJR &v, struct IJR &dT, size ID, size idt, size *idtRange) {
+inline double linear_interp_PSP(double ****PSP, IJR &v, IJR &dT, size ID, size idt, size *idtRange) {
     size iidt = idt + idtRange[dT.i];
     size jjdt = idt + idtRange[dT.j];
     //cout << " dT.i " << dT.i << endl;
@@ -107,7 +107,7 @@ inline void add_input_i_contribution(size i, size idt, nNL &neuroLib, Input &inp
                               input.ID[i], idt, neuroLib.idtRange);
 }
 
-inline double linear_interp_kV(double ******kV, struct IJR &v, struct IJR &ijdT, size dT, size it, size *idtRange, size ndt, size i, size j) {
+inline double linear_interp_kV(double ******kV, IJR &v, IJR &ijdT, size dT, size it, size *idtRange, size ndt, size i, size j) {
     if (dT == 0) {
         size jt = idtRange[ijdT.j] + it;
         it = idtRange[ijdT.i] + it;
@@ -252,7 +252,7 @@ inline double interp_for_t_cross(double v_right, double v_left, double t_right, 
             std::cout << v_left <<  ", " << v1 << ", " << v_right << std::endl;
         }
         ival++;
-        if (fabs(v1-neuron.vThres)<neuron.v_tol) {
+        if (fabs(v1-neuron.vThres)<neuron.vTol) {
             v = v1;
             t_cross = t_cross1;
             break;
@@ -288,7 +288,7 @@ inline double interp_for_t_cross(double v_right, double v_left, double t_right, 
         //if (jumpy::debug2) {
             ival++;
         //}
-        if (fabs(v2-neuron.vThres)<neuron.v_tol) {
+        if (fabs(v2-neuron.vThres)<neuron.vTol) {
             v = v2;
             t_cross = t_cross2;
             break;
@@ -379,7 +379,7 @@ bool check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, doub
         if (jumpy::debug) {
             std::cout << "l+b vmax > vThres, find t and v for cross" << std::endl;
         }
-        if (fabs(vmax-neuron.vThres)>neuron.v_tol && tmax-jnd.t.back()>1) {
+        if (fabs(vmax-neuron.vThres)>neuron.vTol && tmax-jnd.t.back()>1) {
             t_cross = interp_for_t_cross(vmax, jnd.v.back(), tmax, jnd.t.back(), head, tail_l, tail_b, tCross, tol_tl, neuroLib, cross, input, neuron, v_pass);
             assert(t_cross > jnd.t.back());
             jnd.t.push_back(t_cross);
@@ -644,7 +644,7 @@ unsigned int nsyn_jBilinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, 
     size old_tail_b;
     size old_tail_l;
     bool crossed, spiked;
-    double tref = neuron.tref/tstep;
+    double tref = neuron.tRef/tstep;
     size i_, j_;
     double r_;
     size ii;
@@ -697,7 +697,7 @@ unsigned int nsyn_jBilinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, 
                 tBack = iend;
             }
             vBack = neuron.vRest;
-            tsp.push_back(t_cross*neuroLib.tstep+neuron.tref/2);
+            tsp.push_back(t_cross*neuroLib.tstep+neuron.tRef/2);
             nc_old = nc;
             nc++;
             spiked = nc - nc_old;

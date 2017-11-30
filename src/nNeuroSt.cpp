@@ -96,12 +96,13 @@ void Inputs::print_this(int i) {
     cout << "dT index: " << dTijr[i].i << ", " << dTijr[i].j << ", " << dTijr[i].r << endl;
 }
 
-nNeuroSt::nNeuroSt(unsigned int seed, int nSyn0, vector<double> &t0, double run_t0, vector<double> &rate, bool *ei0, bool testing, double tstep0) {
+nNeuroSt::nNeuroSt(unsigned int seed, int nSyn0, bool *ei0, double trans0, double tRef0, double vTol0) {
     status = true;
     nOut = 0;
-    run_t = run_t0;
     nSyn = nSyn0;
-    tstep = tstep0;
+    trans = trans0;
+    tRef = tRef0;
+    vTol = vTol0;
     ei.assign(ei0,ei0+nSyn);
 
     poiGen.assign(nSyn,std::minstd_rand());
@@ -114,21 +115,32 @@ nNeuroSt::nNeuroSt(unsigned int seed, int nSyn0, vector<double> &t0, double run_
         poiGen[i].seed(seed-i-1);
     }
     cout << endl;
-    if (!testing) {
-        cout << "initialized input heap" << endl;
-        double tmpT;
-        double dt;
-        for (int i=0; i<nSyn; i++) {
-            if (rate[i] > 0 ) {
-                tmpT = next_poisson_const(poiGen[i],t0[i],rate[i],uniform0_1);
-            } else {
-                tmpT = run_t + 1.0;
-            }
-            tmpT = static_cast<int>(tmpT/tstep)*tstep;
-            tPoi[i].push_back(tmp.back());
+}
+void nNeuroSt::initialize(double run_t0, double tstep0, vector<double> &t0, vector<double> &rate, unsigned int seed) {
+    run_t = run_t0;
+    tstep = tstep0;
+    if (seed > 0) {
+        cout << "reseed " << endl;
+        for (int i = 0; i < nSyn; i++ ) {
+            //cout << ei[i] << ", ";
+            ranGen[i].seed(seed+i+1);
+            poiGen[i].seed(seed-i-1);
         }
-        my::make_heap(tmp.data(), nSyn, heap);
     }
+    cout << "initialize input heap" << endl;
+    double tmpT;
+    double dt;
+    for (int i=0; i<nSyn; i++) {
+        if (rate[i] > 0 ) {
+            tmpT = next_poisson_const(poiGen[i],t0[i],rate[i],uniform0_1);
+        } else {
+            tmpT = run_t + 1.0;
+        }
+        // let poisson event arrive at dt sharp.
+        tmpT = static_cast<int>(tmpT/tstep)*tstep;
+        tPoi[i].push_back(tmp.back());
+    }
+    my::make_heap(tmp.data(), nSyn, heap);
 }
 void nNeuroSt::getNextInput(vector<double> rate) {
     int i =  heap[0];

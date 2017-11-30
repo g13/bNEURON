@@ -1,4 +1,5 @@
 #include "nNeuroLib.h"
+#include <cassert>
 
 nNeuroLib::nNeuroLib(const char *filename) {
     MATFile *pmat;
@@ -151,11 +152,25 @@ nNeuroLib::nNeuroLib(const char *filename) {
     assert(nStrength == nSyn);
 
     ei = new bool[nSyn];
+    nE = 0;
+    nI = 0;
     for (i=0; i<nSyn; i++) {
         if (gList[i] > 0) {
             ei[i] = true;
+            nE +=1;
+            if (nE==1) {
+                assert(i==0);
+            } else {
+                assert(ei[i-1] == true);
+            }
         } else {
             ei[i] = false;
+            nI +=1;
+            if (nI==1) {
+                assert(i==nE);
+            } else {
+                assert(ei[i-1] == false);
+            }
         }
     }
 

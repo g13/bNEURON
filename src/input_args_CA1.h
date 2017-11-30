@@ -15,7 +15,7 @@ struct input_args_CA1 : input_args {
     double tRef;
     double trans;
     double trans0;
-    double rHH;
+    double rBiLinear;
     unsigned int vInit;
     input_args_CA1();
 };

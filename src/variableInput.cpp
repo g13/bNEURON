@@ -35,12 +35,10 @@ int main(int argc, char **argv)
     mxArray *para ;
     double cpu_t_sim, cpu_t_bilinear, cpu_t_linear, cpu_t_bilinear0;
     double cpu_t_jbilinear, cpu_t_jlinear;
-    unsigned int i,j,k,nt;
+    unsigned int i,j,k,nt, nt0;
     clockid_t clk_id = CLOCK_PROCESS_CPUTIME_ID;
     struct timespec tpS, tpE;
     MATFile *matFile;
-    nNL neuroLib;
-    nNS neuron;
     vector<double> simV;
     vector<double> biV, biV0;
     vector<double> liV;
@@ -48,25 +46,30 @@ int main(int argc, char **argv)
     vector<double> tsp_sim, tsp_bi, tsp_jbi, tsp_li, tsp_jli, tsp_bi0;
 
     //InputArgsCA1 inputArg = input_args_CA1();
-    InputArgsCA1 inputArg();
+    InputArgsCA1 inputArg = input_args_CA1();
     inputArg.read(argc,argv);
-
-    neuroLib.readLib(inputArg.libFile.c_str());
-
-    if (nr == 1) {
-        string prefix = "E"+to_string(static_cast<int>(sr[0]))+"-I"+to_string(static_cast<int>(sr[1]))+"-corrL"+to_string(static_cast<int>(neuroLib.tol_tb-inputArg.ignoreT))+"-t"+to_string(static_cast<int>(runTime[0]))+"-s"+to_string(static_cast<unsigned int>(inputArg.seed));
-    } else {
-        string prefix = to_string(static_cast<int>(inputArg.input[0][0])) + "E"+to_string(static_cast<int>(inputArg.input[0][1]))+ "-" + to_string(static_cast<int>(inputArg.input[1][0])) + "I"+to_string(static_cast<int>(inputArg.input[1][0]))+"-corrL"+to_string(static_cast<int>(neuroLib.tol_tb-inputArg.ignoreT))+"-" + to_string(static_cast<int>(inputArg.runTime[0]) + "t"+to_string(static_cast<int>(inputArg.runTime[1]))+"-s"+to_string(static_cast<unsigned int>(inputArg.seed));
+    if (inputArg.dtVarLevels) {
+        cout << "different dt can only affect YALE NEURON simulation" << endl;
     }
-    inputArg.theme = "-" + inputArg.theme;
-	raster_file.open(prefix + "Raster" + inputArg.theme + ".bin", ios::out|ios::binary);
-	tIncome_file.open(prefix + "tIn" + inputArg.theme + ".bin", ios::out|ios::binary);
-	data_file.open(prefix + "Data" + inputArg.theme + ".bin", ios::out|ios::binary);
-	jND_file.open(prefix + "jND" + inputArg.theme + ".bin", ios::out|ios::binary);
+
+    nNL neuroLib(inputArg.libFile.c_str());
+    nNS neuron(inputArg.seed,neuroLib.nSyn,neuroLib.ei,inputArg.trans,inputArg.tRef,inputArg.vTol);
+
+    vector<vector<double>> rate(neuroLib.nSyn,vector<double>());
+    for (int i; i<inputArg.inputLevel.size(); i++) {
+        rate[i].reserve(neuroLib.nSyn);
+        for (int j; j<neuroLib.nSyn; j++) {
+            rate[i].push_back(inputArg.inputLevel[i]*inputArg.input[0][i]);
+        }
+    }
+    string prefix = inputArg.theme + "-s" + to_string(static_cast<unsigned int>(inputArg.seed)) + "-at" + to_string(static_cast<unsigned int>(std::time(NULL)));
+	raster_file.open(prefix + "Raster.bin", ios::out|ios::binary);
+	tIncome_file.open(prefix + "tIn.bin", ios::out|ios::binary);
+	data_file.open(prefix + "Data.bin", ios::out|ios::binary);
+	jND_file.open(prefix + "jND.bin", ios::out|ios::binary);
 
     double tstep = neuroLib.tstep;
     cout << "using tstep: " << tstep << " ms" << endl;
-    cout << "E rate " << sr[0] << ", I rate " << r[1] << endl;
     Py_Initialize();
     cout << "Python " << endl;
     _import_array();
@@ -79,18 +82,16 @@ int main(int argc, char **argv)
         neuroLib.pos, 
         neuroLib.gList, 
         neuroLib.nSyn, 
-        vRest
+        inputArg.vRest
     }; 
     Cell cell(syn);
 
-    neuron.trans = inputArg.trans;
-    neuron.tRef = inputArg.tRef;
-    neuron.vTol = inputArg.vTol;
-    for (int ii=0; ii<inputLevel.size(); ii++) {
+    for (int ii=0; ii<inputArg.inputLevel.size(); ii++) {
         vector<double> t0(neuroLib.nSyn,0);
-        double run_t = runTime[ii];
-        neuron.initialize(seed,neuroLib.nSyn,t0,run_t,rate,max_rate,neuroLib.ei,testing,tstep);
-        while (neuron.status) neuron.getNextInput(inputLevel[ii]);
+        double run_t = inputArg.runTime[ii];
+        neuron.initialize(inputArg.runTime[ii],tstep,t0,rate[ii]);
+        double v0 = neuroLib.vRange[inputArg.vInit];
+        while (neuron.status) neuron.getNextInput(rate[ii]);
         cout << " initialized" << endl;
         // get external inputs
 
@@ -130,12 +131,12 @@ int main(int argc, char **argv)
         cout << " spikeTrain generated" << endl;
 
         nt = static_cast<unsigned int>(run_t/tstep)+1;
-        double v0 = neuroLib.vRange[vinit];
+        nt0 = static_cast<unsigned int>(run_t/inputArg.tstep[ii])+1;
         vector<vector<double>> dendV(neuron.nSyn,vector<double>());
         for (i=0; i<neuron.nSyn; i++) {
-            dendV[i].reserve(nt);
+            dendV[i].reserve(nt0);
         }
-        simV.reserve(nt);
+        simV.reserve(nt0);
         //simV.push_back(v0);
         biV.reserve(nt);
         biV.push_back(v0);
@@ -193,8 +194,8 @@ int main(int argc, char **argv)
         cout << endl;
         clock_gettime(clk_id,&tpS);
         double totalRate = 0;
-        for (i=0;i<r.size();i++) {
-            totalRate += r[i];
+        for (i=0;i<rate[ii].size();i++) {
+            totalRate += rate[ii][i];
         }
         size rSize = static_cast<size>((totalRate)*run_t);
         size corrSize = static_cast<size>((totalRate)*neuroLib.tol_tb);
@@ -253,11 +254,12 @@ int main(int argc, char **argv)
         vector<double>* output[4] = {&simV,&biV,&liV,&biV0};
         neuron.writeAndUpdateIn(neuron.tin.size(), tIncome_file);
         //neuron.writeAndUpdateOut(neuron.tsp.size(), raster_file);
-        for (i=0;i<4;i++) {
+        data_file.write((char*)output[0]->data(), nt0*sizeof(double));
+        for (i=1;i<4;i++) {
             data_file.write((char*)output[i]->data(), nt*sizeof(double));
         }
         for (i=0;i<neuron.nSyn;i++) {
-            data_file.write((char*)dendV[i].data(), nt*sizeof(double));
+            data_file.write((char*)dendV[i].data(), nt0*sizeof(double));
         }
         size jndSize = jndb.t.size();
         jND_file.write((char*)&(jndSize),sizeof(size));
@@ -323,7 +325,7 @@ int main(int argc, char **argv)
         jbv.clear();
         liV.clear();
         cout << "level " << ii << " finalized " << endl;
-        cout << " run time " << inputArg.inputTime[ii] << " tstep " << inputArg.tstep[ii] << endl;
+        cout << " run time " << inputArg.runTime[ii] << " tstep " << tstep << endl;
         cout << "time table: sim,   bi, jbi,    li, jli,    bi0" << endl;
         cout << "       " << cpu_t_sim << ", ";
         cout << cpu_t_bilinear << ", " << cpu_t_jbilinear << ", ";
