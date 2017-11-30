@@ -4,7 +4,7 @@
 #include <vector>
 #include "typedefs.h"
 #include "nNeuroLib.h"
-#include "nNeuroSt2.h"
+#include "nNeuroSt.h"
 #include "nsynJtest3.h"
 namespace jl{
     bool debug = true;

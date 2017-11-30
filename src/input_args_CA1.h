@@ -15,9 +15,10 @@ struct input_args_CA1 : input_args {
     double tRef;
     double trans;
     double trans0;
+    double rHH;
     unsigned int vInit;
     input_args_CA1();
 };
 
-typedef struct input_args_CA1 inputArgsCA1;
+typedef struct input_args_CA1 InputArgsCA1;
 #endif

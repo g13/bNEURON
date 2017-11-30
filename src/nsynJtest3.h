@@ -4,7 +4,7 @@
 #include <vector>
 #include "typedefs.h"
 #include "nNeuroLib.h"
-#include "nNeuroSt2.h"
+#include "nNeuroSt.h"
 
 namespace jumpy{
     const bool debug = true;

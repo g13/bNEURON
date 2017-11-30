@@ -1,5 +1,5 @@
 #include "poisson_process.h"
-#include<fstream>
+#include <fstream>
 
 linear_distribution::linear_distribution(double r0, double r1, double dt) {
     r_ = (r0+r1)/2;
@@ -17,19 +17,6 @@ void linear_distribution::roll_all(vector<double> &rand, vector<double> &result)
     result.reserve(rand.size());
     for (unsigned int i=0; i<rand.size(); i++) {
         result.push_back(roll(rand[i]));
-    }
-}
-
-inline double next_poisson_const(std::minstd_rand &poiGen, double lastSpikeTime, double poissonRate, std::uniform_real_distribution<double> &uniform0_1) {
-    return lastSpikeTime - log(uniform0_1(poiGen))/poissonRate;
-}
-
-inline int next_poisson_non_const(vector<double> &spikeTime, double pR0, double pR1, double dt, double t0, double maxPoissonRate, std::minstd_rand &poiGen, std::minstd_rand &ranGen, std::uniform_real_distribution<double> &uniform0_1) { 
-    linearDist linear(pR0,pR1,dt);
-    if (uniform0_1(poiGen) < linear.r_/maxPoissonRate) {
-        spikeTime.push_back(t0 + linear.roll(uniform0_1(ranGen)));
-    } else {
-        return 0;
     }
 }
 

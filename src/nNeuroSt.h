@@ -72,8 +72,8 @@ struct Inputs {
 typedef struct Inputs Input;
 
 struct nNeuroSt{
-    double v_tol, run_t, trans;
-    double vThres, vReset, vRest, tref, tstep;
+    double vTol, run_t, trans;
+    double vThres, vReset, vRest, tRef, tstep;
     unsigned int nSyn;
     vector<double> tin;
     vector<size> inID; 
@@ -87,8 +87,8 @@ struct nNeuroSt{
     vector<bool> ei;
     std::uniform_real_distribution<double> uniform0_1 = std::uniform_real_distribution<double>(0.0,1.0);;
 
-    nNeuroSt(unsigned int seed, int nSyn0, vector<double> &t0, double run_t0, vector<double> &rate, vector<double> &max_rate, bool *ei0, bool testing, double tstep0);
-    void getNextInput(vector<double> rate, vector<double> max_rate);
+    nNeuroSt(unsigned int seed, int nSyn0, vector<double> &t0, double run_t0, vector<double> &rate, bool *ei0, bool testing, double tstep0);
+    void getNextInput(vector<double> rate);
     void setInputs(vector<vector<double>> &inputs);
     void writeAndUpdateIn(size i, std::ofstream &tIncome_file);
     void writeAndUpdateOut(size i, std::ofstream &raster_file);

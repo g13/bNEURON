@@ -1,4 +1,5 @@
 #include "nNeuroSt.h"
+#include "poisson_process.h"
 
 IJR ijr::operator+(IJR ijr_input) {
     IJR ijr_output;
@@ -95,7 +96,7 @@ void Inputs::print_this(int i) {
     cout << "dT index: " << dTijr[i].i << ", " << dTijr[i].j << ", " << dTijr[i].r << endl;
 }
 
-nNeuroSt::nNeuroSt(unsigned int seed, int nSyn0, vector<double> &t0, double run_t0, vector<double> &rate, vector<double> &max_rate, bool *ei0, bool testing, double tstep0) {
+nNeuroSt::nNeuroSt(unsigned int seed, int nSyn0, vector<double> &t0, double run_t0, vector<double> &rate, bool *ei0, bool testing, double tstep0) {
     status = true;
     nOut = 0;
     run_t = run_t0;
@@ -119,41 +120,28 @@ nNeuroSt::nNeuroSt(unsigned int seed, int nSyn0, vector<double> &t0, double run_
         double dt;
         for (int i=0; i<nSyn; i++) {
             if (rate[i] > 0 ) {
-                tmpT = t0[i];
-                do tmpT = tmpT -log(uniform0_1(poiGen[i]))/max_rate[i];
-                while (uniform0_1(ranGen[i]) > rate[i]/max_rate[i]);
-                //cout << " uniform " <<uniform0_1(poiGen[i]) << endl;
-                //cout << " t0[i] " <<t0[i] << "r[i] " << rate[i] << "rm[i]" << max_rate[i] << endl;
-                //cout << "   " << tmpT << " < " << run_t << endl;   
-                tmpT = static_cast<int>(tmpT/tstep)*tstep;
+                tmpT = next_poisson_const(poiGen[i],t0[i],rate[i],uniform0_1);
             } else {
                 tmpT = run_t + 1.0;
             }
-            tmp.push_back(tmpT);
+            tmpT = static_cast<int>(tmpT/tstep)*tstep;
             tPoi[i].push_back(tmp.back());
         }
         my::make_heap(tmp.data(), nSyn, heap);
     }
 }
-void nNeuroSt::getNextInput(vector<double> rate, vector<double> max_rate) {
+void nNeuroSt::getNextInput(vector<double> rate) {
     int i =  heap[0];
     double dt;
     if (tmp[i] > run_t) {
         status = false;
         return;
     } else {
-        //cout << tmp[i] << endl;
         tin.push_back(tmp[i]);
         inID.push_back(i);
     }
-    double tmpT = tPoi[i].back();
-    do {
-        dt = -log(uniform0_1(poiGen[i]))/max_rate[i];
-        tmpT = tmpT + dt;
-        tmpT = round(tmpT/tstep)*tstep;
-    } while (uniform0_1(ranGen[i]) > rate[i]/max_rate[i] || dt < tstep);
-    tmp[i] = tmpT;
-    tPoi[i].push_back(tmpT);
+    tmp[i] = next_poisson_const(poiGen[i],tmp[i],rate[i],uniform0_1);
+    tPoi[i].push_back(tmp[i]);
     my::heapify(tmp.data(),0,tmp.size(),heap);
 }
 void nNeuroSt::setInputs(vector<vector<double>> &inputs) {

@@ -3,7 +3,7 @@
 #include <cmath>
 #include <vector>
 #include "typedefs.h"
-#include "nNeuroSt2.h"
+#include "nNeuroSt.h"
 #include "nNeuroLib.h"
 namespace sB{
     const bool debug = true;

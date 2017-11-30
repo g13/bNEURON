@@ -1,6 +1,7 @@
 #include "input_args.h"
 #include <cstdlib>
 #include <cmath>
+#include <ctime>
 using std::ifstream;
 
 input_args::input_args() {
@@ -48,6 +49,9 @@ int input_args::read(int argc, char **argv) {
     } else {
         cout << "cannot open configuration file: " << configFn << endl; 
         return 0;
+    }
+    if (seed<=0) {
+	    seed = static_cast<unsigned int>(std::time(NULL));
     }
     // input levels
     if (vm.count("irregInputLevels")) {
