@@ -1,11 +1,11 @@
 #ifndef NNS_H
 #define NNS_H
-#include "nNeuroLib.h"
-#include "typedefs.h"
 #include <vector>
 #include <random>
 #include <fstream>
 #include <array>
+#include "nNeuroLib.h"
+#include "typedefs.h"
 #include "heap.h"
 
 using std::vector;
