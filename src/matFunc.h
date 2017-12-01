@@ -2,8 +2,9 @@
 #define MATFUNC_H
 #include <iostream>
 #include "mat.h"
+#include "mex.h"
 #include "matrix.h"
-#include "assert.h"
+#include <cassert>
 #include "typedefs.h"
 
 template<typename T>
@@ -212,20 +213,20 @@ void pointer6d(T****** &ptr, T* source, size *dimSize) {
     }
 }
 
-void openMat(MATFile* &pmat, const char* file) {
+inline void openMat(MATFile* &pmat, const char* file) {
     pmat = matOpen(file, "r");
     if (pmat == NULL) {
         std::cout << "Error opening file: " << file << std::endl;
         abort();
     } 
 }
-void closeMat(MATFile* pmat, const char* file) {
+inline void closeMat(MATFile* pmat, const char* file) {
     if (matClose(pmat) != 0) {
         std::cout << "Error closing file: " << file << std::endl;
         abort();
     }
 }
-void getArrayDims(mxArray* &tmp, size* dimSize, size &arraySize, const char* name)
+inline void getArrayDims(mxArray* &tmp, size* dimSize, size &arraySize, const char* name)
 {
     unsigned int i,ndim;
     ndim = mxGetNumberOfDimensions(tmp);
@@ -238,7 +239,7 @@ void getArrayDims(mxArray* &tmp, size* dimSize, size &arraySize, const char* nam
     }
     arraySize = mxGetNumberOfElements(tmp);
 }
-void readArray(mxArray* &tmp, const char* name, size* dimSize, size &arraySize, MATFile* &pmat, const char* file)
+inline void readArray(mxArray* &tmp, const char* name, size* dimSize, size &arraySize, MATFile* &pmat, const char* file)
 {
     tmp = matGetVariable(pmat, name);
     if (tmp == NULL) {
@@ -249,6 +250,7 @@ void readArray(mxArray* &tmp, const char* name, size* dimSize, size &arraySize, 
     }
     getArrayDims(tmp, dimSize, arraySize, name);
 }
+
 template<typename T>
 void readVar(T &var, const char *name, MATFile* pmat, const char* file)
 {
@@ -283,4 +285,5 @@ void getIthElementOfFieldArray(T &var, mxArray* para, unsigned int ith,  const c
     std::cout << fieldname << ": " << var << std::endl;
     //mxDestroyArray(tmp);
 }
+
 #endif

@@ -6,10 +6,10 @@
 using std::cout;
 using std::endl;
 namespace my{
-    unsigned int left(unsigned int i) {
+    inline unsigned int left(unsigned int i) {
         return 2*i+1;
     }
-    unsigned int right(unsigned int i) {
+    inline unsigned int right(unsigned int i) {
         return 2*i+2;
     }
     

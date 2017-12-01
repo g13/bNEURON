@@ -1,4 +1,4 @@
-theme = 'test';
+theme = 'gainCurve-test';
 nInput = 10;
 %inputFn = '';
 inputFn = 'inputTable.bin';
@@ -8,8 +8,8 @@ pVar = true;
 %pVar = false;
 %tVar = true;
 tVar = false;
-%extendVar = true;
-extendVar = false;
+extendVar = true;
+%extendVar = false;
 dtVarLevels = true;
 tVarLevels = true;
 irregInputLevels = true;
@@ -79,7 +79,7 @@ if ~isempty(inputFn)
         if ~tVar
             if extendVar
                 for i=1:nLevel
-                    posR = (1:nInput)+nLevel;
+                    posR = ((1:nInput)+nLevel)/(nInput+nLevel);
                     fwrite(fid,posR,'double');
                 end
             else
@@ -116,5 +116,5 @@ end
 if irregInputLevels, sirregInputLevels = ' --irregInputLevels'; else sirregInputLevels = ''; end
 themeOpt = [' -m ', theme];
 snInput = [' --nInput ', num2str(nInput)];
-cmd = ['./test', themeOpt, snInput, spVar, stVar, sextendVar, sirregInputLevels, sdtVarLevels, stVarLevels, inputFopt, levelsFopt]
+cmd = ['./gainCurve', themeOpt, snInput, spVar, stVar, sextendVar, sirregInputLevels, sdtVarLevels, stVarLevels, inputFopt, levelsFopt]
 ret = system(cmd)
