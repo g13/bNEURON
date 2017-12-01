@@ -46,6 +46,7 @@ int input_args::read(int argc, char **argv) {
     cfgFile.open(configFn);
     if (cfgFile) {
         store(po::parse_config_file(cfgFile, configFileOptions, true), vm);
+        po::notify(vm);
     } else {
         cout << "cannot open configuration file: " << configFn << endl; 
         return 0;

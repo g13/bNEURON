@@ -114,7 +114,8 @@ else
     dtOpt = [' --dt ', num2str(dt)];
 end
 if irregInputLevels, sirregInputLevels = ' --irregInputLevels'; else sirregInputLevels = ''; end
-themeOpt = [' -m ', theme];
+%themeOpt = [' --theme ', theme];
+themeOpt ='';
 snInput = [' --nInput ', num2str(nInput)];
 cmd = ['./gainCurve', themeOpt, snInput, spVar, stVar, sextendVar, sirregInputLevels, sdtVarLevels, stVarLevels, inputFopt, levelsFopt]
 ret = system(cmd)

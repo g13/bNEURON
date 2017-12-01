@@ -28,7 +28,6 @@ int main(int argc, char **argv)
 {
     //bool win = true;
     //feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
-    // prhs[] ~ lib_file, para_file, ith, run_t, ignore_t, vinit
     ofstream tIncome_file, raster_file, data_file, jND_file;
     double cpu_t_sim, cpu_t_bilinear, cpu_t_linear, cpu_t_bilinear0;
     double cpu_t_jbilinear, cpu_t_jlinear;
@@ -42,11 +41,10 @@ int main(int argc, char **argv)
     vector<double> jlv, jbv;
     vector<double> tsp_sim, tsp_bi, tsp_jbi, tsp_li, tsp_jli, tsp_bi0;
 
-    //InputArgsCA1 inputArg = input_args_CA1();
     InputArgsCA1 inputArg = input_args_CA1();
     inputArg.read(argc,argv);
     if (inputArg.dtVarLevels) {
-        cout << "different dt can only affect YALE NEURON simulation" << endl;
+        cout << "different dt can only affect Yale NEURON simulation" << endl;
     }
 
     nNL neuroLib(inputArg.libFile.c_str());

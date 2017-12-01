@@ -18,6 +18,7 @@ struct input_args_CA1 : input_args {
     double rBiLinear;
     unsigned int vInit;
     input_args_CA1();
+    using input_args::read;
 };
 
 typedef struct input_args_CA1 InputArgsCA1;
