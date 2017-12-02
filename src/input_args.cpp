@@ -5,31 +5,24 @@
 using std::ifstream;
 
 input_args::input_args() {
-    irregInputLevels = false;
-    dtVarLevels = false;
-    tVarLevels = false;
-    tVar = false;
-    pVar = false;
-    extendVar = false;
-    withDend = false;
     initialGenerics.add_options()
         ("configFn,c", po::value<string>(&configFn)->default_value("input.cfg"),"filename of configuration");
     configFileOptions.add_options()
         ("theme,m", po::value<string>(&theme), "theme of simulation")
-        ("irregInputLevels", "irregular input levels")
-        ("tVarLevels", "variable input level sim time")
-        ("dtVarLevels", " use different tstep for each input level")
+        ("irregInputLevels", po::value<bool>(&irregInputLevels)->default_value(false), "irregular input levels")
+        ("tVarLevels", po::value<bool>(&tVarLevels)->default_value(false), "variable input level sim time")
+        ("dtVarLevels", po::value<bool>(&dtVarLevels)->default_value(false)," use different tstep for each input level")
         ("nInput", po::value<unsigned long>(&nInput)->default_value(1), " number of input sites")
         ("inputLevelsFn", po::value<string>(&inputLevelsFn),"filename of irregular input levels (need to set irregInputLevels, dtVarLevels or tVarLevels flag)")
         ("inputLinspace,i", po::value<double>()->multitoken()->composing(), "evenly spaced input level, start, total steps, end")
 		("runTime,t", po::value<double>(), "simulation time for each input level")
         ("dt", po::value<double>(), "dt time step for each run")
-        ("tVar", " use temporally variable input")
-        ("pVar", " use positionally variable input")
-        ("extendVar", " extend pVar or tVar to other input levels")
+        ("tVar", po::value<bool>(&tVar)->default_value(false), " use temporally variable input")
+        ("pVar", po::value<bool>(&pVar)->default_value(false), " use positionally variable input")
+        ("extendVar", po::value<bool>(&extendVar)->default_value(false), " extend pVar or tVar to other input levels")
         ("inputFn", po::value<string>(&inputFn),"filename of variable input table (need to set tVar or pVar flag)")
         ("nNeuron", po::value<unsigned long>(&nNeuron)->default_value(1),"number of neurons in simulation")
-        ("withDend", "input direct on neuron's dendrites")
+        ("withDend", po::value<bool>(&withDend)->default_value(false), "input direct on neuron's dendrites")
         ("conFn", po::value<string>(&conFn), "presynaptic connections binary data,repeat{pre;preID;(#dend;dendID);}")
         ("strFn", po::value<string>(&strFn), " connection strength binary data file, must match with conFn")
         ("seed", po::value<unsigned long>(&seed), " seed for the simulation");
@@ -55,8 +48,7 @@ int input_args::read(int argc, char **argv) {
 	    seed = static_cast<unsigned int>(std::time(NULL));
     }
     // input levels
-    if (vm.count("irregInputLevels")) {
-        irregInputLevels = true;
+    if (irregInputLevels) {
         vars.push_back(inputLevel);
         if (vm.count("inputLinspace")) {
             cout << " using irregInputLevels flag, ignoring inputLinspace" << endl;
@@ -78,9 +70,8 @@ int input_args::read(int argc, char **argv) {
             }
         }
     }
-    if (vm.count("tVarLevels")) {
+    if (tVarLevels) {
         vars.push_back(runTime);
-        tVarLevels = true;
         if (vm.count("runTime")) {
             cout << " using tVarLevels flag, ignoring runTime" << endl;
         }
@@ -96,9 +87,8 @@ int input_args::read(int argc, char **argv) {
             }
         }
     }
-    if (vm.count("dtVarLevels")) {
+    if (dtVarLevels) {
         vars.push_back(tstep);
-        dtVarLevels = true;
         if (vm.count("dt")) {
             cout << " using dtVarLevels flag, ignoring single dt" << endl;
         }
@@ -148,15 +138,6 @@ int input_args::read(int argc, char **argv) {
         vars.clear();
     }
     // per input level
-    if (vm.count("pVar")) {
-        pVar = true;
-    }
-    if (vm.count("tVar")) {
-        tVar = true;
-    }
-    if (vm.count("extendVar")) {
-        extendVar = true;
-    }
     if (tVar && pVar && (tVarLevels || dtVarLevels || extendVar)) {
         cout << " (tVar + pVar) is not compatible to tVarLevels, dtVarLevels, extendVar flag" << endl;
         cout << " run additional instances of simulation instead" << endl;
@@ -275,8 +256,7 @@ int input_args::read(int argc, char **argv) {
     if (vm.count("conFn")) {
         assert(nNeuron > 1);
         int skipping = 1;
-        if (vm.count("withDend")) {
-            withDend = true;
+        if (withDend) {
             skipping = 2;     
         }
         if (!vm.count("strFn")) {
