@@ -1,2 +1,3 @@
-function plotGainCurve(theme)
+function plotGainCurve(dataFn)
+    inputFn = 'input.cfg';
 end

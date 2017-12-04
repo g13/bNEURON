@@ -17,7 +17,8 @@ date
 
 echo $theme
 
-./gainCurve -m $theme && matlab -r "plotGainCurve('$theme')exit;"
+dataFn=./gainCurve -m $theme 
+matlab -r "plotGainCurve('$dataFn');exit;"
 
 date
 hostname
