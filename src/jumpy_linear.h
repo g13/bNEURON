@@ -3,12 +3,10 @@
 #include <cmath>
 #include <vector>
 #include "typedefs.h"
-#include "nNeuroLib.h"
-#include "nNeuroSt.h"
 #include "jumpy_bilinear.h"
 namespace jl{
-    const bool debug = true;
-    const bool debug2 = true;
+    const bool debug = false;
+    const bool debug2 = false;
     inline double find_v_at_t(Input &input, nNL &neuroLib, Cross &cross, size head, size tail_l, double t, double tCross, double tol_tl, double v) {
         long i;
         size j, it;
@@ -43,7 +41,7 @@ namespace jl{
                 assert(t_right >= t_left);
             }
             t_cross1 = t_left + (neuron.vThres - v_left)/(v_right-v_left)*(t_right-t_left);
-            t_cross1 = ceil(t_cross1);
+            //t_cross1 = ceil(t_cross1);
             assert(t_cross1 >= t_left);
             if (debug2) {
                 std::cout << " find v at " << t_cross1 << std::endl;
@@ -75,7 +73,7 @@ namespace jl{
             // solve for a, b of f(t)-v_left = a(t-t_left)^2 + b(t-t_left);
             // solve for t when a(t-t_left)^2 + b(t-t_left) = (vThres - v_left)
             t_cross2 = parabola(t_left,v_left,t_right,v_right,t_cross1, v1, neuron.vThres);
-            t_cross2 = ceil(t_cross2);
+            //t_cross2 = ceil(t_cross2);
             if (debug2) {
                 std::cout << " v: " << v_left << ", " << v1 << ", " << v_right << std::endl;
                 std::cout << " t: " << t_left << ", " << t_cross1 << ", " << t_right << std::endl;

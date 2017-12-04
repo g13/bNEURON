@@ -2,21 +2,21 @@ function readNib4(dir)
     theme = dir
     file = [dir,'/',theme,'-vRange.bin'];
     fid = fopen(file);
-    vRange = fread(fid,[1,inf],'double');
+    vRange = fread(fid,[1,inf],'double')
     nv0 = length(vRange);
     fclose(fid);
     file = [dir,'/',theme,'-dtRange.bin'];
     fid = fopen(file);
-    dtRange = fread(fid,[1,inf],'double');
+    dtRange = fread(fid,[1,inf],'double')
     ndt = length(dtRange);
     fclose(fid);
     file = [dir,'/',theme,'-p.bin'];
     fid = fopen(file);
     data = fread(fid,[1,inf],'double');
-    tstep = data(1);
-    dur = data(2);
-    trans = data(3); 
-    n = int32(data(4));
+    tstep = data(1)
+    dur = data(2)
+    trans = data(3)
+    n = int32(data(4))
     disp([num2str(n),' Synapses']);
     fclose(fid);
 

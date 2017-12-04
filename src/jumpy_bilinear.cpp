@@ -12,7 +12,7 @@ double interp_for_t_cross(double v_right, double v_left, double t_right, double 
         }
         assert(t_right > t_left);
         t_cross1 = t_left + (neuron.vThres - v_left)/(v_right-v_left)*(t_right-t_left);
-        t_cross1 = ceil(t_cross1);
+        //t_cross1 = ceil(t_cross1);
         assert(t_cross1 >= t_left);
         if (jb::debug2) {
             std::cout << " find v at " << t_cross1 << std::endl;
@@ -43,7 +43,7 @@ double interp_for_t_cross(double v_right, double v_left, double t_right, double 
         // solve for a, b of f(t)-v_left = a(t-t_left)^2 + b(t-t_left);
         // solve for t when a(t-t_left)^2 + b(t-t_left) = (vThres - v_left)
         t_cross2 = parabola(t_left,v_left,t_right,v_right,t_cross1, v1, neuron.vThres);
-        t_cross2 = ceil(t_cross2);
+        //t_cross2 = ceil(t_cross2);
         if (jb::debug2) {
             std::cout << " v: " << v_left << ", " << v1 << ", " << v_right << std::endl;
             std::cout << " t: " << t_left << ", " << t_cross1 << ", " << t_right << std::endl;
@@ -326,7 +326,7 @@ void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neu
                 v = neuroLib.vRange[input.Vijr[i].i] + (neuroLib.vRange[input.Vijr[i].j] - neuroLib.vRange[input.Vijr[i].i]) * input.Vijr[i].r;
                 jb::getNear(neuroLib.vRange, neuroLib.fireCap[input.ID[i]][input.dTijr[i].i], v, input.Vijr[i].r, input.Vijr[i].i, input.Vijr[i].j);
             }
-            input.tMax[i] = linear_interp_tMax(neuroLib.tMax, cross.vCross.back(), input.dTijr[i],i);
+            input.tMax[i] = linear_interp_tMax(neuroLib.tMax, cross.vCross.back(), input.dTijr[i],input.ID[i]);
             //cout << "   loop ended" << endl;
         }
     }
@@ -387,7 +387,7 @@ void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neu
             v = neuroLib.vRange[input.Vijr[i].i] + (neuroLib.vRange[input.Vijr[i].j] - neuroLib.vRange[input.Vijr[i].i]) * input.Vijr[i].r;
             jb::getNear(neuroLib.vRange, neuroLib.fireCap[input.ID[i]][input.dTijr[i].i], v, input.Vijr[i].r, input.Vijr[i].i, input.Vijr[i].j);
         }
-        input.tMax.push_back(linear_interp_tMax(neuroLib.tMax, cross.vCross.back(), input.dTijr[i],i));
+        input.tMax.push_back(linear_interp_tMax(neuroLib.tMax, cross.vCross.back(), input.dTijr[i],input.ID[i]));
         input.Tmpijr.push_back(IJR(0,1,0)); 
         input.bir.push_back(BilinearRelationships(corrSize));
         for (j=tail; j<i; j++) {

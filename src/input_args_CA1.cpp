@@ -5,6 +5,8 @@ input_args_CA1::input_args_CA1() {
     CA1_options.add_options()
 		("libFile,l",po::value<string>(&libFile),"neuron library")
         ("vInit,v", po::value<unsigned int>(&vInit), "index of intial voltage in vRange")
+        ("vThres", po::value<double>(&vThres), "spiking threshold")
+        ("vRest", po::value<double>(&vRest), "resting threshold")
         ("tRef",po::value<double>(&tRef),"refractory period")
         ("trans",po::value<double>(&trans),"transient VClamp time")
         ("trans0",po::value<double>(&trans0),"default transient VClamp time")

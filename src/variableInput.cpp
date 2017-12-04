@@ -1,18 +1,4 @@
-//#include <fenv.h>;
-//#include "boost_program_options_overload.h"
-#include "typedefs.h"
-#include "Yale_NEURON_PyAPI.h"
-#include "input_args_CA1.h"
-#include "nNeuroLib.h"
-#include "nNeuroSt.h"
-#include "jumpy_linear.h"
-#include "jumpy_bilinear.h"
-#include "linear_bilinear.h"
-#include <ctime>
-#include <fstream>
-#include <iostream>
-#include <boost/program_options.hpp>
-#include <cstring>
+#include "variableInput.h"
 
 using std::cout;
 using std::endl;
@@ -31,7 +17,6 @@ int main(int argc, char **argv)
     ofstream tIncome_file, raster_file, data_file, jND_file;
     double cpu_t_sim, cpu_t_bilinear, cpu_t_linear, cpu_t_bilinear0;
     double cpu_t_jbilinear, cpu_t_jlinear;
-    unsigned int i,j,k,nt, nt0;
     clockid_t clk_id = CLOCK_PROCESS_CPUTIME_ID;
     struct timespec tpS, tpE;
     MATFile *matFile;
@@ -50,12 +35,16 @@ int main(int argc, char **argv)
     nNL neuroLib(inputArg.libFile.c_str());
     nNS neuron(inputArg.seed,neuroLib.nSyn,neuroLib.ei,inputArg.trans,inputArg.tRef,inputArg.vTol);
 
-    vector<vector<double>> rate(neuroLib.nSyn,vector<double>());
-    for (int i; i<inputArg.inputLevel.size(); i++) {
+    vector<vector<double>> rate(inputArg.inputLevel.size(),vector<double>());
+    cout << "exact rate levels " << endl;
+    for (int i=0; i<inputArg.inputLevel.size(); i++) {
         rate[i].reserve(neuroLib.nSyn);
-        for (int j; j<neuroLib.nSyn; j++) {
-            rate[i].push_back(inputArg.inputLevel[i]*inputArg.input[0][i]);
+        assert(inputArg.input[i].size() == neuroLib.nSyn);
+        for (int j=0; j<neuroLib.nSyn; j++) {
+            rate[i].push_back(inputArg.inputLevel[i]*inputArg.input[i][j]);
+            cout << rate[i][j] << ", ";
         }
+        cout << endl;
     }
     string prefix = inputArg.theme + "-s" + to_string(static_cast<unsigned int>(inputArg.seed)) + "-at" + to_string(static_cast<unsigned int>(std::time(NULL)));
 	raster_file.open(prefix + "Raster.bin", ios::out|ios::binary);
@@ -67,10 +56,8 @@ int main(int argc, char **argv)
     cout << "using tstep: " << tstep << " ms" << endl;
     Py_Initialize();
     cout << "Python " << endl;
-    _import_array();
     PyRun_SimpleString("import sys");
     PyRun_SimpleString("sys.path.append(\".\")");
-    cout << "initialized " << endl;
 
     SynSet syn = {
         neuroLib.loc, 
@@ -79,27 +66,26 @@ int main(int argc, char **argv)
         neuroLib.nSyn, 
         inputArg.vRest
     }; 
+    cout << " NEURON" << endl;
     Cell cell(syn);
 
+    cout << "initialized " << endl;
     for (int ii=0; ii<inputArg.inputLevel.size(); ii++) {
         vector<double> t0(neuroLib.nSyn,0);
         double run_t = inputArg.runTime[ii];
+        cout << "generating inputs" << endl;
         neuron.initialize(inputArg.runTime[ii],tstep,t0,rate[ii]);
         double v0 = neuroLib.vRange[inputArg.vInit];
         while (neuron.status) neuron.getNextInput(rate[ii]);
-        cout << " initialized" << endl;
-        // get external inputs
-
-        cout << "generating inputs" << endl;
         cout << "done" << endl;
         cout << endl;
-
+        vector<vector<double>> spikeTrain;
         cout << "INPUTS: ";
-        vector<vector<double>> spikeTrain(neuroLib.nSyn,vector<double>());
+        spikeTrain.assign(neuroLib.nSyn,vector<double>());
         cout << "(";
-        for (i=0; i<neuroLib.nSyn; i++) {
+        for (int i=0; i<neuroLib.nSyn; i++) {
             cout << "[";
-            for (j=0; j<neuron.tPoi[i].size(); j++) {
+            for (int j=0; j<neuron.tPoi[i].size(); j++) {
                 //spikeTrain[i].push_back(neuron.tPoi[i][j] + trans0);
                 spikeTrain[i].push_back(neuron.tPoi[i][j]);
                 cout << neuron.tPoi[i][j];
@@ -115,7 +101,7 @@ int main(int argc, char **argv)
             }
         }
         cout << "total spikes for synapse: ";
-        for (i=0; i<neuroLib.nSyn; i++) {
+        for (int i=0; i<neuroLib.nSyn; i++) {
             cout << spikeTrain[i].size(); 
             if (i<neuroLib.nSyn-1) {
                 cout << ", ";
@@ -125,10 +111,10 @@ int main(int argc, char **argv)
         assert(inputArg.vBuffer < 0);
         cout << " spikeTrain generated" << endl;
 
-        nt = static_cast<unsigned int>(run_t/tstep)+1;
-        nt0 = static_cast<unsigned int>(run_t/inputArg.tstep[ii])+1;
+        unsigned int nt = static_cast<unsigned int>(run_t/tstep)+1;
+        unsigned int nt0 = static_cast<unsigned int>(run_t/inputArg.tstep[ii])+1;
         vector<vector<double>> dendV(neuron.nSyn,vector<double>());
-        for (i=0; i<neuron.nSyn; i++) {
+        for (int i=0; i<neuron.nSyn; i++) {
             dendV[i].reserve(nt0);
         }
         simV.reserve(nt0);
@@ -189,7 +175,7 @@ int main(int argc, char **argv)
         cout << endl;
         clock_gettime(clk_id,&tpS);
         double totalRate = 0;
-        for (i=0;i<rate[ii].size();i++) {
+        for (int i=0;i<rate[ii].size();i++) {
             totalRate += rate[ii][i];
         }
         size rSize = static_cast<size>((totalRate)*run_t);
@@ -250,10 +236,10 @@ int main(int argc, char **argv)
         neuron.writeAndUpdateIn(neuron.tin.size(), tIncome_file);
         //neuron.writeAndUpdateOut(neuron.tsp.size(), raster_file);
         data_file.write((char*)output[0]->data(), nt0*sizeof(double));
-        for (i=1;i<4;i++) {
+        for (int i=1;i<4;i++) {
             data_file.write((char*)output[i]->data(), nt*sizeof(double));
         }
-        for (i=0;i<neuron.nSyn;i++) {
+        for (int i=0;i<neuron.nSyn;i++) {
             data_file.write((char*)dendV[i].data(), nt0*sizeof(double));
         }
         size jndSize = jndb.t.size();
@@ -269,7 +255,7 @@ int main(int argc, char **argv)
 
         jND_file.write((char*)&(ncross),sizeof(size));
         size tmpSize;
-        for (i=0;i<ncross;i++) {
+        for (int i=0;i<ncross;i++) {
             tmpSize = crossb.iCross[i+1] - crossb.iCross[i];
             jND_file.write((char*)&(tmpSize),sizeof(size));
             jND_file.write((char*)&(crossb.t[crossb.iCross[i]]),tmpSize*sizeof(double));
@@ -288,7 +274,7 @@ int main(int argc, char **argv)
         }
         jND_file.write((char*)&(ncross),sizeof(size));
         tmpSize;
-        for ( i=0;i<ncross;i++) {
+        for (int i=0;i<ncross;i++) {
             tmpSize = crossl.iCross[i+1] - crossl.iCross[i];
             jND_file.write((char*)&(tmpSize),sizeof(size));
             jND_file.write((char*)&(crossl.t[crossl.iCross[i]]),tmpSize*sizeof(double));
@@ -328,6 +314,7 @@ int main(int argc, char **argv)
         cout << cpu_t_bilinear0;
         cout << endl;
         neuron.clear();
+        spikeTrain.clear();
     }
     if (jND_file.is_open())          jND_file.close();
     if (data_file.is_open())        data_file.close();

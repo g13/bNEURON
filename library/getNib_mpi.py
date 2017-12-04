@@ -274,10 +274,11 @@ def getNib(argv):
     rdpi = 300
     #dtRange = np.array([0,30,60],dtype='float')
     
+    dtRange = np.array([0,70,140],dtype='float')
     #dtRange = np.array([0,2,4,6,8,10,12,15,20,25,30,50,70,140,210],dtype='float')
-    dtRangeE = np.array([6,8,10,12,15,17,19,21,23,26,30],dtype='float')
-    dtRangeI = np.array([0,0.5,1,1.5,2,4,40,50,60,70,80,90,110,125,150,175],dtype='float')
-    dtRange = np.sort(np.hstack([dtRangeE,dtRangeI]))
+    #dtRangeE = np.array([6,8,10,12,15,17,19,21,23,26,30],dtype='float')
+    #dtRangeI = np.array([0,0.5,1,1.5,2,4,40,50,60,70,80,90,110,125,150,175],dtype='float')
+    #dtRange = np.sort(np.hstack([dtRangeE,dtRangeI]))
 
     #dtRange = np.array([0,12,24,60],dtype='float')
     #dtRange = np.array([0,8,20,130],dtype='float')
@@ -290,15 +291,18 @@ def getNib(argv):
     #locE = np.random.randint(75,134,6)
     #locE = np.array([79, 82, 83, 108, 124, 129],dtype='int')
     #vRange = np.arange(-74,-59)
-    vRange = np.array([-74,-70,-67,-65,-63,-62,-61.5,-61,-60.5,-60])
-    locE = np.array([60, 72, 78, 84, 98],dtype='int')
+    vRange = np.array([-74,-70,-65,-61],dtype='double')
+    #vRange = np.array([-74,-70,-67,-65,-63,-62,-61.5,-61,-60.5,-60],dtype='double')
+    #locE = np.array([60, 72, 78, 84, 98],dtype='int')
+    locE = np.array([60, 72],dtype='int')
     #locE = np.array([52, 60, 72, 78, 84, 98],dtype='int')
     #locE = np.array([52, 60, 72],dtype='int')
     #locE = np.array([72],dtype='int')
     #locI = np.random.randint(1,75,3)
     #locI = np.array([41, 42, 43],dtype='int')
     #locI = np.array([40],dtype='int')
-    locI = np.array([14, 28, 40],dtype='int')
+    #locI = np.array([14, 28, 40],dtype='int')
+    locI = np.array([14],dtype='int')
     ### swap one
     #swap = locE[0]
     #locE[0] = locI[-1]

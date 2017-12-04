@@ -4,6 +4,7 @@ get_cell::get_cell(SynSet syn) {
     PyObject *pName, *pFunc;
     PyObject *pArgs, *pValue, *Py_gList;
     //PyObject *Py_loc, *Py_pos;
+    _import_array();
 
     pName = PyString_FromString("neuroAlter");
     pModule = PyImport_Import(pName);
@@ -11,21 +12,29 @@ get_cell::get_cell(SynSet syn) {
     if (pModule != NULL) {
         cout << "neuroAlter loaded" << endl;
         pFunc = PyObject_GetAttrString(pModule,"prepCell");
-        cout << " prepCell function access granted" << endl;
         if (pFunc && PyCallable_Check(pFunc)) {
+            cout << " prepCell function access granted" << endl;
             npy_intp dim = syn.nSyn;
             long n = static_cast<long>(dim);
+            //cout << "dim: " << n << endl;
+            //cout << syn.gList[0] << ", " << syn.gList[1] << ", " << syn.gList[2] << endl;
             Py_gList = PyArray_SimpleNewFromData(1,&dim,NPY_DOUBLE,syn.gList);
             if (!Py_gList) {
                 cout << "gList Wrapper failed" << endl;
+            } else {
+                //cout << " gList ready" << endl;
             }
             Py_loc = PyArray_SimpleNewFromData(1,&dim,NPY_INT,syn.loc);
             if (!Py_loc) {
                 cout << "loc Wrapper failed" << endl;
+            } else {
+                //cout << " loc ready" << endl;
             }
             Py_pos = PyArray_SimpleNewFromData(1,&dim,NPY_DOUBLE,syn.pos);
             if (!Py_pos) {
                 cout << "pos Wrapper failed" << endl;
+            } else {
+                //cout << " pos ready" << endl;
             }
             pArgs = PyTuple_New(5);
             PyTuple_SetItem(pArgs,0,Py_gList);

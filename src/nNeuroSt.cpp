@@ -138,6 +138,7 @@ void nNeuroSt::initialize(double run_t0, double tstep0, vector<double> &t0, vect
         }
         // let poisson event arrive at dt sharp.
         tmpT = static_cast<int>(tmpT/tstep)*tstep;
+        tmp.push_back(tmpT);
         tPoi[i].push_back(tmp.back());
     }
     my::make_heap(tmp.data(), nSyn, heap);
@@ -160,7 +161,7 @@ void nNeuroSt::setInputs(vector<vector<double>> &inputs) {
     int index;
     vector<int> stillHas(nSyn,0);
     for (int i=0; i<nSyn; i++) {
-        if (i < inputs.size() && inputs[i].size() > stillHas[i]){
+        if (inputs[i].size() > stillHas[i]){
             tmp.push_back(inputs[i][stillHas[i]]); 
             stillHas[i] += 1;
         } else {
@@ -219,9 +220,12 @@ void nNeuroSt::clear() {
     tin.clear();
     inID.clear();
     status = true;
-    tPoi.clear();
-    ei.clear();
+    for (int i=0; i<nSyn; i++) {
+        tPoi[i].clear();
+    }
     tmp.clear();
-    poiGen.clear();
-    ranGen.clear();
+    tsp.clear();
+    heap.clear();
+    //poiGen.clear();
+    //ranGen.clear();
 }

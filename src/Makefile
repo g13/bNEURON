@@ -13,12 +13,9 @@ DEP=matFunc.h typedefs.h heap.h
 
 # to do gain curve
 gainCurve: $(OBJ) $(DEP)
-	$(CC) $(DEBUG) $(PYLIB) $(MATLAB) $(LBOOST) $(OBJ) -o $(OUTPUTDIR)$@
+	$(CC) $(CXXFLAG) $(PYLIB) $(MATLAB) $(LBOOST) $(OBJ) -o $(OUTPUTDIR)$@
 
-input_args_CA1.o : input_args_CA1.cpp input_args.o
-	$(CC) $(CXXFLAG) -c $< -o $@
-
-%.o: %.cpp
+%.o : %.cpp %.h
 	$(CC) $(CXXFLAG) -c $< -o $@
 
 ## singleRun

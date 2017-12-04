@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=14
+#SBATCH --cpus-per-task=9
 #SBATCH --mem-per-cpu=5G
 #SBATCH --time=8:00:00
-#SBATCH -a 1-10
+#SBATCH -a 1-4
 #SBATCH -o mpiLib_%A_%a.out
 #SBATCH --job-name=mpiLib
 #SBATCH --mail-type=FAIL,END

@@ -4,7 +4,6 @@
 
 struct input_args_CA1 : input_args {
     string libFile;
-    string paraFile; 
     double vThres;
     double vRest;
     double vTol;

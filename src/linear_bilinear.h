@@ -2,9 +2,7 @@
 #define LB_H
 #include <cmath>
 #include <vector>
-#include "typedefs.h"
 #include "nNeuroSt.h"
-#include "nNeuroLib.h"
 namespace lb{
     const bool debug = true;
     const bool debug2 = true;
