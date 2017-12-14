@@ -21,6 +21,7 @@ input_args::input_args() {
         ("pVar", po::value<bool>(&pVar)->default_value(false), " use positionally variable input")
         ("extendVar", po::value<bool>(&extendVar)->default_value(false), " extend pVar or tVar to other input levels")
         ("inputFn", po::value<string>(&inputFn),"filename of variable input table (need to set tVar or pVar flag)")
+        ("reformatInputFn", po::value<string>(&reformatInputFn)->default_value("readoutDimension.bin"),"filename for storing trial lengths")
         ("nNeuron", po::value<unsigned long>(&nNeuron)->default_value(1),"number of neurons in simulation")
         ("withDend", po::value<bool>(&withDend)->default_value(false), "input direct on neuron's dendrites")
         ("conFn", po::value<string>(&conFn), "presynaptic connections binary data,repeat{pre;preID;(#dend;dendID);}")
@@ -28,6 +29,31 @@ input_args::input_args() {
         ("seed", po::value<unsigned long>(&seed), " seed for the simulation");
     cmdLineOptions.add(configFileOptions);
     cmdLineOptions.add(initialGenerics);
+}
+int input_args::reformat_input_table(double tstep0) {
+    ofstream outputfile;
+    outputfile.open(reformatInputFn, ios::binary);
+    assert(runTime.size() == inputLevel.size());
+    assert(runTime.size() == tstep.size());
+    int nTrial = runTime.size();
+    vector<unsigned long> nDataPts;
+    vector<unsigned long> nDataPtsSim;
+    nDataPts.reserve(nTrial);
+    for (int i=0; i<nTrial; i++) {
+        nDataPts.push_back(static_cast<unsigned long>(round(runTime[i]/tstep[i])));
+        nDataPtsSim.push_back(static_cast<unsigned long>(round(runTime[i]/tstep0)));
+    }
+    if (reformatInputFn) {
+        outputfile.write((char*)nTrial, sizeof(int));
+        outputfile.write((char*)&(nDataPtsSim[0],nTrials*sizeof(unsigned long));
+        outputfile.write((char*)&(nDataPts[0],nTrials*sizeof(unsigned long));
+        outputfile.write((char*)&(tstep[0]),nTrial*sizeof(double));
+        outputfile.close();
+        return 1;
+    } else {
+        cout << " failed to open " << reformatInputFn << " for writing readout dimensions " << endl;
+        return 0;
+    }
 }
 int input_args::read(int argc, char **argv) {
     ifstream cfgFile;

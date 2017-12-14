@@ -31,11 +31,12 @@ struct input_args {
     bool irregInputLevels, dtVarLevels, tVarLevels;
     bool tVar, pVar, extendVar, withDend;
     unsigned long nNeuron;
-    string configFn, inputLevelsFn, inputFn, conFn, strFn;
+    string configFn, inputLevelsFn, inputFn, conFn, strFn, reformatInputFn;
     vector<vector<unsigned long>> preID;
     vector<vector<unsigned long>> preStr;
     input_args();
     int read(int argc, char **argv);
+    int reformat_input_table()
 };
 typedef struct input_args InputArgs;
 

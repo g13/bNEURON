@@ -9,12 +9,20 @@ using std::ifstream;
 using std::to_string;
 using std::ios;
 namespace po = boost::program_options;
-
+void write_data_file(data_file, vector<double> *output, vector<double> dendV, unsigned int nt0, unsigned int nt, int nSyn) {
+    data_file.write((char*)output[0]->data(), nt0*sizeof(double));
+    for (int i=1;i<4;i++) {
+        data_file.write((char*)output[i]->data(), nt*sizeof(double));
+    }
+    for (int i=0;i<nSyn;i++) {
+        data_file.write((char*)dendV[i].data(), nt0*sizeof(double));
+    }
+}
 int main(int argc, char **argv)
 {
     //bool win = true;
     //feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
-    ofstream tIncome_file, raster_file, data_file, jND_file;
+    ofstream data_file, tIncome_file, raster_file, jND_file;
     double cpu_t_sim, cpu_t_bilinear, cpu_t_linear, cpu_t_bilinear0;
     double cpu_t_jbilinear, cpu_t_jlinear;
     clockid_t clk_id = CLOCK_PROCESS_CPUTIME_ID;
@@ -34,6 +42,7 @@ int main(int argc, char **argv)
 
     nNL neuroLib(inputArg.libFile.c_str());
     nNS neuron(inputArg.seed,neuroLib.nSyn,neuroLib.ei,inputArg.trans,inputArg.tRef,inputArg.vTol);
+    inputArg.reformatInputFn(neuroLib.tstep);
 
     vector<vector<double>> rate(inputArg.inputLevel.size(),vector<double>());
     cout << "exact rate levels " << endl;
@@ -47,9 +56,9 @@ int main(int argc, char **argv)
         cout << endl;
     }
     string prefix = inputArg.theme + "-s" + to_string(static_cast<unsigned int>(inputArg.seed)) + "-at" + to_string(static_cast<unsigned int>(std::time(NULL)));
+	data_file.open(prefix + "-Data.bin", ios::out|ios::binary);
 	raster_file.open(prefix + "Raster.bin", ios::out|ios::binary);
 	tIncome_file.open(prefix + "tIn.bin", ios::out|ios::binary);
-	data_file.open(prefix + "Data.bin", ios::out|ios::binary);
 	jND_file.open(prefix + "jND.bin", ios::out|ios::binary);
 
     double tstep = neuroLib.tstep;
@@ -232,73 +241,73 @@ int main(int argc, char **argv)
         cout << "spikes: " << nc << endl;
         cout << endl;
         nc = 0;
-        vector<double>* output[4] = {&simV,&biV,&liV,&biV0};
         neuron.writeAndUpdateIn(neuron.tin.size(), tIncome_file);
+        vector<double>* output[4] = {&simV,&biV,&liV,&biV0};
+        write_data_file(data_file, output, dendV, nt0, nt, neuron.nSyn);
+        
         //neuron.writeAndUpdateOut(neuron.tsp.size(), raster_file);
-        data_file.write((char*)output[0]->data(), nt0*sizeof(double));
-        for (int i=1;i<4;i++) {
-            data_file.write((char*)output[i]->data(), nt*sizeof(double));
-        }
-        for (int i=0;i<neuron.nSyn;i++) {
-            data_file.write((char*)dendV[i].data(), nt0*sizeof(double));
-        }
-        size jndSize = jndb.t.size();
-        jND_file.write((char*)&(jndSize),sizeof(size));
-        jND_file.write((char*)&(jndb.t[0]),jndSize*sizeof(double));
+        output[0] = &jndb.t;
+        output[1] = &jndb.v;
         assert(jndb.v.size() == jndb.t.size());
-        jND_file.write((char*)&(jndb.v[0]),jndSize*sizeof(double));
+        size jndSize = jndb.t.size();
+        size_data_write(jND_file, output, 2, jndSize, 0);
         size ncross = crossb.iCross.size()-1;
+        vector<size> tmpSize;
+        tmpSize.reserve(ncross);
+        for (int i=0;i<ncross;i++) {
+            tmpSize.push_back(crossb.iCross[i+1] - crossb.iCross[i]);
+        }
         if (crossb.v.size() != crossb.t.size()) {
             cout << crossb.v.size() <<  "!= " << crossb.t.size() << endl;
             assert(crossb.v.size() == crossb.t.size());
         }
+        output[0] = &(crossb.v);
+        output[1] = &(crossb.t);
+        nsection_write(jND_file, output, 2, crossb.iCross, tmpSize);
 
-        jND_file.write((char*)&(ncross),sizeof(size));
-        size tmpSize;
-        for (int i=0;i<ncross;i++) {
-            tmpSize = crossb.iCross[i+1] - crossb.iCross[i];
-            jND_file.write((char*)&(tmpSize),sizeof(size));
-            jND_file.write((char*)&(crossb.t[crossb.iCross[i]]),tmpSize*sizeof(double));
-            jND_file.write((char*)&(crossb.v[crossb.iCross[i]]),tmpSize*sizeof(double));
-        }
-
-        jndSize = jndl.t.size();
-        jND_file.write((char*)&(jndSize),sizeof(size));
-        jND_file.write((char*)&(jndl.t[0]),jndSize*sizeof(double));
+        output[0] = &jndl.t;
+        output[1] = &jndl.v;
         assert(jndl.v.size() == jndl.t.size());
-        jND_file.write((char*)&(jndl.v[0]),jndSize*sizeof(double));
-        ncross = crossl.iCross.size()-1;
+        size jndSize = jndl.t.size();
+        size_data_write(jND_file, output, 2, jndSize, 0);
+        size ncross = crossl.iCross.size()-1;
+        tmpSize.clear();
+        tmpSize.reserve(ncross);
+        for (int i=0;i<ncross;i++) {
+            tmpSize.push_back(crossl.iCross[i+1] - crossl.iCross[i]);
+        }
         if (crossl.v.size() != crossl.t.size()) {
             cout << crossl.v.size() <<  "!= " << crossl.t.size() << endl;
             assert(crossl.v.size() == crossl.t.size());
         }
-        jND_file.write((char*)&(ncross),sizeof(size));
-        tmpSize;
-        for (int i=0;i<ncross;i++) {
-            tmpSize = crossl.iCross[i+1] - crossl.iCross[i];
-            jND_file.write((char*)&(tmpSize),sizeof(size));
-            jND_file.write((char*)&(crossl.t[crossl.iCross[i]]),tmpSize*sizeof(double));
-            jND_file.write((char*)&(crossl.v[crossl.iCross[i]]),tmpSize*sizeof(double));
-        }
+        output[0] = &(crossl.v);
+        output[1] = &(crossl.t);
+        nsection_write(jND_file, output, 2, crossl.iCross, tmpSize);
 
         size rasterSize = tsp_sim.size();
-        raster_file.write((char*)&rasterSize,sizeof(size));
-        raster_file.write((char*)&(tsp_sim[0]),rasterSize*sizeof(double));
+        output[0] = &tsp_sim;
+        size_data_write(raster_file, output, 1, rasterSize, 0);
+
+        output[0] = &tsp_bi;
         rasterSize = tsp_bi.size();
-        raster_file.write((char*)&rasterSize,sizeof(size));
-        raster_file.write((char*)&(tsp_bi[0]),rasterSize*sizeof(double));
+        size_data_write(raster_file, output, 1, rasterSize, 0);
+
+        output[0] = &tsp_li;
         rasterSize = tsp_li.size();
-        raster_file.write((char*)&rasterSize,sizeof(size));
-        raster_file.write((char*)&(tsp_li[0]),rasterSize*sizeof(double));
+        size_data_write(raster_file, output, 1, rasterSize, 0);
+
+        output[0] = &tsp_jbi;
         rasterSize = tsp_jbi.size();
-        raster_file.write((char*)&rasterSize,sizeof(size));
-        raster_file.write((char*)&(tsp_jbi[0]),rasterSize*sizeof(double));
+        size_data_write(raster_file, output, 1, rasterSize, 0);
+
+        output[0] = &tsp_jli;
         rasterSize = tsp_jli.size();
-        raster_file.write((char*)&rasterSize,sizeof(size));
-        raster_file.write((char*)&(tsp_jli[0]),rasterSize*sizeof(double));
+        size_data_write(raster_file, output, 1, rasterSize, 0);
+
+        output[0] = &tsp_bi0;
         rasterSize = tsp_bi0.size();
-        raster_file.write((char*)&rasterSize,sizeof(size));
-        raster_file.write((char*)&(tsp_bi0[0]),rasterSize*sizeof(double));
+        size_data_write(raster_file, output, 1, rasterSize, 0);
+
         simV.clear();
         biV.clear();
         biV0.clear();
@@ -316,8 +325,8 @@ int main(int argc, char **argv)
         neuron.clear();
         spikeTrain.clear();
     }
-    if (jND_file.is_open())          jND_file.close();
     if (data_file.is_open())        data_file.close();
+    if (jND_file.is_open())         jND_file.close();
     if (raster_file.is_open())      raster_file.close();
     if (tIncome_file.is_open())     tIncome_file.close();
     neuroLib.clearLib();
