@@ -1,23 +1,7 @@
 #include "variableInput.h"
 
-using std::cout;
-using std::endl;
-using std::vector;
-using std::string;
-using std::ofstream;
-using std::ifstream;
-using std::to_string;
-using std::ios;
 namespace po = boost::program_options;
-void write_data_file(data_file, vector<double> *output, vector<double> dendV, unsigned int nt0, unsigned int nt, int nSyn) {
-    data_file.write((char*)output[0]->data(), nt0*sizeof(double));
-    for (int i=1;i<4;i++) {
-        data_file.write((char*)output[i]->data(), nt*sizeof(double));
-    }
-    for (int i=0;i<nSyn;i++) {
-        data_file.write((char*)dendV[i].data(), nt0*sizeof(double));
-    }
-}
+
 int main(int argc, char **argv)
 {
     //bool win = true;
@@ -27,7 +11,6 @@ int main(int argc, char **argv)
     double cpu_t_jbilinear, cpu_t_jlinear;
     clockid_t clk_id = CLOCK_PROCESS_CPUTIME_ID;
     struct timespec tpS, tpE;
-    MATFile *matFile;
     vector<double> simV;
     vector<double> biV, biV0;
     vector<double> liV;
@@ -39,10 +22,9 @@ int main(int argc, char **argv)
     if (inputArg.dtVarLevels) {
         cout << "different dt can only affect Yale NEURON simulation" << endl;
     }
-
     nNL neuroLib(inputArg.libFile.c_str());
     nNS neuron(inputArg.seed,neuroLib.nSyn,neuroLib.ei,inputArg.trans,inputArg.tRef,inputArg.vTol);
-    inputArg.reformatInputFn(neuroLib.tstep);
+    inputArg.reformat_input_table(neuroLib.tstep);
 
     vector<vector<double>> rate(inputArg.inputLevel.size(),vector<double>());
     cout << "exact rate levels " << endl;
@@ -57,9 +39,9 @@ int main(int argc, char **argv)
     }
     string prefix = inputArg.theme + "-s" + to_string(static_cast<unsigned int>(inputArg.seed)) + "-at" + to_string(static_cast<unsigned int>(std::time(NULL)));
 	data_file.open(prefix + "-Data.bin", ios::out|ios::binary);
-	raster_file.open(prefix + "Raster.bin", ios::out|ios::binary);
-	tIncome_file.open(prefix + "tIn.bin", ios::out|ios::binary);
-	jND_file.open(prefix + "jND.bin", ios::out|ios::binary);
+	raster_file.open(prefix + "-Raster.bin", ios::out|ios::binary);
+	tIncome_file.open(prefix + "-tIn.bin", ios::out|ios::binary);
+	jND_file.open(prefix + "-jND.bin", ios::out|ios::binary);
 
     double tstep = neuroLib.tstep;
     cout << "using tstep: " << tstep << " ms" << endl;
@@ -245,44 +227,51 @@ int main(int argc, char **argv)
         vector<double>* output[4] = {&simV,&biV,&liV,&biV0};
         write_data_file(data_file, output, dendV, nt0, nt, neuron.nSyn);
         
+        vector<size> tmpSize;
+        size ncross, jndSize;
         //neuron.writeAndUpdateOut(neuron.tsp.size(), raster_file);
         output[0] = &jndb.t;
         output[1] = &jndb.v;
         assert(jndb.v.size() == jndb.t.size());
-        size jndSize = jndb.t.size();
+        jndSize = jndb.t.size();
         size_data_write(jND_file, output, 2, jndSize, 0);
-        size ncross = crossb.iCross.size()-1;
-        vector<size> tmpSize;
-        tmpSize.reserve(ncross);
-        for (int i=0;i<ncross;i++) {
-            tmpSize.push_back(crossb.iCross[i+1] - crossb.iCross[i]);
+        cout << "iCross: " << crossb.iCross.size() << endl;
+        if (crossb.iCross.size() > 1) {
+            ncross = crossb.iCross.size()-1;
+            tmpSize.reserve(ncross);
+            for (int i=0;i<ncross;i++) {
+                tmpSize.push_back(crossb.iCross[i+1] - crossb.iCross[i]);
+                cout << " tmpSize " << i << " : " << tmpSize.back() << endl;
+            }
+            if (crossb.v.size() != crossb.t.size()) {
+                cout << crossb.v.size() <<  "!= " << crossb.t.size() << endl;
+                assert(crossb.v.size() == crossb.t.size());
+            }
+            output[0] = &(crossb.v);
+            output[1] = &(crossb.t);
+            nsection_write(jND_file, output, 2, crossb.iCross, tmpSize);
         }
-        if (crossb.v.size() != crossb.t.size()) {
-            cout << crossb.v.size() <<  "!= " << crossb.t.size() << endl;
-            assert(crossb.v.size() == crossb.t.size());
-        }
-        output[0] = &(crossb.v);
-        output[1] = &(crossb.t);
-        nsection_write(jND_file, output, 2, crossb.iCross, tmpSize);
 
         output[0] = &jndl.t;
         output[1] = &jndl.v;
         assert(jndl.v.size() == jndl.t.size());
-        size jndSize = jndl.t.size();
+        jndSize = jndl.t.size();
         size_data_write(jND_file, output, 2, jndSize, 0);
-        size ncross = crossl.iCross.size()-1;
-        tmpSize.clear();
-        tmpSize.reserve(ncross);
-        for (int i=0;i<ncross;i++) {
-            tmpSize.push_back(crossl.iCross[i+1] - crossl.iCross[i]);
+        if (crossl.iCross.size() > 1) {
+            ncross = crossl.iCross.size()-1;
+            tmpSize.clear();
+            tmpSize.reserve(ncross);
+            for (int i=0;i<ncross;i++) {
+                tmpSize.push_back(crossl.iCross[i+1] - crossl.iCross[i]);
+            }
+            if (crossl.v.size() != crossl.t.size()) {
+                cout << crossl.v.size() <<  "!= " << crossl.t.size() << endl;
+                assert(crossl.v.size() == crossl.t.size());
+            }
+            output[0] = &(crossl.v);
+            output[1] = &(crossl.t);
+            nsection_write(jND_file, output, 2, crossl.iCross, tmpSize);
         }
-        if (crossl.v.size() != crossl.t.size()) {
-            cout << crossl.v.size() <<  "!= " << crossl.t.size() << endl;
-            assert(crossl.v.size() == crossl.t.size());
-        }
-        output[0] = &(crossl.v);
-        output[1] = &(crossl.t);
-        nsection_write(jND_file, output, 2, crossl.iCross, tmpSize);
 
         size rasterSize = tsp_sim.size();
         output[0] = &tsp_sim;
@@ -335,4 +324,14 @@ int main(int argc, char **argv)
     Py_Finalize();
     cout << "size: " <<  sizeof(size) << " bytes" << endl;
     cout << "size_b: "<< sizeof(size_b) << " bytes" << endl;
+}
+
+void write_data_file(ofstream &data_file, vector<double>** output, vector<vector<double>> &dendV, unsigned int nt0, unsigned int nt, int nSyn) {
+    data_file.write((char*)output[0]->data(), nt0*sizeof(double));
+    for (int i=1;i<4;i++) {
+        data_file.write((char*)output[i]->data(), nt*sizeof(double));
+    }
+    for (int i=0;i<nSyn;i++) {
+        data_file.write((char*)dendV[i].data(), nt0*sizeof(double));
+    }
 }

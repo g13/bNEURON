@@ -17,8 +17,7 @@ date
 
 echo $theme
 
-dataFn=./gainCurve -m $theme 
-matlab -r "plotGainCurve('$dataFn');exit;"
+./gainCurve -m $theme && matlab -nodisplay -nosplash -r "plotGainCurve('input.cfg');exit;"
 
 date
 hostname

@@ -36,7 +36,7 @@ struct input_args {
     vector<vector<unsigned long>> preStr;
     input_args();
     int read(int argc, char **argv);
-    int reformat_input_table()
+    int reformat_input_table(double tstep0);
 };
 typedef struct input_args InputArgs;
 

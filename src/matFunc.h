@@ -214,6 +214,7 @@ void pointer6d(T****** &ptr, T* source, size *dimSize) {
 }
 
 inline void openMat(MATFile* &pmat, const char* file) {
+    std::cout << "trying to open " << file << "..." << std::endl;
     pmat = matOpen(file, "r");
     if (pmat == NULL) {
         std::cout << "Error opening file: " << file << std::endl;

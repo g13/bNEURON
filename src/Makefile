@@ -15,6 +15,12 @@ DEP=matFunc.h typedefs.h heap.h
 gainCurve: $(OBJ) $(DEP)
 	$(CC) $(CXXFLAG) $(PYLIB) $(MATLAB) $(LBOOST) $(OBJ) -o $(OUTPUTDIR)$@
 
+nNeuroSt.o : nNeuroSt.cpp nNeuroSt.h heap.h
+	$(CC) $(CXXFLAG) -c $< -o $@
+
+nNeuroLib.o : nNeuroLib.cpp nNeuroLib.h matFunc.h
+	$(CC) $(CXXFLAG) -c $< -o $@
+
 %.o : %.cpp %.h
 	$(CC) $(CXXFLAG) -c $< -o $@
 

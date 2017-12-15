@@ -3,6 +3,8 @@
 #include <cmath>
 #include <ctime>
 using std::ifstream;
+using std::ofstream;
+using std::ios;
 
 input_args::input_args() {
     initialGenerics.add_options()
@@ -32,7 +34,7 @@ input_args::input_args() {
 }
 int input_args::reformat_input_table(double tstep0) {
     ofstream outputfile;
-    outputfile.open(reformatInputFn, ios::binary);
+    outputfile.open(reformatInputFn, ios::binary|ios::out);
     assert(runTime.size() == inputLevel.size());
     assert(runTime.size() == tstep.size());
     int nTrial = runTime.size();
@@ -43,10 +45,10 @@ int input_args::reformat_input_table(double tstep0) {
         nDataPts.push_back(static_cast<unsigned long>(round(runTime[i]/tstep[i])));
         nDataPtsSim.push_back(static_cast<unsigned long>(round(runTime[i]/tstep0)));
     }
-    if (reformatInputFn) {
-        outputfile.write((char*)nTrial, sizeof(int));
-        outputfile.write((char*)&(nDataPtsSim[0],nTrials*sizeof(unsigned long));
-        outputfile.write((char*)&(nDataPts[0],nTrials*sizeof(unsigned long));
+    if (outputfile.is_open()) {
+        outputfile.write((char*)&nTrial, sizeof(int));
+        outputfile.write((char*)&(nDataPtsSim[0]),nTrial*sizeof(unsigned long));
+        outputfile.write((char*)&(nDataPts[0]),nTrial*sizeof(unsigned long));
         outputfile.write((char*)&(tstep[0]),nTrial*sizeof(double));
         outputfile.close();
         return 1;
