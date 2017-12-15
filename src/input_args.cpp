@@ -50,6 +50,8 @@ int input_args::reformat_input_table(double tstep0) {
         outputfile.write((char*)&(nDataPtsSim[0]),nTrial*sizeof(unsigned long));
         outputfile.write((char*)&(nDataPts[0]),nTrial*sizeof(unsigned long));
         outputfile.write((char*)&(tstep[0]),nTrial*sizeof(double));
+        outputfile.write((char*)&(inputLevel[0]),nTrial*sizeof(double));
+        outputfile.write((char*)&(runTime[0]),nTrial*sizeof(double));
         outputfile.close();
         return 1;
     } else {
@@ -175,6 +177,7 @@ int input_args::read(int argc, char **argv) {
         cout << "no file for tVar available" << endl;
     } else {
         column.clear();
+        // input dimension: site of input, time
         if (pVar && tVar && !tVarLevels && !dtVarLevels && !extendVar) {
             inputMode = "pt";
             column.push_back(round(runTime[0]/tstep[0]));
@@ -183,6 +186,7 @@ int input_args::read(int argc, char **argv) {
             }
             assert(input.size() == inputLevel.size());
         }
+        // input dimension: trial, time
         if (!pVar && tVar && (tVarLevels || dtVarLevels)) {
             if (tVarLevels && !dtVarLevels) {
                 inputMode = "t-T";
@@ -201,6 +205,7 @@ int input_args::read(int argc, char **argv) {
                 return 0;
             }
         }
+        // input dimension: trial, site of input 
         if (pVar && !tVar && (tVarLevels || dtVarLevels)) {
             if (extendVar) {
                 if (tVarLevels && !dtVarLevels) {
@@ -235,6 +240,7 @@ int input_args::read(int argc, char **argv) {
                 assert(input[0].size() == nInput);
             }
         }
+        // input dimension (trial) time/site of input
         if ((!pVar && tVar || !tVar && pVar) && !tVarLevels && !dtVarLevels) {
             column.clear();
             if (!extendVar) {

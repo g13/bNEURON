@@ -37,7 +37,7 @@ int main(int argc, char **argv)
         }
         cout << endl;
     }
-    string prefix = inputArg.theme + "-s" + to_string(static_cast<unsigned int>(inputArg.seed)) + "-at" + to_string(static_cast<unsigned int>(std::time(NULL)));
+    string prefix = inputArg.theme + "-s" + to_string(static_cast<unsigned int>(inputArg.seed));
 	data_file.open(prefix + "-Data.bin", ios::out|ios::binary);
 	raster_file.open(prefix + "-Raster.bin", ios::out|ios::binary);
 	tIncome_file.open(prefix + "-tIn.bin", ios::out|ios::binary);
