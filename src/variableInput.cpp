@@ -303,6 +303,13 @@ int main(int argc, char **argv)
         jlv.clear();
         jbv.clear();
         liV.clear();
+
+        tsp_sim.clear();
+        tsp_bi.clear();
+        tsp_li.clear();
+        tsp_jbi.clear();
+        tsp_jli.clear();
+        tsp_bi0.clear();
         cout << "level " << ii << " finalized " << endl;
         cout << " run time " << inputArg.runTime[ii] << " tstep " << tstep << endl;
         cout << "time table: sim,   bi, jbi,    li, jli,    bi0" << endl;

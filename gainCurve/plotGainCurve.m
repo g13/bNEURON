@@ -2,10 +2,13 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
     if nargin < 4
         sizeSize = 'int64';
         if nargin < 3
-            plotSubthreshold = false;
+            plotSubthreshold = true;
+            if nargin < 2
+                ext = '';
+            end
         end
     end
-    if ext == psc
+    if isequal(ext, 'psc')
         format = 'epsc'
     end
     p = read_cfg(inputFn);
@@ -27,13 +30,11 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
     dimsFid = fopen(dimsFn,'r');
     if dimsFid
         nTrial = fread(dimsFid, 1, 'int');
-        if plotSubthreshold
-            nDimSim = fread(dimsFid, nTrial, 'unsigned long');
-            nDim = fread(dimsFid, nTrial, 'unsigned long');
-            dt = fread(dimsFid, nTrial, 'double');
-            inputLevel = fread(dimsFid, nTrial, 'double');
-            runTime = fread(dimsFid, nTrial, 'double');
-        end
+        nDimSim = fread(dimsFid, nTrial, 'uint64')
+        nDim = fread(dimsFid, nTrial, 'uint64')
+        dt = fread(dimsFid, nTrial, 'double')
+        inputLevel = fread(dimsFid, nTrial, 'double')
+        runTime = fread(dimsFid, nTrial, 'double')
         fclose(dimsFid);
     end
     RasterFn = datafile{1}{2};
@@ -52,17 +53,29 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
     tb0 = cell(nTrial,1);
     for i = 1:nTrial
         ss(i) = fread(RasterFid,1,sizeSize);
-        ts{i} = fread(RasterFid,ss,'double');
+        if ss(i) >0
+            ts{i} = fread(RasterFid,ss(i),'double');
+        end
         sb(i) = fread(RasterFid,1,sizeSize);
-        tb{i} = fread(RasterFid,sb,'double');
+        if sb(i) >0
+            tb{i} = fread(RasterFid,sb(i),'double');
+        end
         sl(i) = fread(RasterFid,1,sizeSize);
-        tl{i} = fread(RasterFid,sl,'double');
+        if sl(i) >0
+            tl{i} = fread(RasterFid,sl(i),'double');
+        end
         sjb(i) = fread(RasterFid,1,sizeSize);
-        tjb{i} = fread(RasterFid,sjb,'double');
+        if sjb(i) >0
+            tjb{i} = fread(RasterFid,sjb(i),'double');
+        end
         sjl(i) = fread(RasterFid,1,sizeSize);
-        tjl{i} = fread(RasterFid,sjl,'double');
+        if sjl(i) >0
+            tjl{i} = fread(RasterFid,sjl(i),'double');
+        end
         sb0(i) = fread(RasterFid,1,sizeSize);
-        tb0{i} = fread(RasterFid,sb0,'double');
+        if sb0(i) >0
+            tb0{i} = fread(RasterFid,sb0(i),'double');
+        end
     end
     fclose(RasterFid);
 
@@ -75,7 +88,9 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
     plot(inputLevel,sjl./runTime,'ob');
     plot(inputLevel,sb0./runTime,'og');
 
-    saveas(gcf,[p.theme,'-gainCurve.',ext],format);
+    if ~isempty(ext)
+        saveas(gcf,[p.theme,'-gainCurve.',ext],format);
+    end
     if plotSubthreshold
         dataFn = datafile{1}{1};
         jNDFn = datafile{1}{3};
@@ -95,31 +110,41 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
         datafid = fopen(dataFn,'r');
         jNDfid = fopen(jNDFn,'r');
         for i=1:nTrial
-            t0 = linspace(1,nDimSim(i)) * tstep;
-            t = linspace(1,nDim(i)) * dt(i);
+            t0 = linspace(1,nDimSim(i),nDimSim(i)) * dt(i);
+            t = linspace(1,nDim(i),nDim(i)) * tstep;
             figure;
             subplot(2,1,1)
             hold on
-            plot(ts,ones(1,ss),'.k','MarkerSize',6,'LineStyle','none');
-            plot(tb,ones(1,sb)+1,'.b','MarkerSize',6,'LineStyle','none');
-            plot(tl,ones(1,sl)+2,'.r','MarkerSize',6,'LineStyle','none');
-            plot(tjb,ones(1,sjb)+3,'ob','MarkerSize',3,'LineStyle','none');
-            plot(tjl,ones(1,sjl)+4,'or','MarkerSize',3,'LineStyle','none');
-            plot(tb0,ones(1,sb0)+5,'og','MarkerSize',3,'LineStyle','none');
+            if ss(i) > 0
+                plot(ts{i},ones(1,ss(i)),'.k','MarkerSize',6,'LineStyle','none');
+            end
+            if sb(i) > 0
+                plot(tb{i},ones(1,sb(i))+1,'.b','MarkerSize',6,'LineStyle','none');
+            end
+            if sl(i) > 0
+                plot(tl{i},ones(1,sl(i))+2,'.r','MarkerSize',6,'LineStyle','none');
+            end
+            if sjb(i) > 0
+                plot(tjb{i},ones(1,sjb(i))+3,'ob','MarkerSize',3,'LineStyle','none');
+            end
+            if sjl(i) > 0
+                plot(tjl{i},ones(1,sjl(i))+4,'or','MarkerSize',3,'LineStyle','none');
+            end
+            if sb0(i) > 0
+                plot(tb0{i},ones(1,sb0(i))+5,'og','MarkerSize',3,'LineStyle','none');
+            end
             ylim([0,6]);
             xlim([0,t(nDim(i))]);
 
             subplot(2,1,2)
             hold on
             if datafid
-                for i=1:nTrial
-                    simV{i} = fread(datafid, nDimSim(i), 'double');
-                    biV{i} = fread(datafid, nDim(i), 'double');
-                    liV{i} = fread(datafid, nDim(i), 'double');
-                    biV0{i} = fread(datafid, nDim(i), 'double');
-                    for j=1:n
-                        dendV{i,j} = fread(datafid, nDimSim(i), 'double');
-                    end
+                simV{i} = fread(datafid, nDimSim(i), 'double');
+                biV{i} = fread(datafid, nDim(i), 'double');
+                liV{i} = fread(datafid, nDim(i), 'double');
+                biV0{i} = fread(datafid, nDim(i), 'double');
+                for j=1:n
+                    dendV{i,j} = fread(datafid, nDimSim(i), 'double');
                 end
             end
             plot(t0,simV{i},'k');
@@ -134,7 +159,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
                 jbnCross = fread(jNDfid,1,'int');
                 for j=1:jbnCross
                     tmpSize = fread(jNDfid, 1, sizeSize);
-                    tmpCrossT = fread(jNDfid, tmpSize, 'double');
+                    tmpCrossT = fread(jNDfid, tmpSize, 'double')*tstep;
                     tmpCrossV = fread(jNDfid, tmpSize, 'double');
                     jbCrossT{i} = [jbCrossT{i}, tmpCrossT];
                     jbCrossV{i} = [jbCrossV{i}, tmpCrossV];
@@ -147,14 +172,16 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
                 plot(jlt{i},jlv{i},'*b','LineStyle','none');
                 for j=1:jbnCross
                     tmpSize = fread(jNDfid, 1, sizeSize);
-                    tmpCrossT = fread(jNDfid, tmpSize, 'double');
+                    tmpCrossT = fread(jNDfid, tmpSize, 'double')*tstep;
                     tmpCrossV = fread(jNDfid, tmpSize, 'double');
                     jlCrossT{i} = [jlCrossT{i}, tmpCrossT];
                     jlCrossV{i} = [jlCrossV{i}, tmpCrossV];
                     plot(tmpCrossT, tmpCrossV,'r');
                 end
             end
-            saveas(gcf,[p.theme,'-trial',num2str(i),'.',ext],format);
+            if ~isempty(ext)
+                saveas(gcf,[p.theme,'-trial',num2str(i),'.',ext],format);
+            end
         end
     end
     fclose(datafid);
