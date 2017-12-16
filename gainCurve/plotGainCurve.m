@@ -107,7 +107,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
             plot(tjl,ones(1,sjl)+4,'or','MarkerSize',3,'LineStyle','none');
             plot(tb0,ones(1,sb0)+5,'og','MarkerSize',3,'LineStyle','none');
             ylim([0,6]);
-            xlim([0,t[nDim(i)]);
+            xlim([0,t(nDim(i))]);
 
             subplot(2,1,2)
             hold on
