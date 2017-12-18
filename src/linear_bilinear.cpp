@@ -108,7 +108,10 @@ unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, d
                     }
                     ith_old = ith; 
                     spiked = 1;
-                    tsp.push_back(k*neuroLib.tstep+neuron.tRef/2);
+                    double tmpTsp = k*neuroLib.tstep+neuron.tRef/2;
+                    if (tmpTsp <= run_t) {
+                        tsp.push_back(tmpTsp);
+                    }
                     vs = k + itref;
                     for (j=0;j<itref;j++) {
                         if (k+j < run_nt) {
@@ -297,7 +300,10 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
                     }
                     ith_old = ith; 
                     spiked = 1;
-                    tsp.push_back(k*neuroLib.tstep+neuron.tRef/2);
+                    double tmpTsp = k*neuroLib.tstep+neuron.tRef/2;
+                    if (tmpTsp <= run_t) {
+                        tsp.push_back(tmpTsp);
+                    }
                     vs = k + itref;
                     for (j=0;j<itref;j++) {
                         if (k+j < run_nt) {
@@ -490,7 +496,10 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
                     }
                     ith_old = ith; 
                     spiked = 1;
-                    tsp.push_back(k*neuroLib.tstep+neuron.tRef/2);
+                    double tmpTsp = k*neuroLib.tstep+neuron.tRef/2;
+                    if (tmpTsp <= run_t) {
+                        tsp.push_back(tmpTsp);
+                    }
                     vs = k + itref;
                     for (j=0;j<itref;j++) {
                         if (k+j < run_nt) {

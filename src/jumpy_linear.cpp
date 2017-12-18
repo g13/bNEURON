@@ -308,7 +308,10 @@ unsigned int nsyn_jLinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cr
                 tBack = iend;
             }
             vBack = neuron.vRest;
-            tsp.push_back(t_cross*neuroLib.tstep+neuron.tRef/2);
+            double tmpTsp = t_cross*neuroLib.tstep+neuron.tRef/2;
+            if (tmpTsp <= end_t) {
+                tsp.push_back(tmpTsp);
+            }
             nc_old = nc;
             nc++;
             spiked = nc - nc_old;
