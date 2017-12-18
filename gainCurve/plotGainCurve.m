@@ -23,10 +23,10 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
     % name, fdr, date, bytes, isdir, datenum
     filter = [1,5];
     fdr = fdr(filter,:);
-    fnstr = strjoin(fdr(1,:));
+    fnstr = strjoin(fdr(1,:))
     load(p.libFile,'tstep','n');
     datafilePattern = [p.theme,'\-s\d*\-(Data|jND|Raster|tIn)\.bin'];
-    datafile = regexp(fnstr, datafilePattern,'match','forceCellOutput');
+    datafile = regexp(fnstr, datafilePattern,'match')%,'forceCellOutput');
     dimsFid = fopen(dimsFn,'r');
     if dimsFid
         nTrial = fread(dimsFid, 1, 'int');
@@ -37,7 +37,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
         runTime = fread(dimsFid, nTrial, 'double')
         fclose(dimsFid);
     end
-    RasterFn = datafile{1}{2};
+    RasterFn = datafile{2};
     RasterFid = fopen(RasterFn,'r');
     ss = zeros(nTrial,1);
     ts = cell(nTrial,1);
@@ -78,7 +78,6 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
         end
     end
     fclose(RasterFid);
-
     figure;
     hold on
     plot(inputLevel,ss./runTime,'*k');
@@ -87,14 +86,15 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
     plot(inputLevel,sjb./runTime,'or');
     plot(inputLevel,sjl./runTime,'ob');
     plot(inputLevel,sb0./runTime,'og');
+    xlim([0,inputLevel(nTrial)*1.1]);
 
     if ~isempty(ext)
         saveas(gcf,[p.theme,'-gainCurve.',ext],format);
     end
     if plotSubthreshold
-        dataFn = datafile{1}{1};
-        jNDFn = datafile{1}{3};
-        tInFn = datafile{1}{4};
+        dataFn = datafile{1};
+        jNDFn = datafile{3};
+        tInFn = datafile{4};
         jbt = cell(nTrial,1);
         jbv = cell(nTrial,1);
         jbCrossT = cell(nTrial,1);
@@ -109,9 +109,13 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
         biV0 = cell(nTrial,1);
         datafid = fopen(dataFn,'r');
         jNDfid = fopen(jNDFn,'r');
+        disp(tstep);
         for i=1:nTrial
-            t0 = linspace(1,nDimSim(i),nDimSim(i)) * dt(i);
-            t = linspace(1,nDim(i),nDim(i)) * tstep;
+            disp(['this is ', num2str(i), 'th trial']);
+            disp(dt(i));
+            t0 = linspace(1,nDimSim(i),nDimSim(i)) * dt(i)-dt(i);
+            t = linspace(1,nDim(i),nDim(i)) * tstep-tstep;
+            assert(t(end)+tstep==t0(end)+dt(i));
             figure;
             subplot(2,1,1)
             hold on
@@ -134,7 +138,8 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
                 plot(tb0{i},ones(1,sb0(i))+5,'og','MarkerSize',3,'LineStyle','none');
             end
             ylim([0,6]);
-            xlim([0,t(nDim(i))]);
+            xl = [0, t(end)];
+            xlim(xl);
 
             subplot(2,1,2)
             hold on
@@ -151,12 +156,14 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
             plot(t,biV{i},'r');
             plot(t,liV{i},'b');
             plot(t,biV0{i},'g');
+            xlim(xl);
             if jNDfid
                 jbSize = fread(jNDfid,1,sizeSize);
-                jbt{i} = fread(jNDfid,jbSize,'double');
+                jbt{i} = fread(jNDfid,jbSize,'double')*tstep;
                 jbv{i} = fread(jNDfid,jbSize,'double');
                 plot(jbt{i},jbv{i},'*r','LineStyle','none');
                 jbnCross = fread(jNDfid,1,'int');
+                jbCrossT{i} = [];
                 for j=1:jbnCross
                     tmpSize = fread(jNDfid, 1, sizeSize);
                     tmpCrossT = fread(jNDfid, tmpSize, 'double')*tstep;
@@ -166,10 +173,11 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
                     plot(tmpCrossT, tmpCrossV,'b');
                 end
                 jlSize = fread(jNDfid,1,sizeSize);
-                jlt{i} = fread(jNDfid,jlSize,'double');
+                jlt{i} = fread(jNDfid,jlSize,'double')*tstep;
                 jlv{i} = fread(jNDfid,jlSize,'double');
-                jlnCross = fread(jNDfid,1,'int');
                 plot(jlt{i},jlv{i},'*b','LineStyle','none');
+                jlnCross = fread(jNDfid,1,'int');
+                jlCrossT{i} = [];
                 for j=1:jbnCross
                     tmpSize = fread(jNDfid, 1, sizeSize);
                     tmpCrossT = fread(jNDfid, tmpSize, 'double')*tstep;
