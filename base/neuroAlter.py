@@ -109,7 +109,7 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, prin
                         for i in xrange(n): 
                             print "     dend[", loc[i], "]" ,"(",pos[i],").v = ", cell.dend[loc[i]](pos[i]).v
                             print >> f, "   dend[", loc[i], "]" ,"(",pos[i],").v = ", cell.dend[loc[i]](pos[i]).v
-            if h.t > tsp + trans + tref:
+            if (h.t > tsp + trans + tref) or (cell.soma(0.0).v <= vThres+15) :
                 fired = 0
             #progress = h.t/h.tstop*100 % 10
             #if progress > oldProgress + 1:
