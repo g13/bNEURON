@@ -31,6 +31,12 @@ jumpyNeuronData::jumpyNeuronData(size rSize) {
     t.reserve(2*rSize);
     v.reserve(2*rSize);
 }
+void jumpyNeuronData::initialize(size rSize) {
+    t.clear();
+    v.clear();
+    t.reserve(2*rSize);
+    v.reserve(2*rSize);
+}
 
 CrossData::CrossData(size nt, double vinit) {
     nCross = 0;
@@ -44,6 +50,23 @@ CrossData::CrossData(size nt, double vinit) {
     v.push_back(vinit);
     t.push_back(0);
 }
+void CrossData::initialize(size nt, double vinit) {
+    nCross = 0;
+    iCross.clear();
+    iCross.reserve(nt/2);
+    iCross.push_back(1);
+    tCross.clear();
+    tCross.reserve(nt/2);
+    tCross.push_back(0);
+    vCross.clear();
+    vCross.reserve(nt/2);
+    v.clear();
+    v.reserve(nt);
+    v.push_back(vinit);
+    t.clear();
+    t.reserve(nt);
+    t.push_back(0);
+}
 
 BilinearRelationships::BilinearRelationships(size corrSize) {
     dTijr.reserve(corrSize);
@@ -52,6 +75,28 @@ BilinearRelationships::BilinearRelationships(size corrSize) {
 }
 
 Inputs::Inputs(size rSize){
+    t.reserve(rSize); 
+    dt.reserve(rSize); 
+    tMax.reserve(rSize); 
+    cCross.reserve(rSize);
+    dTijr.reserve(rSize); 
+    Vijr.reserve(rSize);
+    ID.reserve(rSize);
+    Tmpijr.reserve(rSize); 
+    bir.reserve(rSize);
+    inTref.reserve(rSize);
+}
+void Inputs::initialize(size rSize) {
+    t.clear(); 
+    dt.clear(); 
+    tMax.clear(); 
+    cCross.clear();
+    dTijr.clear(); 
+    Vijr.clear();
+    ID.clear();
+    Tmpijr.clear(); 
+    bir.clear();
+    inTref.clear();
     t.reserve(rSize); 
     dt.reserve(rSize); 
     tMax.reserve(rSize); 

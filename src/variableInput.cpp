@@ -174,6 +174,11 @@ int main(int argc, char **argv)
         jND jndb(rSize);
         Input inputb(rSize);
         Cross crossb(nt,v0);
+        if (ii>0) {
+            jndb.initialize(rSize);
+            inputb.initialize(rSize);
+            crossb.initialize(nt,v0);
+        }
         neuron.vThres = vCrossb;
 
         cout << " jBilinear begin" << endl;
@@ -192,6 +197,11 @@ int main(int argc, char **argv)
         jND jndl(rSize);
         Input inputl(rSize);
         Cross crossl(nt,v0);
+        if (ii>0) {
+            jndl.initialize(rSize);
+            inputl.initialize(rSize);
+            crossl.initialize(nt,v0);
+        }
         neuron.vThres = vCrossl;
         
         nc = nsyn_jLinear(neuron, neuroLib, inputl, jndl, crossl, run_t, jlv, corrSize, tsp_jli, vBackl, neuron.ei);

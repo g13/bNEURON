@@ -28,6 +28,7 @@ typedef struct ijr IJR;
 struct jumpyNeuronData {
     std::vector<double> t,v;
     jumpyNeuronData(size rSize);
+    void initialize(size rSize);
 };
 typedef struct jumpyNeuronData jND;
 
@@ -40,6 +41,7 @@ struct CrossData {
     std::vector<double> tCross; // t of crossing back
     std::vector<double> t,v,gE,gI,m,n,h,hE,hI;
     CrossData(size nt, double vinit);
+    void initialize(size nt, double vinit);
 };
 typedef struct CrossData Cross;
 
@@ -65,6 +67,7 @@ struct Inputs {
     std::vector<size> ID;
     std::vector<bool> inTref;
     Inputs(size rSize);
+    void initialize(size rSize);
     void junk_this();
     void assert_size();
     void print_this(int i);

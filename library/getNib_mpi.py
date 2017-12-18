@@ -322,8 +322,8 @@ def getNib(argv):
     posI = np.random.random_sample(locI.size)
     #posI = np.ones(locI.size)*0.5
 
-    plotData = False 
-    savePlot = False 
+    plotData = True 
+    savePlot = True 
     vrestOnly = False
     vrest = -70
     assert(vrest in vRange)
