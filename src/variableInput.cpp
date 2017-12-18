@@ -235,6 +235,9 @@ int main(int argc, char **argv)
         nc = 0;
         neuron.writeAndUpdateIn(neuron.tin.size(), tIncome_file);
         vector<double>* output[4] = {&simV,&biV,&liV,&biV0};
+        assert(simV.size()==nt0);
+        assert(biV.size()==nt);
+        assert(dendV[0].size()==nt0);
         write_data_file(data_file, output, dendV, nt0, nt, neuron.nSyn);
         
         vector<size> tmpSize;

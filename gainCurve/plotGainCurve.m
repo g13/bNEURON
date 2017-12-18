@@ -113,8 +113,8 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
         for i=1:nTrial
             disp(['this is ', num2str(i), 'th trial']);
             disp(dt(i));
-            t0 = linspace(1,nDimSim(i),nDimSim(i)) * dt(i)-dt(i);
-            t = linspace(1,nDim(i),nDim(i)) * tstep-tstep;
+            t0 = linspace(0,nDimSim(i)-1,nDimSim(i)) * dt(i);
+            t = linspace(0,nDim(i)-1,nDim(i)) * tstep;
             assert(t(end)+tstep==t0(end)+dt(i));
             figure;
             subplot(2,1,1)

@@ -42,8 +42,8 @@ int input_args::reformat_input_table(double tstep0) {
     vector<unsigned long> nDataPtsSim;
     nDataPts.reserve(nTrial);
     for (int i=0; i<nTrial; i++) {
-        nDataPts.push_back(static_cast<unsigned long>(round(runTime[i]/tstep0)));
-        nDataPtsSim.push_back(static_cast<unsigned long>(round(runTime[i]/tstep[i])));
+        nDataPts.push_back(static_cast<unsigned long>(round(runTime[i]/tstep0))+1);
+        nDataPtsSim.push_back(static_cast<unsigned long>(round(runTime[i]/tstep[i]))+1);
     }
     if (outputfile.is_open()) {
         outputfile.write((char*)&nTrial, sizeof(int));
