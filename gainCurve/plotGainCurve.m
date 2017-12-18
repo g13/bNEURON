@@ -80,12 +80,12 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
     fclose(RasterFid);
     figure;
     hold on
-    plot(inputLevel,ss./runTime,'*k');
-    plot(inputLevel,sb./runTime,'*r');
-    plot(inputLevel,sl./runTime,'*b');
-    plot(inputLevel,sjb./runTime,'or');
-    plot(inputLevel,sjl./runTime,'ob');
-    plot(inputLevel,sb0./runTime,'og');
+    plot(inputLevel,ss./runTime,'-*k');
+    plot(inputLevel,sb./runTime,'-*r');
+    plot(inputLevel,sl./runTime,'-*b');
+    plot(inputLevel,sjb./runTime,'-or');
+    plot(inputLevel,sjl./runTime,'-ob');
+    plot(inputLevel,sb0./runTime,'-og');
     xlim([0,inputLevel(nTrial)*1.1]);
 
     if ~isempty(ext)
@@ -153,15 +153,15 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
                 end
             end
             plot(t0,simV{i},'k');
-            plot(t,biV{i},'r');
-            plot(t,liV{i},'b');
+            plot(t,biV{i},'b');
+            plot(t,liV{i},'r');
             plot(t,biV0{i},'g');
             xlim(xl);
             if jNDfid
                 jbSize = fread(jNDfid,1,sizeSize);
                 jbt{i} = fread(jNDfid,jbSize,'double')*tstep;
                 jbv{i} = fread(jNDfid,jbSize,'double');
-                plot(jbt{i},jbv{i},'*r','LineStyle','none');
+                plot(jbt{i},jbv{i},'.b','MarkerSize',3);
                 jbnCross = fread(jNDfid,1,'int');
                 jbCrossT{i} = [];
                 for j=1:jbnCross
@@ -170,12 +170,12 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
                     tmpCrossV = fread(jNDfid, tmpSize, 'double');
                     jbCrossT{i} = [jbCrossT{i}, tmpCrossT];
                     jbCrossV{i} = [jbCrossV{i}, tmpCrossV];
-                    plot(tmpCrossT, tmpCrossV,'b');
+                    plot(tmpCrossT, tmpCrossV,':b');
                 end
                 jlSize = fread(jNDfid,1,sizeSize);
                 jlt{i} = fread(jNDfid,jlSize,'double')*tstep;
                 jlv{i} = fread(jNDfid,jlSize,'double');
-                plot(jlt{i},jlv{i},'*b','LineStyle','none');
+                plot(jlt{i},jlv{i},'.r','MarkerSize',3);
                 jlnCross = fread(jNDfid,1,'int');
                 jlCrossT{i} = [];
                 for j=1:jbnCross
@@ -184,7 +184,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
                     tmpCrossV = fread(jNDfid, tmpSize, 'double');
                     jlCrossT{i} = [jlCrossT{i}, tmpCrossT];
                     jlCrossV{i} = [jlCrossV{i}, tmpCrossV];
-                    plot(tmpCrossT, tmpCrossV,'r');
+                    plot(tmpCrossT, tmpCrossV,':r');
                 end
             end
             if ~isempty(ext)
