@@ -9,7 +9,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
         end
     end
     if isequal(ext, 'psc')
-        format = 'epsc'
+        format = 'epsc';
     end
     p = read_cfg(inputFn);
     dimsFn = 'readoutDimension.bin';
@@ -115,7 +115,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
             disp(dt(i));
             t0 = linspace(0,nDimSim(i)-1,nDimSim(i)) * dt(i);
             t = linspace(0,nDim(i)-1,nDim(i)) * tstep;
-            assert(t(end)+tstep==t0(end)+dt(i));
+            assert(t(end)==t0(end));
             figure;
             subplot(2,1,1)
             hold on
