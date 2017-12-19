@@ -16,8 +16,9 @@ module load matlab
 date
 
 echo $theme
+echo $ext
 
-./gainCurve -m $theme && matlab -nodisplay -nosplash -r "plotGainCurve('input.cfg');exit;"
+./gainCurve -m $theme && matlab -nodisplay -nosplash -r "plotGainCurve('input.cfg','$ext');exit;"
 
 date
 hostname

@@ -514,5 +514,6 @@ unsigned int nsyn_jBilinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, 
         cout << " dead with " << i << ", v " << jnd.v.back() << " at " << jnd.t.back() << endl;
         input.print_this(i);
     }
+    cout << " crossed " << cross.nCross << " times" << endl;
     return nc;
 }

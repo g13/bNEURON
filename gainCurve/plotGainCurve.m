@@ -162,10 +162,10 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
                 jbt{i} = fread(jNDfid,jbSize,'double')*tstep;
                 jbv{i} = fread(jNDfid,jbSize,'double');
                 plot(jbt{i},jbv{i},'.b','MarkerSize',3);
-                jbnCross = fread(jNDfid,1,'int');
+                jbnCross = fread(jNDfid,1,'int')
                 jbCrossT{i} = [];
                 for j=1:jbnCross
-                    tmpSize = fread(jNDfid, 1, sizeSize);
+                    tmpSize = fread(jNDfid, 1, sizeSize)
                     tmpCrossT = fread(jNDfid, tmpSize, 'double')*tstep;
                     tmpCrossV = fread(jNDfid, tmpSize, 'double');
                     jbCrossT{i} = [jbCrossT{i}, tmpCrossT];
@@ -176,10 +176,10 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
                 jlt{i} = fread(jNDfid,jlSize,'double')*tstep;
                 jlv{i} = fread(jNDfid,jlSize,'double');
                 plot(jlt{i},jlv{i},'.r','MarkerSize',3);
-                jlnCross = fread(jNDfid,1,'int');
+                jlnCross = fread(jNDfid,1,'int')
                 jlCrossT{i} = [];
                 for j=1:jbnCross
-                    tmpSize = fread(jNDfid, 1, sizeSize);
+                    tmpSize = fread(jNDfid, 1, sizeSize)
                     tmpCrossT = fread(jNDfid, tmpSize, 'double')*tstep;
                     tmpCrossV = fread(jNDfid, tmpSize, 'double');
                     jlCrossT{i} = [jlCrossT{i}, tmpCrossT];

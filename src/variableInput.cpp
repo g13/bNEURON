@@ -35,7 +35,7 @@ int main(int argc, char **argv)
             assert(inputArg.input[i].size() == neuroLib.nSyn);
         }
         for (int j=0; j<neuroLib.nSyn; j++) {
-            rate[i].push_back(inputArg.inputLevel[i]*inputArg.input[i][j]);
+            rate[i].push_back(inputArg.inputLevel[i]*inputArg.input[i][j]/1000.0);
             cout << rate[i][j] << ", ";
         }
         cout << endl;
@@ -251,43 +251,39 @@ int main(int argc, char **argv)
         assert(jndb.v.size() == jndb.t.size());
         jndSize = jndb.t.size();
         size_data_write(jND_file, output, 2, jndSize, 0);
-        cout << "iCross: " << crossb.iCross.size() << endl;
-        if (crossb.iCross.size() > 1) {
-            ncross = crossb.iCross.size()-1;
-            tmpSize.reserve(ncross);
-            for (int i=0;i<ncross;i++) {
-                tmpSize.push_back(crossb.iCross[i+1] - crossb.iCross[i]);
-                cout << " tmpSize " << i << " : " << tmpSize.back() << endl;
-            }
-            if (crossb.v.size() != crossb.t.size()) {
-                cout << crossb.v.size() <<  "!= " << crossb.t.size() << endl;
-                assert(crossb.v.size() == crossb.t.size());
-            }
-            output[0] = &(crossb.v);
-            output[1] = &(crossb.t);
-            nsection_write(jND_file, output, 2, crossb.iCross, tmpSize);
+
+        tmpSize.reserve(crossb.nCross);
+        for (int i=0;i<crossb.nCross;i++) {
+            tmpSize.push_back(crossb.iCross[i+1] - crossb.iCross[i]);
+            cout << " tmpSize " << i << " : " << tmpSize.back() << endl;
         }
+        if (crossb.v.size() != crossb.t.size()) {
+            cout << crossb.v.size() <<  "!= " << crossb.t.size() << endl;
+            assert(crossb.v.size() == crossb.t.size());
+        }
+        output[0] = &(crossb.v);
+        output[1] = &(crossb.t);
+        nsection_write(jND_file, output, 2, crossb.iCross, tmpSize);
+        tmpSize.clear();
 
         output[0] = &jndl.t;
         output[1] = &jndl.v;
         assert(jndl.v.size() == jndl.t.size());
         jndSize = jndl.t.size();
         size_data_write(jND_file, output, 2, jndSize, 0);
-        if (crossl.iCross.size() > 1) {
-            ncross = crossl.iCross.size()-1;
-            tmpSize.clear();
-            tmpSize.reserve(ncross);
-            for (int i=0;i<ncross;i++) {
-                tmpSize.push_back(crossl.iCross[i+1] - crossl.iCross[i]);
-            }
-            if (crossl.v.size() != crossl.t.size()) {
-                cout << crossl.v.size() <<  "!= " << crossl.t.size() << endl;
-                assert(crossl.v.size() == crossl.t.size());
-            }
-            output[0] = &(crossl.v);
-            output[1] = &(crossl.t);
-            nsection_write(jND_file, output, 2, crossl.iCross, tmpSize);
+
+        tmpSize.reserve(crossb.nCross);
+        for (int i=0;i<crossb.nCross;i++) {
+            tmpSize.push_back(crossl.iCross[i+1] - crossl.iCross[i]);
         }
+        if (crossl.v.size() != crossl.t.size()) {
+            cout << crossl.v.size() <<  "!= " << crossl.t.size() << endl;
+            assert(crossl.v.size() == crossl.t.size());
+        }
+        output[0] = &(crossl.v);
+        output[1] = &(crossl.t);
+        nsection_write(jND_file, output, 2, crossl.iCross, tmpSize);
+        tmpSize.clear();
 
         size rasterSize = tsp_sim.size();
         output[0] = &tsp_sim;

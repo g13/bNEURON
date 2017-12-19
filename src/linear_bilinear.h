@@ -4,8 +4,8 @@
 #include <vector>
 #include "nNeuroSt.h"
 namespace lb{
-    const bool debug = true;
-    const bool debug2 = true;
+    const bool debug = false;
+    const bool debug2 = false;
 }
 template<typename T>
 inline void getNear(T *range, size n, double target, double &ratio, size &istart, size &jnext) {
