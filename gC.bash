@@ -4,6 +4,9 @@ datafdr='../../data'
 dir0='gainCurve'
 
 theme=$1
+newInput=$2
+input=true
+level=false
 
 if [ "$theme" == "" ]; then
     echo "need to assign theme"
@@ -22,6 +25,16 @@ if [ "$n128" == "0" ]; then
 else
     cp base/n128.py_active $dir/n128.py
 fi
+
+if [ "$newInput" == "1" ]; then
+    cp gainCurve.cfg $dir0
+    cp setInput.m $dir0
+    cd $dir0
+    matlab -nosplash -nodisplay -r "setInput($input,$level);exit"
+    cd ..
+else 
+    echo no new input
+fi
 cp base/neuroAlter.py $dir
 cp $dir0/gC.slurm $dir
 cp gainCurve.cfg $dir/input.cfg
@@ -32,6 +45,7 @@ cp -R x86_64 $dir
 
 cp $dir0/levels.bin $dir
 cp $dir0/inputTable.bin $dir
+
 
 cd $dir
 export theme

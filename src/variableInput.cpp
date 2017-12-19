@@ -30,7 +30,10 @@ int main(int argc, char **argv)
     cout << "exact rate levels " << endl;
     for (int i=0; i<inputArg.inputLevel.size(); i++) {
         rate[i].reserve(neuroLib.nSyn);
-        assert(inputArg.input[i].size() == neuroLib.nSyn);
+        if (inputArg.input[i].size() != neuroLib.nSyn) {
+            cout << inputArg.input[i].size() << "!=" << neuroLib.nSyn << endl;
+            assert(inputArg.input[i].size() == neuroLib.nSyn);
+        }
         for (int j=0; j<neuroLib.nSyn; j++) {
             rate[i].push_back(inputArg.inputLevel[i]*inputArg.input[i][j]);
             cout << rate[i][j] << ", ";

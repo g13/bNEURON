@@ -16,7 +16,7 @@ input_args::input_args() {
         ("dtVarLevels", po::value<bool>(&dtVarLevels)->default_value(false)," use different tstep for each input level")
         ("nInput", po::value<unsigned long>(&nInput)->default_value(1), " number of input sites")
         ("inputLevelsFn", po::value<string>(&inputLevelsFn),"filename of irregular input levels (need to set irregInputLevels, dtVarLevels or tVarLevels flag)")
-        ("inputLinspace,i", po::value<double>()->multitoken()->composing(), "evenly spaced input level, start, total steps, end")
+        ("inputLinspace,i", po::value<vector<double>>()->multitoken()->composing(), "evenly spaced input level, start, total steps, end")
 		("runTime,t", po::value<double>(), "simulation time for each input level")
         ("dt", po::value<double>(), "dt time step for each run")
         ("tVar", po::value<bool>(&tVar)->default_value(false), " use temporally variable input")
@@ -31,33 +31,6 @@ input_args::input_args() {
         ("seed", po::value<unsigned long>(&seed), " seed for the simulation");
     cmdLineOptions.add(configFileOptions);
     cmdLineOptions.add(initialGenerics);
-}
-int input_args::reformat_input_table(double tstep0) {
-    ofstream outputfile;
-    outputfile.open(reformatInputFn, ios::binary|ios::out);
-    assert(runTime.size() == inputLevel.size());
-    assert(runTime.size() == tstep.size());
-    int nTrial = runTime.size();
-    vector<unsigned long> nDataPts;
-    vector<unsigned long> nDataPtsSim;
-    nDataPts.reserve(nTrial);
-    for (int i=0; i<nTrial; i++) {
-        nDataPts.push_back(static_cast<unsigned long>(round(runTime[i]/tstep0))+1);
-        nDataPtsSim.push_back(static_cast<unsigned long>(round(runTime[i]/tstep[i]))+1);
-    }
-    if (outputfile.is_open()) {
-        outputfile.write((char*)&nTrial, sizeof(int));
-        outputfile.write((char*)&(nDataPtsSim[0]),nTrial*sizeof(unsigned long));
-        outputfile.write((char*)&(nDataPts[0]),nTrial*sizeof(unsigned long));
-        outputfile.write((char*)&(tstep[0]),nTrial*sizeof(double));
-        outputfile.write((char*)&(inputLevel[0]),nTrial*sizeof(double));
-        outputfile.write((char*)&(runTime[0]),nTrial*sizeof(double));
-        outputfile.close();
-        return 1;
-    } else {
-        cout << " failed to open " << reformatInputFn << " for writing readout dimensions " << endl;
-        return 0;
-    }
 }
 int input_args::read(int argc, char **argv) {
     ifstream cfgFile;
@@ -89,7 +62,7 @@ int input_args::read(int argc, char **argv) {
             return 0;
         } else {
             inputLinspace = vm["inputLinspace"].as<vector<double>>();
-            inputLevel[0] = inputLinspace[0];
+            inputLevel.push_back(inputLinspace[0]);
             if (inputLinspace[1] > 1.5) {
                 // inputLinspace[1] should be a "double" integer
                 double dLevel = (inputLinspace[2] - inputLinspace[0])/(inputLinspace[1]-1);
@@ -106,32 +79,11 @@ int input_args::read(int argc, char **argv) {
             cout << " using tVarLevels flag, ignoring runTime" << endl;
         }
     } else {
-        if (!vm.count("runTime")) {
-            cout << " must provide a single runTime or an array of runTime" << endl;
-            return 0;
-        } else {
-            runTime.assign(inputLevel.size(), vm["runTime"].as<double>());
-            if (runTime[0] <= 0.0 ) {
-                cout << " runTime must be positive" << endl;
-                return 0;
-            }
-        }
     }
     if (dtVarLevels) {
         vars.push_back(tstep);
         if (vm.count("dt")) {
             cout << " using dtVarLevels flag, ignoring single dt" << endl;
-        }
-    } else {
-        if (!vm.count("dt")) {
-            cout << "must provide a single dt or an array of dt" << endl;
-            return 0;
-        } else {
-            tstep.assign(inputLevel.size(), vm["dt"].as<double>());
-            if (tstep[0] <= 0.0) {
-                cout << " dt must be positive" << endl;
-                return 0;
-            }
         }
     }
     if (irregInputLevels || tVarLevels || dtVarLevels) {
@@ -166,6 +118,30 @@ int input_args::read(int argc, char **argv) {
             }
         }
         vars.clear();
+    }
+    if (!tVarLevels) {
+        if (!vm.count("runTime")) {
+            cout << " must provide a single runTime or an array of runTime" << endl;
+            return 0;
+        } else {
+            runTime.assign(inputLevel.size(), vm["runTime"].as<double>());
+            if (runTime[0] <= 0.0 ) {
+                cout << " runTime must be positive" << endl;
+                return 0;
+            }
+        }
+    }
+    if (!dtVarLevels) {
+        if (!vm.count("dt")) {
+            cout << "must provide a single dt (or an array of dt in levels.bin)" << endl;
+            return 0;
+        } else {
+            tstep.assign(inputLevel.size(), vm["dt"].as<double>());
+            if (tstep[0] <= 0.0) {
+                cout << " dt must be positive" << endl;
+                return 0;
+            }
+        }
     }
     // per input level
     if (tVar && pVar && (tVarLevels || dtVarLevels || extendVar)) {
@@ -267,6 +243,9 @@ int input_args::read(int argc, char **argv) {
             }
             if (inputMode == "t") {
                 assert(input.size() == 1);
+                for (int i=1; i<inputLevel.size(); i++) {
+                    input.push_back(input[0]);
+                }
             }
             if (inputMode == "T") {
                 assert(input.size() == inputLevel.size());
@@ -278,6 +257,9 @@ int input_args::read(int argc, char **argv) {
             }
             if (inputMode == "p") {
                 assert(input.size() == 1);
+                for (int i=1; i<inputLevel.size(); i++) {
+                    input.push_back(input[0]);
+                }
             }
             if (inputMode == "P") {
                 assert(input.size() == inputLevel.size());
@@ -309,4 +291,35 @@ int input_args::read(int argc, char **argv) {
         }
     }
     return 1;
+}
+int input_args::reformat_input_table(double tstep0) {
+    ofstream outputfile;
+    outputfile.open(reformatInputFn, ios::binary|ios::out);
+    cout << "tstep" <<endl;
+    for (int i=0; i<tstep.size(); i++) {
+        cout << tstep[i] << endl;
+    }
+    assert(runTime.size() == inputLevel.size());
+    assert(runTime.size() == tstep.size());
+    int nTrial = runTime.size();
+    vector<unsigned long> nDataPts;
+    vector<unsigned long> nDataPtsSim;
+    nDataPts.reserve(nTrial);
+    for (int i=0; i<nTrial; i++) {
+        nDataPts.push_back(static_cast<unsigned long>(round(runTime[i]/tstep0))+1);
+        nDataPtsSim.push_back(static_cast<unsigned long>(round(runTime[i]/tstep[i]))+1);
+    }
+    if (outputfile.is_open()) {
+        outputfile.write((char*)&nTrial, sizeof(int));
+        outputfile.write((char*)&(nDataPtsSim[0]),nTrial*sizeof(unsigned long));
+        outputfile.write((char*)&(nDataPts[0]),nTrial*sizeof(unsigned long));
+        outputfile.write((char*)&(tstep[0]),nTrial*sizeof(double));
+        outputfile.write((char*)&(inputLevel[0]),nTrial*sizeof(double));
+        outputfile.write((char*)&(runTime[0]),nTrial*sizeof(double));
+        outputfile.close();
+        return 1;
+    } else {
+        cout << " failed to open " << reformatInputFn << " for writing readout dimensions " << endl;
+        return 0;
+    }
 }
