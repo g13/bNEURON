@@ -1,4 +1,5 @@
 function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
+    textFontSize = 6;
     if nargin < 5
         sizeSize = 'int64';
         if nargin < 4
@@ -31,7 +32,8 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
     filter = [1,5];
     fdr = fdr(filter,:);
     fnstr = strjoin(fdr(1,:))
-    load(p.libFile,'tstep','n','gList');
+    load(p.libFile,'tstep','n','gList','dtRange','ndt');
+    ldur = dtRange(end) - p.ignoreT;
 
     nE = 0;
     nI = 0;
@@ -98,10 +100,10 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
     figure;
     hold on
     plot(inputLevel,ss./runTime*1000,'-*k');
-    plot(inputLevel,sb./runTime*1000,'-*r');
-    plot(inputLevel,sl./runTime*1000,'-*b');
-    plot(inputLevel,sjb./runTime*1000,'-or');
-    plot(inputLevel,sjl./runTime*1000,'-ob');
+    plot(inputLevel,sb./runTime*1000,'-*b');
+    plot(inputLevel,sl./runTime*1000,'-*r');
+    plot(inputLevel,sjb./runTime*1000,'-ob');
+    plot(inputLevel,sjl./runTime*1000,'-or');
     plot(inputLevel,sb0./runTime*1000,'-og');
     xlim([0,inputLevel(nTrial)*1.1]);
     xlabel('input rate Hz');
@@ -133,6 +135,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
         end
         disp(tstep);
         for i=1:nTrial
+            run_nt = round(runTime(i)/tstep) + 1;
             disp(['this is ', num2str(i), 'th trial']);
             disp(dt(i));
             t0 = linspace(0,nDimSim(i)-1,nDimSim(i)) * dt(i);
@@ -178,12 +181,13 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
             plot(t,biV{i},'b');
             plot(t,liV{i},'r');
             plot(t,biV0{i},'g');
-            minV = min([min(simV{i}),min(biV{i}),min(liV{i}),min(biV0{i})]);
-            maxV = min([-50,max([max(simV{i}),max(biV{i}),max(liV{i}),max(biV0{i})]]);
-            vStretch = maxV-minV;
-            yl = [minV-vStretch*0.1,maxV+vStretch*0.1];
+            minV0 = min([min(simV{i}),min(biV{i}),min(liV{i}),min(biV0{i})]);
+            maxV0 = min([-50,max([max(simV{i}),max(biV{i}),max(liV{i}),max(biV0{i})])]);
+            vStretch = maxV0-minV0;
+            minV = minV0-vStretch*0.1;
+            maxV = maxV0+vStretch*0.1;
+            yl = [minV,maxV];
             ylim(yl);
-            xlim(xl);
             if jNDfid
                 jbSize = fread(jNDfid,1,sizeSize);
                 jbt{i} = fread(jNDfid,jbSize,'double')*tstep;
@@ -231,45 +235,46 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
                 plot(tE,minV*ones(1,Ein),'.r');
                 vItar = zeros(Iin,1);
                 plot(tI,minV*ones(1,Iin),'.b');
-                for i=1:Ein
-                    iv = ceil(tE(i)/tstep);
+                for j=1:Ein
+                    iv = ceil(tE(j)/tstep);
                     if iv==0, iv=iv+1,end
                     jv = iv + 1;
-                    vEtar = simV(iv) + mod(tE(i),tstep)/tstep * (simV(jv)-simV(iv));
-                    plot([tE(i),tE(i)],[minV,vEtar],':r');
-                    text(tE(i),minV+(vEtar-minV)*0.3,num2str(Eid(i)),'Color','r','FontSize',textFontSize);
-                    text(tE(i),minV+(vEtar-minV)*0.1,num2str(i),'Color','r','FontSize',textFontSize);
+                    vEtar = simV{i}(iv) + mod(tE(j),tstep)/tstep * (simV{i}(jv)-simV{i}(iv));
+                    plot([tE(j),tE(j)],[minV,vEtar],':r');
+                    text(tE(j),minV+(vEtar-minV)*0.3,num2str(Eid(j)),'Color','r','FontSize',textFontSize);
+                    text(tE(j),minV+(vEtar-minV)*0.1,num2str(j),'Color','r','FontSize',textFontSize);
                  
-                    iv = ceil((tE(i)+ldur)/tstep);
+                    iv = ceil((tE(j)+ldur)/tstep);
                     if iv==0, iv=iv+1,end
                     if iv+1 < run_nt
                         jv = iv + 1;
-                        vEtar = simV(iv) + mod(tE(i),tstep)/tstep * (simV(jv)-simV(iv));
-                        plot([tE(i),tE(i)]+ldur,[vEtar,maxV],':r');
-                        text(tE(i)+ldur,maxV-(maxV-vEtar)*0.3,num2str(Eid(i)),'Color','r','FontSize',textFontSize);
-                        text(tE(i)+ldur,maxV-(maxV-vEtar)*0.1,num2str(i),'Color','r','FontSize',textFontSize);
+                        vEtar = simV{i}(iv) + mod(tE(j),tstep)/tstep * (simV{i}(jv)-simV{i}(iv));
+                        plot([tE(j),tE(j)]+ldur,[vEtar,maxV],':r');
+                        text(tE(j)+ldur,maxV-(maxV-vEtar)*0.3,num2str(Eid(j)),'Color','r','FontSize',textFontSize);
+                        text(tE(j)+ldur,maxV-(maxV-vEtar)*0.1,num2str(j),'Color','r','FontSize',textFontSize);
                     end
                 end
-                for i=1:Iin
-                    iv = ceil(tI(i)/tstep);
+                for j=1:Iin
+                    iv = ceil(tI(j)/tstep);
                     if iv==0, iv=iv+1,end
                     jv = iv + 1;
-                    vItar(i) = simV(iv) + mod(tI(i),tstep)/tstep * (simV(jv)-simV(iv));
-                    plot([tI(i),tI(i)],[minV,vItar(i)],':b');
-                    text(tI(i),minV+(vItar(i)-minV)*0.3,num2str(Iid(i)),'Color','b','FontSize',textFontSize);
-                    text(tI(i),minV+(vItar(i)-minV)*0.1,num2str(i),'Color','b','FontSize',textFontSize);
+                    vItar(j) = simV{i}(iv) + mod(tI(j),tstep)/tstep * (simV{i}(jv)-simV{i}(iv));
+                    plot([tI(j),tI(j)],[minV,vItar(j)],':b');
+                    text(tI(j),minV+(vItar(j)-minV)*0.3,num2str(Iid(j)),'Color','b','FontSize',textFontSize);
+                    text(tI(j),minV+(vItar(j)-minV)*0.1,num2str(j),'Color','b','FontSize',textFontSize);
                         
-                    iv = ceil((tI(i)+ldur)/tstep);
+                    iv = ceil((tI(j)+ldur)/tstep);
                     if iv==0, iv=iv+1,end
                     if iv+1 < run_nt
                         jv = iv + 1;
-                        vtar = simV(iv) + mod(tI(i),tstep)/tstep * (simV(jv)-simV(iv));
-                        plot([tI(i),tI(i)]+ldur,[vtar,maxV],':b');
-                        text(tI(i)+ldur,maxV-(maxV-vtar)*0.3,num2str(Iid(i)),'Color','b','FontSize',textFontSize);
-                        text(tI(i)+ldur,maxV-(maxV-vtar)*0.1,num2str(i),'Color','b','FontSize',textFontSize);
+                        vtar = simV{i}(iv) + mod(tI(j),tstep)/tstep * (simV{i}(jv)-simV{i}(iv));
+                        plot([tI(j),tI(j)]+ldur,[vtar,maxV],':b');
+                        text(tI(j)+ldur,maxV-(maxV-vtar)*0.3,num2str(Iid(j)),'Color','b','FontSize',textFontSize);
+                        text(tI(j)+ldur,maxV-(maxV-vtar)*0.1,num2str(j),'Color','b','FontSize',textFontSize);
                     end
                 end
             end
+            xlim(xl);
             if ~isempty(ext)
                 saveas(gcf,[p.theme,'-trial',num2str(i),'.',ext],format);
             end

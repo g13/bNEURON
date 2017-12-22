@@ -1,6 +1,7 @@
 #include "linear_bilinear.h"
 
 unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei){
+    bool debug;
     double vTarget, dtTarget, dtTarget1;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
     double tstep = neuroLib.tstep;
@@ -423,7 +424,6 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
     bool crossed; 
     size ncross = 0;
     
-    
     size limit, it, jt;
     unsigned int spikeCount = 0, spiked;
     
@@ -446,8 +446,10 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
     if (neuron.tin.size() > 0) {
         vs = static_cast<size>(neuron.tin[0]/tstep);
         for (i=0; i<neuron.tin.size(); i++) {
-            //cout << "i front " << i << endl;
-            //cout << "t " << vs*tstep << endl;
+            if (lb::debug2) {
+                cout << "i front " << i << endl;
+                cout << "t " << vs*tstep << endl;
+            }
             // linear
             if (neuron.tin[i] > run_t) {
                 break;
@@ -459,6 +461,9 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
                 tl = nt0;
             }
             interpPSP_nV(v, vs, neuroLib.sPSP, neuron.inID[i], 0, tl, iv0);
+            if (lb::debug2) {
+                cout << " linear ok" << endl;
+            }
 
             if (i<neuron.tin.size()-1) {
                 ve = static_cast<size>(neuron.tin[i+1]/tstep);
@@ -479,9 +484,19 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
                 if (neuron.tin[j] + tb > run_t)
                     tl = run_nt - vs;
                 else tl = static_cast<size>(round(nb - dtTarget));
-                //cout << j << "th " << neuron.ei[neuron.inID[i]] << ", " << i <<"th " << neuron.ei[neuron.inID[j]] <<  endl;
+
+                if (lb::debug2) {
+                    cout << j << "th " << neuron.ei[neuron.inID[i]] << ", " << i <<"th " << neuron.ei[neuron.inID[j]] <<  endl;
+                }
                 interpkV0(v, vs, neuroLib.kV0, neuroLib.idtRange, ndt, dtTarget, 0, tl, neuron.inID[j], neuron.inID[i]);
+                if (lb::debug2) {
+                    cout << " biv0 " << v[vs] << endl;
+                }
             } 
+            if (lb::debug2) {
+                cout << " bilinear0 ok" << endl;
+            }
+
             //check spike
             crossed = false;
             ith = i;
@@ -526,9 +541,11 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
                         spikeCount = spikeCount + 1;
                         neuron.tsp.push_back(tsp.back());
                     } 
-                    if (vs + l0 <= run_lt)
+                    if (vs + l0 <= run_lt) {
                         tl = nt0;
-                    else tl = run_nt-vs;
+                    } else {
+                        tl = run_nt-vs;
+                    }
                     for (j=1; j<tl;j++) {
                         v[vs+j] = neuron.vRest;
                     }

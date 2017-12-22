@@ -5,7 +5,7 @@
 #include "nNeuroSt.h"
 namespace lb{
     const bool debug = false;
-    const bool debug2 = false;
+    const bool debug2 = true;
 }
 template<typename T>
 inline void getNear(T *range, size n, double target, double &ratio, size &istart, size &jnext) {
@@ -191,12 +191,12 @@ inline void interpkV0(std::vector<double> &v, size vs, double ****kV0, size *idt
     for (k=1;k<tl;k++) {
         base = kV0[idt][iSyn][jSyn][idtRange[idt]+idt0+k];
         v[vs+k] += base + rdt * (kV0[jdt][iSyn][jSyn][idtRange[jdt]+idt0+k]-base);
-        //if (k==1) {
-        //    cout << "first value " << base << endl;
-        //}
-        //if (k==50) {
-        //    cout << "5ms value " << base << endl;
-        //}
+        if (lb::debug2 && k==1) {
+            cout << "first value " << base << endl;
+        }
+        if (lb::debug2 && k==50) {
+            cout << "5ms value " << base << endl;
+        }
     }
 }
 
