@@ -5,6 +5,7 @@ dir0='gainCurve'
 
 theme=$1
 newInput=$2
+ext=$3
 input=true
 level=false
 
@@ -49,5 +50,5 @@ cp $dir0/inputTable.bin $dir
 
 cd $dir
 export theme
-export newInput
+export ext
 sbatch --export=ALL gC.slurm

@@ -291,18 +291,18 @@ def getNib(argv):
     #locE = np.random.randint(75,134,6)
     #locE = np.array([79, 82, 83, 108, 124, 129],dtype='int')
     #vRange = np.arange(-74,-59)
-    vRange = np.array([-74,-70,-65,-61],dtype='double')
-    #vRange = np.array([-74,-70,-67,-65,-63,-62,-61.5,-61,-60.5,-60],dtype='double')
+    #vRange = np.array([-74,-70,-65,-61],dtype='double')
+    vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
     #locE = np.array([60, 72, 78, 84, 98],dtype='int')
-    locE = np.array([60, 72],dtype='int')
+    #locE = np.array([60, 72],dtype='int')
     #locE = np.array([52, 60, 72, 78, 84, 98],dtype='int')
     #locE = np.array([52, 60, 72],dtype='int')
     #locE = np.array([72],dtype='int')
     #locI = np.random.randint(1,75,3)
     #locI = np.array([41, 42, 43],dtype='int')
     #locI = np.array([40],dtype='int')
-    #locI = np.array([14, 28, 40],dtype='int')
-    locI = np.array([14],dtype='int')
+    locI = np.array([14, 28, 40],dtype='int')
+    #locI = np.array([14],dtype='int')
     ### swap one
     #swap = locE[0]
     #locE[0] = locI[-1]
