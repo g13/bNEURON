@@ -1,10 +1,13 @@
-function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
-    if nargin < 4
+function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
+    if nargin < 5
         sizeSize = 'int64';
-        if nargin < 3
-            plotSubthreshold = true;
-            if nargin < 2
-                ext = '';
+        if nargin < 4
+            plotInput = true;
+            if nargin < 3
+                plotSubthreshold = true;
+                if nargin < 2
+                    ext = '';
+                end
             end
         end
     end
@@ -24,9 +27,19 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
     filter = [1,5];
     fdr = fdr(filter,:);
     fnstr = strjoin(fdr(1,:))
-    load(p.libFile,'tstep','n');
+    load(p.libFile,'tstep','n','gList');
+
+    nE = 0;
+    nI = 0;
+    for i=1:n
+        if gList(i) > 0
+            nE = nE + 1;
+        else
+            nI = nI + 1;
+        end
+    end
     datafilePattern = [p.theme,'\-s\d*\-(Data|jND|Raster|tIn)\.bin'];
-    datafile = regexp(fnstr, datafilePattern,'match')%,'forceCellOutput');
+    datafile = regexp(fnstr, datafilePattern,'match');
     dimsFid = fopen(dimsFn,'r');
     if dimsFid
         nTrial = fread(dimsFid, 1, 'int');
@@ -109,6 +122,9 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
         biV0 = cell(nTrial,1);
         datafid = fopen(dataFn,'r');
         jNDfid = fopen(jNDFn,'r');
+        if plotInput
+            tInfid = fopen(tInFn,'r');
+        end
         disp(tstep);
         for i=1:nTrial
             disp(['this is ', num2str(i), 'th trial']);
@@ -156,6 +172,11 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
             plot(t,biV{i},'b');
             plot(t,liV{i},'r');
             plot(t,biV0{i},'g');
+            minV = min([min(simV{i}),min(biV{i}),min(liV{i}),min(biV0{i})]);
+            maxV = min([-50,max([max(simV{i}),max(biV{i}),max(liV{i}),max(biV0{i})]]);
+            vStretch = maxV-minV;
+            yl = [minV-vStretch*0.1,maxV+vStretch*0.1];
+            ylim(yl);
             xlim(xl);
             if jNDfid
                 jbSize = fread(jNDfid,1,sizeSize);
@@ -187,6 +208,62 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
                     plot(tmpCrossT, tmpCrossV,':r');
                 end
             end
+            if plotInput
+                ntmp = fread(tInfid,[1,1],sizeSize);
+                tin = fread(tInfid,[ntmp,1],'double');
+                tID = fread(tInfid,[ntmp,1],sizeSize);
+                tID = tID + 1;
+                pE = (tID <= nE);
+                pI = (tID > nE);
+                tE = tin(pE);
+                tI = tin(pI);
+                Eid = tID(pE);
+                Iid = tID(pI)-nE;
+                Ein = length(tE);
+                Iin = length(tI);
+                vEtar = zeros(Ein,1);
+                plot(tE,minV*ones(1,Ein),'.r');
+                vItar = zeros(Iin,1);
+                plot(tI,minV*ones(1,Iin),'.b');
+                for i=1:Ein
+                    iv = ceil(tE(i)/tstep);
+                    if iv==0, iv=iv+1,end
+                    jv = iv + 1;
+                    vEtar = simV(iv) + mod(tE(i),tstep)/tstep * (simV(jv)-simV(iv));
+                    plot([tE(i),tE(i)],[minV,vEtar],':r');
+                    text(tE(i),minV+(vEtar-minV)*0.3,num2str(Eid(i)),'Color','r','FontSize',textFontSize);
+                    text(tE(i),minV+(vEtar-minV)*0.1,num2str(i),'Color','r','FontSize',textFontSize);
+                 
+                    iv = ceil((tE(i)+ldur)/tstep);
+                    if iv==0, iv=iv+1,end
+                    if iv+1 < run_nt
+                        jv = iv + 1;
+                        vEtar = simV(iv) + mod(tE(i),tstep)/tstep * (simV(jv)-simV(iv));
+                        plot([tE(i),tE(i)]+ldur,[vEtar,maxV],':r');
+                        text(tE(i)+ldur,maxV-(maxV-vEtar)*0.3,num2str(Eid(i)),'Color','r','FontSize',textFontSize);
+                        text(tE(i)+ldur,maxV-(maxV-vEtar)*0.1,num2str(i),'Color','r','FontSize',textFontSize);
+                    end
+                end
+                for i=1:Iin
+                    iv = ceil(tI(i)/tstep);
+                    if iv==0, iv=iv+1,end
+                    jv = iv + 1;
+                    vItar(i) = simV(iv) + mod(tI(i),tstep)/tstep * (simV(jv)-simV(iv));
+                    plot([tI(i),tI(i)],[minV,vItar(i)],':b');
+                    text(tI(i),minV+(vItar(i)-minV)*0.3,num2str(Iid(i)),'Color','b','FontSize',textFontSize);
+                    text(tI(i),minV+(vItar(i)-minV)*0.1,num2str(i),'Color','b','FontSize',textFontSize);
+                        
+                    iv = ceil((tI(i)+ldur)/tstep);
+                    if iv==0, iv=iv+1,end
+                    if iv+1 < run_nt
+                        jv = iv + 1;
+                        vtar = simV(iv) + mod(tI(i),tstep)/tstep * (simV(jv)-simV(iv));
+                        plot([tI(i),tI(i)]+ldur,[vtar,maxV],':b');
+                        text(tI(i)+ldur,maxV-(maxV-vtar)*0.3,num2str(Iid(i)),'Color','b','FontSize',textFontSize);
+                        text(tI(i)+ldur,maxV-(maxV-vtar)*0.1,num2str(i),'Color','b','FontSize',textFontSize);
+                    end
+                end
+            end
             if ~isempty(ext)
                 saveas(gcf,[p.theme,'-trial',num2str(i),'.',ext],format);
             end
@@ -194,4 +271,5 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
     end
     fclose(datafid);
     fclose(jNDfid);
+    fclose(tInfid);
 end

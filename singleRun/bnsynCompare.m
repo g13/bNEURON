@@ -92,7 +92,7 @@ function bsynCompare(theme,rE,rI,libfile,seed,run_t)
     figure;
     textFontSize = 8;
     minV = min([min(simV),min(biV),min(liV),min(biV0)]);
-    maxV = max([max(simV),max(biV),max(liV),max(biV0)]);
+    maxV = min([-50,max([max(simV),max(biV),max(liV),max(biV0)]]);
     subplot(2,2,1);
     %plot(t,[simV,simVq,biV,liV]);
     plot(t,[simV,biV,liV,biV0]);
