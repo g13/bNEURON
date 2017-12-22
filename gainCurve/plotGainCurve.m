@@ -8,8 +8,12 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
             end
         end
     end
+    format = ext;
     if isequal(ext, 'psc')
         format = 'epsc';
+    end
+    if isequal(ext, 'jpg')
+        format = 'jpeg';
     end
     p = read_cfg(inputFn);
     dimsFn = 'readoutDimension.bin';
@@ -80,13 +84,15 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, sizeSize)
     fclose(RasterFid);
     figure;
     hold on
-    plot(inputLevel,ss./runTime,'-*k');
-    plot(inputLevel,sb./runTime,'-*r');
-    plot(inputLevel,sl./runTime,'-*b');
-    plot(inputLevel,sjb./runTime,'-or');
-    plot(inputLevel,sjl./runTime,'-ob');
-    plot(inputLevel,sb0./runTime,'-og');
+    plot(inputLevel,ss./runTime*1000,'-*k');
+    plot(inputLevel,sb./runTime*1000,'-*r');
+    plot(inputLevel,sl./runTime*1000,'-*b');
+    plot(inputLevel,sjb./runTime*1000,'-or');
+    plot(inputLevel,sjl./runTime*1000,'-ob');
+    plot(inputLevel,sb0./runTime*1000,'-og');
     xlim([0,inputLevel(nTrial)*1.1]);
+    xlabel('input rate Hz');
+    ylabel('firing rate Hz');
 
     if ~isempty(ext)
         saveas(gcf,[p.theme,'-gainCurve.',ext],format);
