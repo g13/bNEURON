@@ -15,6 +15,8 @@ input_args_CA1::input_args_CA1() {
         ("vTol",po::value<double>(&vTol),"crossing threshold tolerance")
         ("vBuffer",po::value<double>(&vBuffer),"return threshold buffer")
         ("dendClampRatio",po::value<double>(&dendClampRatio),"dendrite dV contribution ratio")
+        ("afterSpikeBehavior",value<int>(&afterSpikeBehavior)->default_value(0), "0:no linear or bilinear extension after spike. 1:no bilinear extension. 2: all extend.")
+        ("kVStyle",value<int>(&kVStyle)->default_value(0), "bilinear0 after spike kV style, 0: kV0 style. 1: kV style.")
 		("ignoreT", po::value<double>(&ignoreT),"ingore time while applying bilinear rules");
         
     cmdLineOptions.add(CA1_options);

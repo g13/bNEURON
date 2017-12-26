@@ -253,7 +253,7 @@ void jl::update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS 
     input.assert_size();
 }
 
-unsigned int nsyn_jLinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, std::vector<double> &v, size corrSize, std::vector<double> &tsp, double vStop, vector<bool> &ei) {
+unsigned int nsyn_jLinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, std::vector<double> &v, size corrSize, std::vector<double> &tsp, double vStop, vector<bool> &ei, int afterSpikeBehavior) {
     size i, i_prior_cross;
     double iend = end_t/neuroLib.tstep;
     unsigned int nc_old, nc = 0;
@@ -288,10 +288,10 @@ unsigned int nsyn_jLinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cr
             if (ii > 1) cout << " AGAIN?!!" << endl;
             if (t_cross <= neuron.tin[i]/tstep) {
                 tail_l = old_tail_l;
-                //reverse_corr_window(neuron.tin, tail_l, t_cross, tol_tl, tstep);
                 i_prior_cross = i-1;
             } else {
                 i_prior_cross = i;
+                //old_tail_l = tail_l;
                 //move_corr_window(neuron.tin, tail_l, t_cross, tol_tl, tstep);
             }
             if (jl::debug) {
@@ -343,7 +343,9 @@ unsigned int nsyn_jLinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cr
             move_corr_window(neuron.tin, tail_l, tBack, tol_tl, tstep);
             jl::update_info_after_cross(input, neuroLib, cross, neuron, tBack, vBack, i_prior_cross, tail_l, i, corrSize, tsp, spiked);
             cout << " updated" << endl;
-            tail_l = i + 1;
+            if (!afterSpikeBehavior) {
+                tail_l = i + 1;
+            }
             crossed = jl::check_crossing(input, neuroLib, cross, neuron, tol_tl, end_t, tail_l, i, jnd, t_cross);
             cout << "------------" << endl;
         }

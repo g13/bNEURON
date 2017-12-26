@@ -1,6 +1,6 @@
 #include "linear_bilinear.h"
 
-unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei){
+unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterSpikeBehavior){
     bool debug;
     double vTarget, dtTarget, dtTarget1;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
@@ -72,17 +72,20 @@ unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, d
             } else {
                 vc = run_nt;
             }
-            if (i_b == i && i != 0) cout << "first v after cross " << v[vs] << endl;
+            if (i_b == i && i != 0) cout << "first input after cross " << v[vs] << endl;
             for (k=i; k>i_b; k--) {
                 j = k-1; // prevent negative for unsigned int iteration number. 
                 dtTarget = neuron.tin[i]-neuron.tin[j];
                 if (dtTarget > tb) break;
                 dtTarget = dtTarget/tstep; // for interp along idtRange
-                if (neuron.tin[j] + tb > run_t)
+                if (neuron.tin[j] + tb > run_t) {
                     tl = run_nt - vs;
-                else tl = static_cast<size>(round(nb - dtTarget));
+                } else {
+                    tl = static_cast<size>(round(nb - dtTarget));
+                }
 
                 if (lb::debug2) {
+                    cout << j << "th " << neuron.ei[neuron.inID[i]] << ", " << i <<"th " << neuron.ei[neuron.inID[j]] <<  endl;
                     cout << " b " << k << " v " << v[vs] << endl;
                     cout << " tl " << tl << " vs + tl " << vs + tl << endl;
                 }
@@ -147,10 +150,11 @@ unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, d
                     for (j=1; j<tl;j++) {
                         v[vs+j] = neuron.vRest;
                     }
-                    vTarget = neuron.vRest;
+                    vTarget = v[vs];
                     //if (vs < run_lt) {
-                    if (0) {
-                        for (ii=ith+1; ii>ith+1; ii--) {
+                    if (afterSpikeBehavior) {
+                        cout << " adding afterSpike sPSP " << endl;
+                        for (ii=ith+1; ii>0; ii--) {
                             i = ii-1;
                             it = round(neuron.tin[i]/tstep);
                             dtTarget = vs - it;
@@ -165,33 +169,38 @@ unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, d
                                 //cout << neuron.tin[i] << " + " << t1 << " < " << run_t << endl;
                             }
                             interpPSP(v,vs, neuroLib.sPSP, neuroLib.vRange, neuroLib.idtRange, neuron.inID[i], neuroLib.nv, ndt, vTarget, dtTarget, limit);
-                            for (k=i; k>0; k--) {
-                                j = k-1; // prevent negative for unsigned int iteration number. 
-                                jt = neuron.tin[j]/tstep;
-                                dtTarget = it - jt;
-                                dtTarget1 = vs - jt;
-                                if (dtTarget > lb) {
-                                    break;
-                                }
-                                if (neuron.tin[j] + tb > run_t)
-                                    tl = run_nt - vs;
-                                else tl = static_cast<size>(round(nb - dtTarget1));
-                                //cout << "vs + tl " << vs << " + " << tl << " < " << run_nt << endl;
-                                interpkV(v, vs, neuroLib.kV, neuroLib.vRange, neuroLib.idtRange, neuroLib.nv, ndt, vTarget, dtTarget, dtTarget1, tl, neuron.inID[j], neuron.inID[i]);
-                            } 
+                            if (afterSpikeBehavior==2) {
+                                i_b = 0;
+                                cout << " adding afterspike bPSP " << endl;
+                                for (k=i; k>0; k--) {
+                                    j = k-1; // prevent negative for unsigned int iteration number. 
+                                    jt = neuron.tin[j]/tstep;
+                                    dtTarget = it - jt;
+                                    dtTarget1 = vs - jt;
+                                    if (dtTarget > lb) {
+                                        break;
+                                    } 
+                                    if (neuron.tin[j] + tb > run_t) {
+                                        tl = run_nt - vs;
+                                    } else { 
+                                        tl = static_cast<size>(round(nb - dtTarget1));
+                                    }
+                                    //cout << "vs + tl " << vs << " + " << tl << " < " << run_nt << endl;
+                                    interpkV(v, vs, neuroLib.kV, neuroLib.vRange, neuroLib.idtRange, neuroLib.nv, ndt, vTarget, dtTarget, dtTarget1, tl, neuron.inID[j], neuron.inID[i]);
+                                } 
+                            }
                         }
-                        vc = vs + l1; 
                         if (ith<neuron.tin.size()-1) {
                             ve = static_cast<size>(neuron.tin[ith+1]/tstep);
-                            if (ve + 1 < vc) {
+                            if (ve + 1 > vs + nt) {
+                                vc = vs + nt;
+                            } else {
                                 vc = ve + 1;
                             }
                         } else {
-                            if (vc > run_lt) {
-                                vc = run_nt;
-                            }
+                            vc = run_nt;
                         }
-                        k = vc-1;
+                        k = vc-1; // initial value in case vs == vc
                         for (j=vs; j<vc; j++) {
                             if (v[j] > vCross) {
                                 k = j;
@@ -223,7 +232,7 @@ unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, d
     return spikeCount;
 }
 
-unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei){
+unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterSpikeBehavior){
     double vTarget, dtTarget;
     size tl, vs, ve, vc, i, j, k, ith_old, ith;
     double tstep = neuroLib.tstep;
@@ -291,10 +300,9 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
             ith = i;
             for (k=vs;k<vc;k++) {
                 while (v[k] > vCross) {
-                    //std::cout << "k " << k << std::endl;
+                    assert(k<vc);
                     crossed = true;
                     ncross = ncross +1;
-                    // come in and out in multiples of tstep 
                     if (lb::debug) {
                         std::cout << "crossed at " << k*tstep << ", start ith " << ith << " t= " << neuron.tin[ith] << std::endl;
                         std::cout << "v[k0] " << v[k]  << " vCross " << vCross << std::endl;
@@ -331,18 +339,19 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
                         spikeCount = spikeCount + 1;
                         neuron.tsp.push_back(tsp.back());
                     } 
-                    if (vs + l0 <= run_lt)
+                    if (vs + l0 <= run_lt) {
                         tl = nt0;
-                    else tl = run_nt-vs;
+                    } else {
+                        tl = run_nt-vs;
+                    }
                     for (j=1; j<tl;j++) {
                         v[vs+j] = neuron.vRest;
                     }
-                    vTarget = neuron.vRest;
+                    vTarget = v[vs];
                     //if (vs < run_lt) {
-                    if (0) {
+                    if (afterSpikeBehavior) {
                         for (i=ith+1;i>0; i--) {
                             j = i-1;
-                            //if (inTref[j]) continue;
                             it = round(neuron.tin[j]/tstep);
                             dtTarget = vs - it;
                             if (l1 <= dtTarget) {
@@ -356,16 +365,15 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
                             }
                             interpPSP(v,vs, neuroLib.sPSP, neuroLib.vRange, neuroLib.idtRange, neuron.inID[j], neuroLib.nv, ndt, vTarget, dtTarget, limit);
                         }
-                        vc = vs + l1; 
                         if (ith<neuron.tin.size()-1) {
                             ve = static_cast<size>(neuron.tin[ith+1]/tstep);
-                            if (ve < vc) {
-                                vc = ve;
+                            if (ve + 1 > vs + nt) {
+                                vc = vs + nt;
+                            } else {
+                                vc = ve + 1;
                             }
                         } else {
-                            if (vc > run_lt) {
-                                vc = run_nt;
-                            }
+                            vc = run_nt;
                         }
                         k = vc-1;
                         //cout << " vc " << vc << endl;
@@ -388,6 +396,7 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
                 }
                 if (crossed) {
                     i = ith;
+                    cout << " last input during cross " << i << endl;
                     break;
                 }
             }
@@ -398,7 +407,7 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
     return spikeCount;
 }
 
-unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei){
+unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterSpikeBehavior, bool kVStyle){
     double vTarget, dtTarget, dtTarget1;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
     double tstep = neuroLib.tstep;
@@ -460,7 +469,7 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
             } else {
                 tl = nt0;
             }
-            interpPSP_nV(v, vs, neuroLib.sPSP, neuron.inID[i], 0, tl, iv0);
+            interpPSP_nV(v, vs, neuroLib.sPSP, neuroLib.idtRange, ndt, neuron.inID[i], 0, tl, iv0);
             if (lb::debug2) {
                 cout << " linear ok" << endl;
             }
@@ -483,10 +492,14 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
                 dtTarget = dtTarget/tstep; // for interp along idtRange
                 if (neuron.tin[j] + tb > run_t)
                     tl = run_nt - vs;
-                else tl = static_cast<size>(round(nb - dtTarget));
+                } else  {
+                    tl = static_cast<size>(round(nb - dtTarget));
+                }
 
                 if (lb::debug2) {
                     cout << j << "th " << neuron.ei[neuron.inID[i]] << ", " << i <<"th " << neuron.ei[neuron.inID[j]] <<  endl;
+                    cout << " b " << k << " v " << v[vs] << endl;
+                    cout << " tl " << tl << " vs + tl " << vs + tl << endl;
                 }
                 interpkV0(v, vs, neuroLib.kV0, neuroLib.idtRange, ndt, dtTarget, 0, tl, neuron.inID[j], neuron.inID[i]);
                 if (lb::debug2) {
@@ -549,13 +562,77 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
                     for (j=1; j<tl;j++) {
                         v[vs+j] = neuron.vRest;
                     }
-                    vTarget = neuron.vRest;
+                    vTarget = v[vs];
                     //if (vs < run_lt) {
-                    cout << " no readjust input, only leakage" << endl;
-                    if (ith<neuron.tin.size()-1) {
-                        ve = static_cast<size>(neuron.tin[ith+1]/tstep);
+                    if (afterSpikeBehavior) {
+                        cout << " adding afterSpike sPSP " << endl;
+                        for (ii=ith+1; ii>0; ii--) {
+                            i = ii-1;
+                            it = round(neuron.tin[i]/tstep);
+                            dtTarget = vs - it;
+                            if (l1 <= dtTarget) {
+                                break;
+                            }
+                            if (neuron.tin[i] + t1 > run_t) {
+                                //cout << neuron.tin[i] << " + " << t1 << " > " << run_t << endl;
+                                limit = run_nt - it;
+                            } else {
+                                limit = nt;
+                                //cout << neuron.tin[i] << " + " << t1 << " < " << run_t << endl;
+                            }
+                            interpPSP_nV(v, vs, neuroLib.sPSP, neuroLib.idtRange, ndt, neuron.inID[i], dtTarget, limit, iv0, kVStyle);
+                            if (afterSpikeBehavior==2) {
+                                i_b = 0;
+                                cout << " adding afterspike bPSP " << endl;
+                                for (k=i; k>0; k--) {
+                                    j = k-1; // prevent negative for unsigned int iteration number. 
+                                    jt = neuron.tin[j]/tstep;
+                                    dtTarget = it - jt;
+                                    dtTarget1 = vs - jt;
+                                    if (dtTarget > lb) {
+                                        break;
+                                    } 
+                                    if (neuron.tin[j] + tb > run_t) {
+                                        tl = run_nt - vs;
+                                    } else { 
+                                        tl = static_cast<size>(round(nb - dtTarget1));
+                                    }
+                                    //cout << "vs + tl " << vs << " + " << tl << " < " << run_nt << endl;
+                                    if (kVStyle) {
+                                        interpkV(v, vs, neuroLib.kV, neuroLib.vRange, neuroLib.idtRange, neuroLib.nv, ndt, neuron.vRest, dtTarget, dtTarget1, tl, neuron.inID[j], neuron.inID[i]);
+                                    } else {
+                                        interpkV0(v, vs, neuroLib.kV0, neuroLib.idtRange, ndt, dtTarget, dtTarget1, tl, neuron.inID[j], neuron.inID[i]);
+                                    }
+                                }
+                            }
+                        }
+                        if (ith<neuron.tin.size()-1) {
+                            ve = static_cast<size>(neuron.tin[ith+1]/tstep);
+                            if (ve + 1 > vs + nt) {
+                                vc = vs + nt;
+                            } else {
+                                vc = ve + 1;
+                            }
+                        } else {
+                            vc = run_nt;
+                        }
+                        k = vc-1; // initial value in case vs == vc
+                        for (j=vs; j<vc; j++) {
+                            if (v[j] > vCross) {
+                                k = j;
+                                if (lb::debug) {
+                                    std::cout << "cross again at " << k << std::endl;
+                                }
+                                break;
+                            }
+                        }
+                    } else {
+                        cout << " no readjust input, only leakage" << endl;
+                        if (ith<neuron.tin.size()-1) {
+                            ve = static_cast<size>(neuron.tin[ith+1]/tstep);
+                        }
+                        break;
                     }
-                    break;
                 }
                 if (crossed) {
                     i = ith;
