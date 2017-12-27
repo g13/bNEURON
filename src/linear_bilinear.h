@@ -135,7 +135,7 @@ inline void interpPSP_nV(std::vector<double> &v, size vs, double ****PSP, size *
                 v[vs+k] += base + rdt*(PSP[iv0][jdt][iSyn][jjdt+k]-base);
             }
         } else {
-            idtTar = static_cast<size>(round(dtTar));
+            size idtTar = static_cast<size>(round(dtTar));
             limit = limit - idtTar;
             for (k=1;k<limit;k++) {
                  v[vs+k] += PSP[iv0][0][iSyn][idtTar + k];

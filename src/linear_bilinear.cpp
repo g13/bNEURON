@@ -469,7 +469,7 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
             } else {
                 tl = nt0;
             }
-            interpPSP_nV(v, vs, neuroLib.sPSP, neuroLib.idtRange, ndt, neuron.inID[i], 0, tl, iv0);
+            interpPSP_nV(v, vs, neuroLib.sPSP, neuroLib.idtRange, ndt, neuron.inID[i], 0, tl, iv0, kVStyle);
             if (lb::debug2) {
                 cout << " linear ok" << endl;
             }
@@ -490,7 +490,7 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
                 dtTarget = neuron.tin[i]-neuron.tin[j];
                 if (dtTarget > tb) break;
                 dtTarget = dtTarget/tstep; // for interp along idtRange
-                if (neuron.tin[j] + tb > run_t)
+                if (neuron.tin[j] + tb > run_t) {
                     tl = run_nt - vs;
                 } else  {
                     tl = static_cast<size>(round(nb - dtTarget));
@@ -644,6 +644,6 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
             //cout << "i back" << i << "ve " << vs << endl;
         }
     }
-    std::cout << "crossed " << ncross << " times" << std::endl;
+    cout << "crossed " << ncross << " times" << endl;
     return spikeCount;
 }
