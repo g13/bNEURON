@@ -1,20 +1,19 @@
 #!/bin/bash
 n128=0
-datafdr='../../data'
 dir0='gainCurve'
 
-theme=$1
+fdr=$1
 newInput=$2
 ext=$3
 input=true
 level=false
 
-if [ "$theme" == "" ]; then
-    echo "need to assign theme"
+if [ "$fdr" == "" ]; then
+    echo "need to assign fdr"
     exit 0
 fi
 
-dir=$dir0'/'$theme
+dir=$dir0'/'$fdr
 if [ -d "$dir" ]; then
     rm -r $dir/*
 else
@@ -49,6 +48,5 @@ cp $dir0/inputTable.bin $dir
 
 
 cd $dir
-export theme
 export ext
 sbatch --export=ALL gC.slurm

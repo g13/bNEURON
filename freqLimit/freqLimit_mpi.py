@@ -1,5 +1,5 @@
 import numpy as np
-import os, time, sys
+import os, time, sys, getopt
 from neuroAlter import *
 import multiprocessing as mp
 from shutil import copy
@@ -417,6 +417,368 @@ def subOnly(gList,loc,pos,vrest,v0,presetSpike,trans,run_t,tol_t,tstep,spList,se
     else:
         return dbv, dlv, db0v
 
+def subOnly0(gList,loc,pos,vrest,v0,presetSpike,trans,run_t,tol_t,tstep,spList,seed,name,rE,rI,linear,bilinear,bilinear0,noMoreInput_t,s,did,rdpi):
+    # only available on Unix
+    f = open('sOlog-'+str(did),'w')
+    nE = sum([x>0 for x in gList])
+    nI = sum([x<=0 for x in gList])
+    n = nI + nE
+    
+    cell, vecStimList, synList = prepCell(gList, loc, pos, n, vrest)
+    
+    tol_nt = int(tol_t/tstep)
+    ntrans = int(trans/tstep)
+    run_nt = int(run_t/tstep)
+    
+    
+    if presetSpike:
+        spikeTrain = list([])
+        for i in xrange(n):
+            tmpTrain = np.empty(spList[i].size)
+            k = 0
+            for j in xrange(spList[i].size):
+                ts = round(spList[i][j]/tstep)*tstep
+                if ts <= noMoreInput_t:
+                    tmpTrain[k] = ts
+                    k = k+1
+                else:
+                    break
+            spikeTrain.append(np.resize(tmpTrain,k))
+    else:
+        rateE = np.ones(nE)*rE/1000
+        rateI = np.ones(nI)*rI/1000
+        rate = np.concatenate((rateE, rateI))
+        spikeTrain = list([])
+        for i in xrange(n):
+            tmpTrain = np.empty(int(10*rate[i]*noMoreInput_t))
+            if tmpTrain.size > 0:
+                tmpT = 0
+                lastT = 0
+                j = 0
+                while tmpT < noMoreInput_t and j < tmpTrain.size:
+                    dt = - np.log(np.random.random_sample(1))/rate[i]
+                    tmpT = tmpT + dt
+                    if dt > tstep or lastT == 0:
+                        tmpTrain[j] = round(tmpT/tstep)*tstep
+                        j = j + 1
+                    lastT = tmpT
+                if tmpTrain[j-1] > noMoreInput_t:
+                    spikeTrain.append(np.resize(tmpTrain,(j-1)))
+                else:
+                    spikeTrain.append(np.resize(tmpTrain,(j)))
+            else:
+                spikeTrain.append(np.empty(0))
+            print i, "th spikeTrain:", spikeTrain[i]
+            print >> f, i, "th spikeTrain:", spikeTrain[i]
+    
+    totSpikes = sum([x.size for x in spikeTrain])
+    print " total inputs = ", totSpikes
+    print >> f, " total inputs = ", totSpikes
+    print spikeTrain
+    print >> f, spikeTrain
+    
+    singleSpikeTrain = np.empty(totSpikes,dtype=float)
+    singleSpikeID = np.empty(totSpikes,dtype=int)
+    j = 0
+    for i in xrange(n):
+        if spikeTrain[i].size > 0:
+            singleSpikeTrain[j:j+spikeTrain[i].size] = spikeTrain[i]
+            singleSpikeID[j:j+spikeTrain[i].size] = i
+            j = j + spikeTrain[i].size
+    args = np.argsort(singleSpikeTrain, kind='mergesort')
+    print singleSpikeTrain
+    print >> f, singleSpikeTrain
+    print singleSpikeID
+    print >> f, singleSpikeID
+    print " "
+    print >> f, " "
+    singleSpikeTrain = singleSpikeTrain[args]
+    singleSpikeID = singleSpikeID[args]
+    
+    print singleSpikeTrain
+    print >> f, singleSpikeTrain
+    print singleSpikeID
+    print >> f, singleSpikeID
+
+    assert(not singleSpikeTrain[-1] == 0)
+    
+    print " original sim:"
+    print >> f, " original sim:"
+    RList = np.zeros((n,2))
+    rel = np.zeros(n,dtype=int)
+    sel = range(0,n)
+    simV,fired,_,_ = proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, trans + run_t, 0, 0, 0, 1, 0, tstep, loc, pos)
+    print simV.size
+    print >> f, simV.size
+    #assert(fired==0)
+    
+    v_pre = v0
+    liV = np.zeros(max(run_nt,int((singleSpikeTrain[-1]+tol_t)/tstep))+1) + vrest
+    leakyV, _= leaky(cell, v0, synList, RList, vecStimList, n, trans, trans + run_t, tstep, loc, pos)
+    leakyV = leakyV - vrest
+    leakyV = leakyV[ntrans:ntrans+run_nt+1]
+    liV[:run_nt+1] = liV[:run_nt+1] + leakyV
+    #leakyV, _, _ = proceed(cell, v0, synList, RList, vecStimList, np.empty((n,0)), n, trans, tol_t + trans, 0, 0, 0, 1, 0, tstep)
+    #leakyV = leakyV - vrest
+    #leakyV = leakyV[ntrans:ntrans+tol_nt+1]
+    #liV[:tol_nt+1] = liV[:tol_nt+1] + leakyV
+    biV = liV.copy()
+    biV0 = liV.copy()
+    pyplot.figure(name+'/'+name+'-'+'leakyV',figsize=(8,4))
+    pyplot.plot(np.linspace(0,run_t,run_nt+1),liV[:run_nt+1])
+    pyplot.savefig(name+'/'+name+'-leakyV.png',format='png',bbox_inches='tight',dpi=rdpi)
+    pyplot.close()
+   
+    if linear:
+        print " singlets for linear:"
+        print >> f, " singlets for linear:"
+        for i in xrange(totSpikes):
+            if gList[singleSpikeID[i]] < 0.0:
+                label = 'I'+str(singleSpikeID[i])+'-'
+            else:
+                label = 'E'+str(singleSpikeID[i])+'-'
+
+            t0 = singleSpikeTrain[i]
+            if t0 > run_t:
+                break
+            i0 = int(round(t0/tstep))
+            i1 = i0 + 1
+            v_pre = liV[i0]
+            sel = singleSpikeID[i]
+        
+            v,_ = sproceed(cell, v_pre, synList, gList, RList, vecStimList, 0.0, n, sel, trans, trans + tol_t, tstep, '')
+            leakyV, _ = leaky(cell, v_pre, synList, RList, vecStimList, n, trans, trans + tol_t, tstep, loc, pos)
+            v = v[ntrans:ntrans+tol_nt+1] - leakyV[ntrans:ntrans+tol_nt+1]
+        
+            pyplot.figure(name+'/'+name+'-s'+label+str(i),figsize=(8,4))
+            pyplot.title(label+str(i))
+            pyplot.plot(np.linspace(0,tol_t,tol_nt+1),v,'g',lw = 1.5)
+            pyplot.savefig(name+'/'+name+'-s'+label+str(i)+'.png',format='png',bbox_inches='tight',dpi=rdpi)
+            pyplot.close()
+            shiftAdd(liV,v,1,i1,tol_nt)
+                
+        pyplot.figure(name+'/'+name+'-liV',figsize=(8,4))
+        pyplot.plot(np.linspace(0,run_t,run_nt+1),simV[ntrans:ntrans+run_nt+1], lw = 2)
+        pyplot.plot(np.linspace(0,run_t,run_nt+1),liV[:run_nt+1], lw = 1)
+        pyplot.savefig(name+'/'+name+'-liV.png',format='png',bbox_inches='tight',dpi=rdpi)
+        pyplot.close()
+    
+    RList = np.zeros((n,2))
+    rel = np.zeros(n,dtype=int)
+    if bilinear:
+        for i in xrange(totSpikes):
+            if gList[singleSpikeID[i]] < 0:
+                label1 = 'I'+str(singleSpikeID[i])+'-'
+            else:
+                label1 = 'E'+str(singleSpikeID[i])+'-'
+            print ''
+            print >> f, ''
+            t0 = singleSpikeTrain[i]
+            if t0 > run_t:
+                break
+            i0 = int(round(t0/tstep))
+            i1 = i0 + 1
+            v_pre = biV[i0]
+            sel = singleSpikeID[i]
+            #print 'v_pre = ', v_pre
+            #print >> f, 'v_pre = ', v_pre
+            v2, _ = sproceed(cell, v_pre, synList, gList, RList, vecStimList, 0.0, n, sel, trans, trans + tol_t, tstep, '')
+            leakyV, _ = leaky(cell, v_pre, synList, RList, vecStimList, n, trans, trans + tol_t, tstep, loc, pos)
+            v2 = v2[ntrans:ntrans+tol_nt+1] - leakyV[ntrans:ntrans+tol_nt+1]
+            shiftAdd(biV,v2,1,i1,tol_nt)
+            pyplot.figure(name+'/'+name+'-s'+label1+str(i),figsize=(8,4))
+            pyplot.title(label1+str(i))
+            pyplot.plot(np.linspace(0,tol_t,tol_nt+1),v2,'b',lw = 1.0)
+            pyplot.savefig(name+'/'+name+'-s'+label1+str(i)+'.png',format='png',bbox_inches='tight',dpi=rdpi)
+        
+            for j in xrange(0,i):
+                print i, '-', j
+                print >> f, i, '-', j
+                if gList[singleSpikeID[j]] < 0:
+                    label2 = 'I'+str(singleSpikeID[j])+'-'
+                else:
+                    label2 = 'E'+str(singleSpikeID[j])+'-'
+                label = label2 + label1
+                t00 = singleSpikeTrain[j]
+                dt = t0 - t00
+
+                if dt < tol_t:
+                    idt = int(round(dt/tstep))
+                    if singleSpikeID[j] == singleSpikeID[i]:
+                        sel = [singleSpikeID[j]]
+                        spikes = np.array([[0.0,dt]])
+                    else:
+                        sel = [singleSpikeID[j],singleSpikeID[i]]
+                        spikes = np.array([np.array([0.0]),np.array([dt])])
+                    print 'synapse:', sel
+                    print >> f, 'synapse:', sel
+                    v,_ = bproceed0(cell, v_pre, synList, gList, RList, vecStimList, spikes, n, sel, trans, dt, trans + tol_t, 0.0, tstep, '')
+                    v = v[ntrans+idt:ntrans+tol_nt+1]
+                    relit = v.size
+                    v = v - leakyV[ntrans:ntrans+relit]
+                    assert(relit == tol_nt+1-idt)
+                
+                    sel = [singleSpikeID[j]]
+                    spikes = np.array([[0.0]])
+                    v1,_ = bproceed0(cell, v_pre, synList, gList, RList, vecStimList, spikes, n, sel, trans, dt, trans + tol_t, 0.0, tstep, '')
+                    v1 = v1[ntrans+idt:ntrans+tol_nt+1]
+                    v1 = v1 - leakyV[ntrans:ntrans+relit]
+        
+                    addv = v2[:relit] + v1
+                    bv = v - addv
+                    shiftAdd(biV,bv,1,i1,relit-1)
+                    pyplot.figure(name+'/'+name+'-b'+label+str(i)+'-'+str(j),figsize=(8,4))
+                    pyplot.title(label+str(i)+'-'+str(j))
+                    t = np.linspace(t0,t0+relit*tstep,relit)
+                    pyplot.plot(t,v,'k',lw=2)
+                    pyplot.plot(t,v1,'r', lw=1)
+                    pyplot.plot(t,v2[:relit],'b',lw = 0.5)
+                    pyplot.plot(t,addv,':g',lw = 2)
+                    pyplot.savefig(name+'/'+name+'-b'+label+str(i)+'-'+str(j)+'.png',format='png',bbox_inches='tight',dpi=rdpi)
+                    pyplot.close()
+        
+    if bilinear0:
+        v_pre = vrest
+        RList = np.zeros((n,2))
+        for i in xrange(totSpikes):
+            if gList[singleSpikeID[i]] < 0:
+                label1 = 'I'+str(singleSpikeID[i])+'-'
+            else:
+                label1 = 'E'+str(singleSpikeID[i])+'-'
+            print ''
+            print >> f, ''
+            t0 = singleSpikeTrain[i]
+            if t0 > run_t:
+                break
+            i0 = int(round(t0/tstep))
+            i1 = i0 + 1
+            sel = singleSpikeID[i]
+            #print 'v_pre = ', v_pre
+            #print >> f, 'v_pre = ', v_pre
+            v2, _ = sproceed(cell, v_pre, synList, gList, RList, vecStimList, 0.0, n, sel, trans, trans + tol_t, tstep, '')
+            v2 = v2[ntrans:ntrans+tol_nt+1] - vrest
+            shiftAdd(biV0,v2,1,i1,tol_nt)
+            pyplot.figure(name+'/'+name+'-s'+label1+str(i),figsize=(8,4))
+            pyplot.title(label1+str(i))
+            pyplot.plot(np.linspace(0,tol_t,tol_nt+1),v2, 'r', lw = 0.5)
+            pyplot.savefig(name+'/'+name+'-s'+label1+str(i)+'.png',format='png',bbox_inches='tight',dpi=rdpi)
+        
+            for j in xrange(0,i):
+                print i, '-', j
+                print >> f, i, '-', j
+                if gList[singleSpikeID[j]] < 0:
+                    label2 = 'I'+str(singleSpikeID[j])+'-'
+                else:
+                    label2 = 'E'+str(singleSpikeID[j])+'-'
+                label = label2 + label1
+                t00 = singleSpikeTrain[j]
+                dt = t0 - t00
+        
+                if dt < tol_t:
+                    idt = int(round(dt/tstep))
+                    if singleSpikeID[j] == singleSpikeID[i]:
+                        sel = [singleSpikeID[j]]
+                        spikes = np.array([[0.0,dt]])
+                    else:
+                        sel = [singleSpikeID[j],singleSpikeID[i]]
+                        spikes = np.array([[0.0],[dt]])
+                    print 'synapse:', sel
+                    print >> f, 'synapse:', sel
+                    v,_ = bproceed0(cell, v_pre, synList, gList, RList, vecStimList, spikes, n, sel, trans, 0.0, trans + tol_t, 0.0, tstep, '')
+                    v = v[ntrans+idt:ntrans+tol_nt+1]
+                    relit = v.size
+                    v = v - vrest
+                    assert(relit == tol_nt+1-idt)
+                
+                    sel = singleSpikeID[j]
+                    v1,_ = sproceed(cell, v_pre, synList, gList, RList, vecStimList, 0.0, n, sel, trans, trans + tol_t, tstep, '')
+                    v1 = v1[ntrans+idt:ntrans+tol_nt+1]
+                    v1 = v1 - vrest
+        
+                    addv = v2[:relit] + v1
+                    bv = v - addv
+                    shiftAdd(biV0,bv,1,i1,relit-1)
+                    pyplot.figure(name+'/'+name+'-b0'+label+str(i)+'-'+str(j),figsize=(8,4))
+                    pyplot.title(label+str(i)+'-'+str(j))
+                    t = np.linspace(t0,t0+relit*tstep,relit)
+                    pyplot.plot(t,v,'k',lw=2)
+                    pyplot.plot(t,v1,'r',lw=1)
+                    pyplot.plot(t,v2[:relit],'b',lw=0.5)
+                    pyplot.plot(t,addv,':g',lw=2)
+                    pyplot.savefig(name+'/'+name+'-b0'+label+str(i)+'-'+str(j)+'.png',format='png',bbox_inches='tight',dpi=rdpi)
+                    pyplot.close()
+
+    if bilinear:
+        fig = pyplot.figure(name+'/'+name+'-biV',figsize=(8,4))
+        ax = fig.add_subplot(211)
+        minv = np.amin([np.amin(biV),np.amin(liV),np.amin(simV)])
+        maxv = np.amax([np.amax(biV),np.amax(liV),np.amax(simV)])
+        t = np.linspace(0,run_t,run_nt+1)
+        if linear:
+            li, = ax.plot(t,liV[:run_nt+1], lw=0.5, color = '0.75',label = 'linear')
+            write_one(name+'/'+name+'-figdata.bin',liV,mode='w')
+        bi, = ax.plot(t,biV[:run_nt+1],'g',lw=1.5,label='bilinear')
+        if bilinear0:
+            bi0, = ax.plot(t,biV0[:run_nt+1],'c',lw=1.0,label='bilinear0')
+        si, = ax.plot(t,simV[ntrans:ntrans+run_nt+1],':b',label = 'sim')
+        ymin, ymax = ax.get_ylim()
+        ax.plot(np.array([noMoreInput_t, noMoreInput_t]),np.array([ymin,ymax]),':k')
+        for i in xrange(n):
+            if gList[i] > 0:
+                for j in xrange(spikeTrain[i].size):
+                    ts = spikeTrain[i][j]
+                    if ts > run_t:
+                        break
+                    it = int(np.floor(ts/tstep))
+                    vtar = simV[ntrans+it]
+                    ax.plot((ts,ts),(minv,vtar),':r')
+                    ax.text(ts, minv+(vtar-minv)*0.1*i, str(i)+'-'+str(j), color='red',fontsize=6)
+            else:
+                for j in xrange(spikeTrain[i].size):
+                    ts = spikeTrain[i][j]
+                    if ts > run_t:
+                        break
+                    it = int(np.floor(ts/tstep))
+                    vtar = simV[ntrans+it]
+                    ax.plot((ts,ts),(minv,vtar),':b')
+                    ax.text(ts, minv+(vtar-minv)*0.1*i, str(i)+'-'+str(j), color='blue',fontsize=6)
+        write_one(name+'/'+name+'-figdata.bin',biV)
+        write_one(name+'/'+name+'-figdata.bin',simV)
+        write_one(name+'/'+name+'-figdata.bin',biV0)
+        if bilinear0 and linear:
+            ax.legend(handles=[si,li,bi,bi0])
+        elif linear:
+            ax.legend(handles=[si,li,bi])
+        else: 
+            ax.legend(handles=[si,bi,bi0])
+        pyplot.xlabel('t (ms)')
+        pyplot.ylabel('V (mV)')
+
+        ax = fig.add_subplot(212)
+        if linear:
+            li, = ax.plot(t,liV[:run_nt+1]-simV[ntrans:ntrans+run_nt+1], lw=0.5, color = '0.75',label = r'$\Delta$linear')
+        if bilinear0:
+            bi0, = ax.plot(t,biV0[:run_nt+1]-simV[ntrans:ntrans+run_nt+1],'c', lw=1.0, label=r'$\Delta$bilinear0')
+        bi, = ax.plot(t,biV[:run_nt+1]-simV[ntrans:ntrans+run_nt+1],'g', lw=1.5, label=r'$\Delta$bilinear')
+        ax.plot(t,np.zeros(run_nt+1),':k')
+        if bilinear0 and linear:
+            ax.legend(handles=[si,li,bi,bi0])
+        elif linear:
+            ax.legend(handles=[si,li,bi])
+        else: 
+            ax.legend(handles=[si,bi,bi0])
+
+        pyplot.savefig(name+'/'+name+'-biV.png',format='png',bbox_inches='tight',dpi=rdpi)
+        pyplot.close()
+    dbv = simV[ntrans:ntrans+run_nt+1] - biV[:run_nt+1]
+    dlv = simV[ntrans:ntrans+run_nt+1] - liV[:run_nt+1]
+    db0v = simV[ntrans:ntrans+run_nt+1] - biV0[:run_nt+1]
+    f.close()
+    if s is not None:
+        s.send(np.array([dbv,dlv,db0v,did]))
+    else:
+        return dbv, dlv, db0v
+
 if __name__ == '__main__':
     #stratum_radiatum 0-78
     #apical dends 0-134
@@ -424,27 +786,56 @@ if __name__ == '__main__':
     #axon secs 192-199
     #apical trunk [0, 2, 14, 28, 30, 32, 40, 44, 52, 60, 66, 72, 74, 78, 84, 90, 92, 98]
     #name = 't'
-    #seed = 14
+    argv = sys.argv[1:]
+    try:
+        opts, args = getopt.getopt(argv,'ps',['seed=','mode=','dt='])
+    except getopt.GetoptError:
+        print "err"
+        sys.exit(2)
+    print opts
+    opt0 = [opt[0] for opt in opts]
+    mode = 1
+    seed = 1505530645 
+    tstep = 0.1
+    if '--mode' not in opt0:
+        print "using default mode " + str(int(mode))
+    if '--seed' not in opt0:
+        print "using default seed " + str(int(seed))
+    if '--dt' not in opt0:
+        print "using default tstep " + str(float(tstep))
+    for opt,arg in opts:
+        if opt == '--dt':
+            tstep = float(arg);
+        if opt == '--seed':
+            if int(arg) != 0:
+                seed = int(arg);
+        if opt == '--mode':
+            mode = int(arg);
+
+
     f=open('sOlog0','w')
     start = time.time()
 
-    input_start = 0
+    input_start = 5
     run_t = 80 + input_start
     noMoreInput_t = run_t/4
     tol_t = min(240,run_t)
     trans = 110
-    rErange = np.array([50,100,150,200,250,300,350,400,450,500])
-    rIrange = rErange
+    #rErange = np.array([50,100,150,200,250,300,350,400,450,500])
+    rErange = np.linspace(10,60,6)
+    rIrange = rErange*2
     #rIrange = [50,100,150,200,250,300,350,400,450,500]
     nsp = np.array([1,2,3,4,5,6,7,8,9,10])
-    tstep = 1.0/10.0
-    v0 = -69
+    v0 = -70
     vrest = -70
     rdpi = 160
     presetSpike = 0
-    name0 = 'freqLimit4'
+    if mode == 0:
+        theme = 'fL0-4'
+    else:
+        theme = 'fL-4'
+    name0 = theme + "-" + str(seed)
     orig = 0
-    seed = 1505530645 
     #seed = int(time.mktime(datetime.now().timetuple())) 
     print "seed = ", seed
     np.random.seed(seed)
@@ -453,22 +844,16 @@ if __name__ == '__main__':
     bilinear0 = 1
     loadData = False 
     #locE = np.array([36, 74, 83, 97, 117, 132],dtype='int')
-    if presetSpike:
-        nE = 2
-        nI = 2
-        locE = np.random.randint(53,134,nE)
-        locI = np.random.randint(0,53,nI)
-    else:
-        nE = 6
-        nI = 2
-        locE = np.random.randint(53,134,nE)
-        locI = np.random.randint(0,53,nI)
+    nE = 8
+    nI = 2
+    locE = np.random.randint(53,134,nE)
+    locI = np.random.randint(0,53,nI)
     #gE = 3.0e-4 + np.random.random_sample(locE.size)*0
-    gE = 4.e-3*np.ones(locE.size)
+    gE = 8.e-3*np.ones(locE.size)
     posE = np.random.random_sample(locE.size)
     #locI = np.array([7, 28, 137],dtype='int')
     #gI = 1.5e-4 + np.random.random_sample(locI.size) * 0) * (-1)
-    gI = -1.0e-2*np.ones(locI.size)
+    gI = -1.0e-3*np.ones(locI.size)
     posI = np.random.random_sample(locI.size)
     print name0
     print >>f, name0
@@ -510,7 +895,11 @@ if __name__ == '__main__':
 
             if not os.path.isdir(name):
                 os.mkdir('./'+name)
-            p = mp.Process(target = subOnly, args = (gList,loc,pos,vrest,v0,presetSpike,trans,run_t,tol_t,tstep,spList[i],seed,name,rErange[i],rIrange[i],linear,bilinear,bilinear0,noMoreInput_t,send,i,rdpi))
+            if mode == 0:
+                targetFunc = subOnly0
+            else:
+                targetFunc = subOnly
+            p = mp.Process(target = targetFunc, args = (gList,loc,pos,vrest,v0,presetSpike,trans,run_t,tol_t,tstep,spList[i],seed,name,rErange[i],rIrange[i],linear,bilinear,bilinear0,noMoreInput_t,send,i,rdpi))
             jobs.append(p)
             recv.append(r)
             p.start()

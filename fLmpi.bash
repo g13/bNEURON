@@ -1,9 +1,11 @@
 #!/bin/bash
 
-mode=0
-n128=0
+mode=1 # 0 with vClamp on soma only
+n128=1
 dir0='freqLimit'
-theme='fL10-n'$n128-'m'$mode-p
+seed=26574839
+theme0='test'
+theme=$theme0'-n'$n128-'m'$mode
 ## p-preset; r-random
 dir=$dir0'/'$theme
 
@@ -13,11 +15,8 @@ else
     mkdir $dir
 fi
 cp $dir0/freqMpi.slurm $dir
-if [ "$mode" == "0" ]; then
-    cp $dir0/freqLimit0_mpi.py $dir
-else
-    cp $dir0/freqLimit_mpi.py $dir
-fi
+cp $dir0/freqLimit_mpi.py $dir
+
 if [ "$n128" == "0" ]; then
     cp base/n128.py_pas $dir/n128.py
 else
@@ -29,4 +28,5 @@ cp -R x86_64 $dir
 cd $dir
 
 export mode
+export seed
 sbatch --export=ALL freqMpi.slurm

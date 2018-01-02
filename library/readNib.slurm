@@ -11,7 +11,7 @@ module load matlab
 
 date
 
-theme=valgrind
+theme='test'
 echo $theme
 matlab -nodesktop -nosplash -r "readNib4('$theme');exit;"
 

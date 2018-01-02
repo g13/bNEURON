@@ -32,7 +32,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
     filter = [1,5];
     fdr = fdr(filter,:);
     fnstr = strjoin(fdr(1,:))
-    load(p.libFile,'tstep','n','gList','dtRange','ndt');
+    load(p.libFile,'tstep','n','gList','dtRange');
     ldur = dtRange(end) - p.ignoreT;
 
     nE = 0;
@@ -45,7 +45,8 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
         end
     end
     datafilePattern = [p.theme,'\-s\d*\-(Data|jND|Raster|tIn)\.bin'];
-    datafile = regexp(fnstr, datafilePattern,'match');
+    datafile = regexp(fnstr, datafilePattern,'match')
+    assert(length(datafile)==4);
     dimsFid = fopen(dimsFn,'r');
     if dimsFid
         nTrial = fread(dimsFid, 1, 'int');
@@ -104,7 +105,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
     plot(inputLevel,sl./runTime*1000,'-*r');
     plot(inputLevel,sjb./runTime*1000,'-ob');
     plot(inputLevel,sjl./runTime*1000,'-or');
-    plot(inputLevel,sb0./runTime*1000,'-og');
+    plot(inputLevel,sb0./runTime*1000,'-*g');
     xlim([0,inputLevel(nTrial)*1.1]);
     xlabel('input rate Hz');
     ylabel('firing rate Hz');

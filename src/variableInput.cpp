@@ -23,6 +23,12 @@ int main(int argc, char **argv)
         cout << "different dt can only affect Yale NEURON simulation" << endl;
     }
     nNL neuroLib(inputArg.libFile.c_str());
+    if (neuroLib.nSyn >= inputArg.nInput) {
+        neuroLib.nSyn = inputArg.nInput;
+    } else {
+        cout << " nInput > nSyn, exit" << endl;
+        return 0;
+    }
     nNS neuron(inputArg.seed,neuroLib.nSyn,neuroLib.ei,inputArg.trans,inputArg.tRef,inputArg.vTol);
     inputArg.reformat_input_table(neuroLib.tstep);
 

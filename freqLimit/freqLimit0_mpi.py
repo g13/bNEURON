@@ -2,7 +2,6 @@ import numpy as np
 import os, time, sys
 from neuroAlter import *
 import multiprocessing as mp
-from getPSP import write_one
 from shutil import copy
 from datetime import datetime
 from matplotlib import pyplot
@@ -403,23 +402,25 @@ if __name__ == '__main__':
     f=open('sOlog0','w')
     start = time.time()
 
-    input_start = 0
+    input_start = 5
     run_t = 80 + input_start
     noMoreInput_t = run_t/4
     tol_t = min(240,run_t)
     trans = 110
-    rErange = np.array([50,100,150,200,250,300,350,400,450,500])
-    rIrange = rErange
+    #rErange = np.array([50,100,150,200,250,300,350,400,450,500])
+    rErange = np.linspace(5,80,16)
+    rIrange = rErange*2
     #rIrange = [50,100,150,200,250,300,350,400,450,500]
     nsp = np.array([1,2,3,4,5,6,7,8,9,10])
     tstep = 1.0/10.0
     v0 = -69
     vrest = -70
     rdpi = 160
-    presetSpike = 1
-    name0 = 'fL'
-    orig = 0
+    presetSpike = 0
     seed = 1505530645 
+    theme = 'fL0-4'
+    name0 = theme + "-" + str(seed)
+    orig = 0
     #seed = int(time.mktime(datetime.now().timetuple())) 
     print "seed = ", seed
     np.random.seed(seed)
