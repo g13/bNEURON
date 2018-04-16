@@ -3,10 +3,12 @@
 #include <cmath>
 #include <vector>
 #include "nNeuroSt.h"
+#include "Yale_NEURON_PyAPI.h"
 namespace lb{
     const bool debug = false;
     const bool debug2 = false;
 }
+
 template<typename T>
 inline void getNear(T *range, size n, double target, double &ratio, size &istart, size &jnext) {
     size i;
@@ -181,10 +183,10 @@ inline void interpVinit(std::vector<double> &v, size vs,  double **vLeak, double
         v[vs+k] = vLeak[i][k] + r*(vLeak[j][k]-vLeak[i][k]);
 }
 
-unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterSpikeBehavior);
+unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape);
 
-unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterSpikeBehavior);
+unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape);
 
-unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterSpikeBehavior, bool kVStyle);
+unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape, bool kVStyle);
 
 #endif

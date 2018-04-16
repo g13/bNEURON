@@ -1,6 +1,6 @@
 #include "linear_bilinear.h"
 
-unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterSpikeBehavior){
+unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape){
     bool debug;
     double vTarget, dtTarget, dtTarget1;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
@@ -108,49 +108,53 @@ unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, d
                     ncross = ncross +1;
                     if (lb::debug) {
                         std::cout << "crossed at " << k*tstep << ", start ith " << ith << " t= " << neuron.tin[ith] << std::endl;
-                        std::cout << "v[k0] " << v[k]  << " vCross " << vCross << std::endl;
+                        std::cout << "v[vs] " << v[k]  << " vCross " << vCross << std::endl;
                     }
                     ith_old = ith; 
-                    spiked = 1;
-                    double tmpTsp = k*neuroLib.tstep+neuron.tRef/2;
-                    if (tmpTsp <= run_t) {
-                        tsp.push_back(tmpTsp);
-                    }
-                    vs = k + itref;
-                    for (j=0;j<itref;j++) {
-                        if (k+j < run_nt) {
-                            v[k+j] = vCross;
+                    if (spikeShape) {
+                        neuroAlterB(neuron, neuroLib, v, ith, vs, run_nt, tstep, tsp, vinit, ve, vBack, cell, ei, spikeTrain, s0, s1, dendVclamp);
+                    } else {
+                        spiked = 1;
+                        double tmpTsp = k*neuroLib.tstep+neuron.tRef/2;
+                        if (tmpTsp <= run_t) {
+                            tsp.push_back(tmpTsp);
+                        }
+                        vs = k + itref;
+                        for (j=0;j<itref;j++) {
+                            if (k+j < run_nt) {
+                                v[k+j] = vCross;
+                            } else {
+                                vs = k+j-1;
+                                break;
+                            }
+                        }
+                        v[vs] = neuron.vRest;
+                        for (ith = ith_old; ith < nin; ith++) {
+                            if (neuron.tin[ith] > vs*tstep) {
+                                break;                
+                            }
+                        }
+                        ith--;
+                        assert(ith>=ith_old);
+                        i_b = ith + 1;
+                        if (lb::debug) {
+                            std::cout << "backed at " << vs*tstep << ", end ith " << ith << " t= " << neuron.tin[ith] << std::endl;
+                            std::cout << "v[ve] " << v[vs]  << " vBack " << vBack << std::endl;
+                        }
+                        if (vs + l0 <= run_lt) {
+                            tl = nt0;
                         } else {
-                            vs = k+j-1;
-                            break;
+                            tl = run_nt-vs;
+                        }
+                        for (j=1; j<tl;j++) {
+                            v[vs+j] = neuron.vRest;
                         }
                     }
-                    v[vs] = neuron.vRest;
-                    for (ith = ith_old; ith < nin; ith++) {
-                        if (neuron.tin[ith] > vs*tstep) {
-                            break;                
-                        }
-                    }
-                    ith--;
-                    assert(ith>=ith_old);
-                    i_b = ith + 1;
-                    if (lb::debug) {
-                        std::cout << "backed at " << vs*tstep << ", end ith " << ith << " t= " << neuron.tin[ith] << std::endl;
-                        std::cout << "v[k1] " << v[vs]  << " vBack " << vBack << std::endl;
-                    }
+                    vTarget = v[vs];
                     if (spiked){
                         spikeCount = spikeCount + 1;
                         neuron.tsp.push_back(tsp.back());
                     } 
-                    if (vs + l0 <= run_lt) {
-                        tl = nt0;
-                    } else {
-                        tl = run_nt-vs;
-                    }
-                    for (j=1; j<tl;j++) {
-                        v[vs+j] = neuron.vRest;
-                    }
-                    vTarget = v[vs];
                     //if (vs < run_lt) {
                     if (afterSpikeBehavior) {
                         cout << " adding afterSpike sPSP " << endl;
@@ -232,7 +236,7 @@ unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, d
     return spikeCount;
 }
 
-unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterSpikeBehavior){
+unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape){
     double vTarget, dtTarget;
     size tl, vs, ve, vc, i, j, k, ith_old, ith;
     double tstep = neuroLib.tstep;
@@ -305,50 +309,52 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
                     ncross = ncross +1;
                     if (lb::debug) {
                         std::cout << "crossed at " << k*tstep << ", start ith " << ith << " t= " << neuron.tin[ith] << std::endl;
-                        std::cout << "v[k0] " << v[k]  << " vCross " << vCross << std::endl;
+                        std::cout << "v[vs] " << v[k]  << " vCross " << vCross << std::endl;
                     }
                     ith_old = ith; 
-                    spiked = 1;
-                    double tmpTsp = k*neuroLib.tstep+neuron.tRef/2;
-                    if (tmpTsp <= run_t) {
-                        tsp.push_back(tmpTsp);
-                    }
-                    vs = k + itref;
-                    for (j=0;j<itref;j++) {
-                        if (k+j < run_nt) {
-                            v[k+j] = vCross;
+                    if (spikeShape) {
+                        neuroAlterB(neuron, neuroLib, v, ith, vs, run_nt, tstep, tsp, vinit, ve, vBack, cell, ei, spikeTrain, s0, s1, dendVclamp);
+                    } else {
+                        spiked = 1;
+                        double tmpTsp = k*neuroLib.tstep+neuron.tRef/2;
+                        if (tmpTsp <= run_t) {
+                            tsp.push_back(tmpTsp);
+                        }
+                        vs = k + itref;
+                        for (j=0;j<itref;j++) {
+                            if (k+j < run_nt) {
+                                v[k+j] = vCross;
+                            } else {
+                                vs = k+j-1;
+                                break;
+                            }
+                        }
+                        v[vs] = neuron.vRest;
+                        for (ith = ith_old; ith < nin; ith++) {
+                            if (neuron.tin[ith] > vs*tstep) {
+                                break;                
+                            }
+                        }
+                        ith--;
+                        assert(ith>=ith_old);
+                        if (lb::debug) {
+                            std::cout << "backed at " << vs*tstep << ", end ith " << ith <<  " t= " << neuron.tin[ith] << std::endl;
+                            std::cout << "v[ve] " << v[vs]  << " vBack " << vCross << " vBack " << vBack << std::endl;
+                        }
+                        if (vs + l0 <= run_lt) {
+                            tl = nt0;
                         } else {
-                            vs = k+j-1;
-                            break;
+                            tl = run_nt-vs;
+                        }
+                        for (j=1; j<tl;j++) {
+                            v[vs+j] = neuron.vRest;
                         }
                     }
-                    v[vs] = neuron.vRest;
-                    for (ith = ith_old; ith < nin; ith++) {
-                        if (neuron.tin[ith] > vs*tstep) {
-                            break;                
-                        }
-                    }
-                    ith--;
-                    assert(ith>=ith_old);
-                    if (lb::debug) {
-                        std::cout << "backed at " << vs*tstep << ", end ith " << ith <<  " t= " << neuron.tin[ith] << std::endl;
-                        std::cout << "v[k] " << v[vs]  << " vCross " << vCross << " vBack " << vBack << std::endl;
-                    }
-                    assert(k*tstep < vs*tstep);
+                    vTarget = v[vs];
                     if (spiked){
                         spikeCount = spikeCount + 1;
                         neuron.tsp.push_back(tsp.back());
                     } 
-                    if (vs + l0 <= run_lt) {
-                        tl = nt0;
-                    } else {
-                        tl = run_nt-vs;
-                    }
-                    for (j=1; j<tl;j++) {
-                        v[vs+j] = neuron.vRest;
-                    }
-                    vTarget = v[vs];
-                    //if (vs < run_lt) {
                     if (afterSpikeBehavior) {
                         for (i=ith+1;i>0; i--) {
                             j = i-1;
@@ -407,7 +413,7 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
     return spikeCount;
 }
 
-unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterSpikeBehavior, bool kVStyle){
+unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, vector<std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape, bool kVStyle){
     double vTarget, dtTarget, dtTarget1;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
     double tstep = neuroLib.tstep;
@@ -435,6 +441,8 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
     
     size limit, it, jt;
     unsigned int spikeCount = 0, spiked;
+    vector<size> s0(neuroLib.nSyn,0);
+    vector<size> s1(neuroLib.nSyn,0);
     
     double vinit = v[0];
     v.assign(run_nt,neuron.vRest);
@@ -520,50 +528,53 @@ unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, 
                     ncross = ncross +1;
                     if (lb::debug) {
                         std::cout << "crossed at " << k*tstep << ", start ith " << ith << " t= " << neuron.tin[ith] << std::endl;
-                        std::cout << "v[k0] " << v[k]  << " vCross " << vCross << std::endl;
+                        std::cout << "v[vs] " << v[k]  << " vCross " << vCross << std::endl;
                     }
                     ith_old = ith; 
-                    spiked = 1;
-                    double tmpTsp = k*neuroLib.tstep+neuron.tRef/2;
-                    if (tmpTsp <= run_t) {
-                        tsp.push_back(tmpTsp);
-                    }
-                    vs = k + itref;
-                    for (j=0;j<itref;j++) {
-                        if (k+j < run_nt) {
-                            v[k+j] = vCross;
+                    if (spikeShape) {
+                        neuroAlterB(neuron, neuroLib, v, ith, vs, run_nt, tstep, tsp, vinit, ve, vBack, cell, ei, spikeTrain, s0, s1, dendVclamp);
+                    } else {
+                        spiked = 1;
+                        double tmpTsp = k*neuroLib.tstep+neuron.tRef/2;
+                        if (tmpTsp <= run_t) {
+                            tsp.push_back(tmpTsp);
+                        }
+                        vs = k + itref;
+                        for (j=0;j<itref;j++) {
+                            if (k+j < run_nt) {
+                                v[k+j] = vCross;
+                            } else {
+                                vs = k+j-1;
+                                break;
+                            }
+                        }
+                        v[vs] = neuron.vRest;
+                        for (ith = ith_old; ith < nin; ith++) {
+                            if (neuron.tin[ith] > vs*tstep) {
+                                break;                
+                            }
+                        }
+                        ith--;
+                        assert(ith>=ith_old);
+                        i_b = ith + 1;
+                        if (lb::debug) {
+                            std::cout << "backed at " << vs*tstep << ", end ith " << ith << " t= " << neuron.tin[ith] << std::endl;
+                            std::cout << "v[ve] " << v[vs]  << " vBack " << vBack << std::endl;
+                        }
+                        if (vs + l0 <= run_lt) {
+                            tl = nt0;
                         } else {
-                            vs = k+j-1;
-                            break;
+                            tl = run_nt-vs;
+                        }
+                        for (j=1; j<tl;j++) {
+                            v[vs+j] = neuron.vRest;
                         }
                     }
-                    v[vs] = neuron.vRest;
-                    for (ith = ith_old; ith < nin; ith++) {
-                        if (neuron.tin[ith] > vs*tstep) {
-                            break;                
-                        }
-                    }
-                    ith--;
-                    assert(ith>=ith_old);
-                    i_b = ith + 1;
-                    if (lb::debug) {
-                        std::cout << "backed at " << vs*tstep << ", end ith " << ith << " t= " << neuron.tin[ith] << std::endl;
-                        std::cout << "v[k1] " << v[vs]  << " vBack " << vBack << std::endl;
-                    }
+                    vTarget = v[vs];
                     if (spiked){
                         spikeCount = spikeCount + 1;
                         neuron.tsp.push_back(tsp.back());
                     } 
-                    if (vs + l0 <= run_lt) {
-                        tl = nt0;
-                    } else {
-                        tl = run_nt-vs;
-                    }
-                    for (j=1; j<tl;j++) {
-                        v[vs+j] = neuron.vRest;
-                    }
-                    vTarget = v[vs];
-                    //if (vs < run_lt) {
                     if (afterSpikeBehavior) {
                         cout << " adding afterSpike sPSP " << endl;
                         for (ii=ith+1; ii>0; ii--) {

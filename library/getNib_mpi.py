@@ -63,6 +63,110 @@ def getNear(seq, target):
                     break;
     return istart, jnext, ratio
 
+def get0J(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,s,savePlot,plotData,directory,rdpi):
+    print "j = ", j
+    bfire = np.empty(ndt)
+    kv = np.zeros((ndt,run_nt))
+    if i == j:
+        if idt == 0:
+            s.send(np.array([kv,bfire,j]))
+            return
+        else:
+            spikes = np.array([[]])
+            sel = [i]
+    else:
+        spikes = np.array([np.array([]),np.array([])])
+        sel = [i, j]
+    if plotData:
+        dtfigname = 'kv-v'+str(vid)+'-i'+str(i)+'-j'+str(j)+'-dt'+str(idt)
+        dtfig = pyplot.figure(dtfigname,figsize = (8,4))
+    for jdt in xrange(idt,ndt):
+        print " jdt = ", jdt
+        dtt = dtRange[jdt]
+        RList = np.zeros((n,2))
+        if i==j:
+            rl0 = getGH(dt,gList[i])
+            RList[i,:] = getGH(dtt-dt,gList[i],rl0[0],rl0[1])
+        else:
+            RList[i,:] = getGH(dtt,gList[i])
+            RList[j,:] = getGH(dtt-dt,gList[j])
+        #if jdt == ndt-1:
+        relit = run_nt - idtRange[jdt]
+        relt = run_t-dtt
+        v,fired = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + relt , 0, tstep, '')
+        v = v[ntrans:ntrans+relit]
+        #else:
+        #    relit = tol_nt - idtRange[jdt]
+        #    relt = tol_t-dtt
+        #    v,fired = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + relt, 0, tstep, '')
+        #    v = v[ntrans:ntrans+relit]
+        bfire[jdt] = fired
+        assert(dtt>=dt)
+        print relit, ' == ', v.size
+        assert(v.size == relit)
+        v = v - leakyV[:relit]
+        print "max V = ", np.amax(v)
+        print "max it = ", np.argmax(v)
+        dtij = idtRange[jdt] - idtRange[idt]
+        idtij = np.argwhere(idtRange - dtij == 0)
+        assert(idtij.size==1 or idtij.size==0)
+        if idtij.size == 1:
+            print idtij, " I skipped a singlet simulation"
+            v2 = v1[idtij[0,0],j,dtij:dtij+relit]
+        else:
+            idtij = np.argwhere(iextraRange - dtij == 0)
+            print idtij, " I skipped a extralet simulation"
+            assert(idtij.size==1)
+            v2 = extralet[idtij[0,0],j,dtij:dtij+relit]
+
+        assert(v2.size == relit)
+        addv = v1[jdt,i,idtRange[jdt]:idtRange[jdt]+relit] + v2
+        kvtmp = v-addv
+        kv[jdt,idtRange[jdt]:idtRange[jdt]+relit] = kvtmp
+        print "max kv = ", np.amax(np.absolute(kvtmp))
+        if plotData:
+            pyplot.figure(dtfigname)
+            t = np.arange(run_nt)*tstep
+            tSel = np.arange(idtRange[jdt],idtRange[jdt]+relit)
+            ax1 = dtfig.add_subplot(111)         
+            ax1.plot(t[tSel],v,'c',lw=3)
+            ax1.plot(t[tSel],v1[jdt,i,tSel],'r',lw=2)
+            ax1.plot(t[tSel],v2,'b',lw=1)
+            ax1.plot(t[tSel],addv,':g',lw=1)
+            ax1.plot(t[tSel],kvtmp,':k')
+    if savePlot and plotData:
+        pyplot.figure(dtfigname)
+        pyplot.savefig(directory+'/'+dtfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+        pyplot.close(dtfigname)
+    s.send(np.array([kv,bfire,j]))
+    print 'j',j, '\'s out'
+
+def get0I(i,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,s,savePlot,plotData,directory,rdpi):
+    print " i = ", i
+    jobs = []
+    recv = []
+    kv = np.zeros((n,ndt,run_nt))
+    bfire = np.empty((n,ndt))
+    for j in xrange(n):
+        r, send = mp.Pipe(False)
+        p = mp.Process(target = getJ, args = (i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,send,savePlot,plotData,directory,rdpi))
+        jobs.append(p)
+        recv.append(r)
+        p.start()
+    print 'gathering i ', i
+    result = np.array([x.recv() for x in recv])
+    for p in jobs:
+        p.join()
+    print 'joined i ', i
+    ind = [result[j][2] for j in xrange(n)]
+    argi = np.argsort(ind)
+    for j in xrange(n):
+        jj = argi[j]
+        kv[j,:,:] = result[jj][0]
+        bfire[j,:] = result[jj][1]
+    s.send(np.array([kv,bfire,i]))
+    print 'i',i,'\'s out'
+        
 def getJ(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,s,savePlot,plotData,directory,rdpi):
     print "j = ", j
     bfire = np.empty(ndt)
@@ -329,13 +433,14 @@ def getNib(argv):
     assert(vrest in vRange)
     usage = 'getNib.py --theme=<theme name> --vid=<vid> --trans=<vClamp time> -p<plotData> -s<savePlot> -r<vrest only>// all the items in lists should be separated by comma without space'
     try:
-        opts, args = getopt.getopt(argv,'psr',['theme=','vid=','trans='])
+        opts, args = getopt.getopt(argv,'psr',['theme=','vid=','trans=','mode='])
     except getopt.GetoptError:
         print "error reading args"
         print argv
         print usage
         sys.exit(2)
     print opts
+    mode = 1
     opt0 = [opt[0] for opt in opts]
     if '--vid' not in opt0:
         print 'vid must be specified'
@@ -343,6 +448,8 @@ def getNib(argv):
     if '--theme' not in opt0:
         print 'theme name must be specified'
         sys.exit(2)
+    if '--mode' not in opt0:
+        print 'using default mode ' + str(mode)
     for opt, arg in opts:
         if opt == '--vid':
             vid = int(arg)

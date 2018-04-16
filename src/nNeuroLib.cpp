@@ -177,8 +177,8 @@ nNeuroLib::nNeuroLib(const char *filename) {
     closeMat(pmat, file);
     assert(ndt>=2);
     assert(dtRange[0] == 0.0);
-    tol_tb = dtRange[ndt-1];
     tol_tl = dtRange[ndt-1];
+    tol_tb = dtRange[ndt-1];
 
     std::cout << "Done" << std::endl;
     std::cout << std::endl;

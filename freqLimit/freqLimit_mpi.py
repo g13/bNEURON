@@ -822,7 +822,7 @@ if __name__ == '__main__':
     tol_t = min(240,run_t)
     trans = 110
     #rErange = np.array([50,100,150,200,250,300,350,400,450,500])
-    rErange = np.linspace(10,60,6)
+    rErange = np.linspace(10,60,3)
     rIrange = rErange*2
     #rIrange = [50,100,150,200,250,300,350,400,450,500]
     nsp = np.array([1,2,3,4,5,6,7,8,9,10])
@@ -849,7 +849,7 @@ if __name__ == '__main__':
     locE = np.random.randint(53,134,nE)
     locI = np.random.randint(0,53,nI)
     #gE = 3.0e-4 + np.random.random_sample(locE.size)*0
-    gE = 8.e-3*np.ones(locE.size)
+    gE = 5.e-3*np.ones(locE.size)
     posE = np.random.random_sample(locE.size)
     #locI = np.array([7, 28, 137],dtype='int')
     #gI = 1.5e-4 + np.random.random_sample(locI.size) * 0) * (-1)

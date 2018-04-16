@@ -17,6 +17,7 @@ struct input_args_CA1 : input_args {
     double rBiLinear;
     int kVStyle;
     int afterSpikeBehavior;
+    bool spikeShape;
     unsigned int vInit;
     input_args_CA1();
     using input_args::read;

@@ -44,9 +44,9 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
             nI = nI + 1;
         end
     end
-    datafilePattern = [p.theme,'\-s\d*\-(Data|jND|Raster|tIn)\.bin'];
+    datafilePattern = ['(Data|jND|Raster|tIn|cpuTime)-,'p.theme,'\-s\d*\.bin'];
     datafile = regexp(fnstr, datafilePattern,'match')
-    assert(length(datafile)==4);
+    assert(length(datafile)==5);
     dimsFid = fopen(dimsFn,'r');
     if dimsFid
         nTrial = fread(dimsFid, 1, 'int');
@@ -71,52 +71,82 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
     tjl = cell(nTrial,1);
     sb0 = zeros(nTrial,1);
     tb0 = cell(nTrial,1);
+    cpuFn = datafile{3};
+    cpuFid = fopen(cpuFn,'r');
+    cpuTime = fread(cpuFid,[6,nTrial],'double');
+    figure;
     for i = 1:nTrial
+        subplot(nTrial,2,(i-1)*2+1)
+        hold on
         ss(i) = fread(RasterFid,1,sizeSize);
         if ss(i) >0
             ts{i} = fread(RasterFid,ss(i),'double');
         end
+        plot(ts{i},zeros(ss(i),1)+1,'.k','MarkerSize',10);
+
         sb(i) = fread(RasterFid,1,sizeSize);
         if sb(i) >0
             tb{i} = fread(RasterFid,sb(i),'double');
         end
+        plot(tb{i},zeros(sb(i),1)+2,'.b','MarkerSize',10);
+
         sl(i) = fread(RasterFid,1,sizeSize);
         if sl(i) >0
             tl{i} = fread(RasterFid,sl(i),'double');
         end
+        plot(tl{i},zeros(sl(i),1)+3,'.r','MarkerSize',10);
+
         sjb(i) = fread(RasterFid,1,sizeSize);
         if sjb(i) >0
             tjb{i} = fread(RasterFid,sjb(i),'double');
         end
+        plot(tjb{i},zeros(sjb(i),1)+4,'.c','MarkerSize',10);
+
         sjl(i) = fread(RasterFid,1,sizeSize);
         if sjl(i) >0
             tjl{i} = fread(RasterFid,sjl(i),'double');
         end
+        plot(tjl{i},zeros(sjl(i),1)+5,'.m','MarkerSize',10);
+
         sb0(i) = fread(RasterFid,1,sizeSize);
         if sb0(i) >0
             tb0{i} = fread(RasterFid,sb0(i),'double');
         end
+        plot(tb0{i},zeros(sb0(i),1)+6,'.g','MarkerSize',10);
     end
     fclose(RasterFid);
-    figure;
+    subplot(2,2,2)
     hold on
     plot(inputLevel,ss./runTime*1000,'-*k');
     plot(inputLevel,sb./runTime*1000,'-*b');
     plot(inputLevel,sl./runTime*1000,'-*r');
-    plot(inputLevel,sjb./runTime*1000,'-ob');
-    plot(inputLevel,sjl./runTime*1000,'-or');
+    plot(inputLevel,sjb./runTime*1000,'-oc');
+    plot(inputLevel,sjl./runTime*1000,'-om');
     plot(inputLevel,sb0./runTime*1000,'-*g');
     xlim([0,inputLevel(nTrial)*1.1]);
     xlabel('input rate Hz');
     ylabel('firing rate Hz');
+
+    subplot(2,2,4)
+    hold on
+    plot(inputLevel,cpuTime(i,:),'-*k');
+    plot(inputLevel,cpuTime(i,:),'-*b');
+    plot(inputLevel,cpuTime(i,:),'-*r');
+    plot(inputLevel,cpuTime(i,:),'-oc');
+    plot(inputLevel,cpuTime(i,:),'-om');
+    plot(inputLevel,cpuTime(i,:),'-*g');
+    xlim([0,inputLevel(nTrial)*1.1]);
+    legend(['sim','bilinear','linear','jb','jl','bilinear0']);
+    xlabel('input rate Hz');
+    ylabel('cpuTime s');
 
     if ~isempty(ext)
         saveas(gcf,[p.theme,'-gainCurve.',ext],format);
     end
     if plotSubthreshold
         dataFn = datafile{1};
-        jNDFn = datafile{3};
-        tInFn = datafile{4};
+        jNDFn = datafile{4};
+        tInFn = datafile{5};
         jbt = cell(nTrial,1);
         jbv = cell(nTrial,1);
         jbCrossT = cell(nTrial,1);

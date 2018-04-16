@@ -13,15 +13,13 @@ namespace jl{
         double dt;
         dt = t - tCross;
         if (dt < tol_tl) {
-            v = add_vinit_contribution(neuroLib, cross.vCross.back(), dt);
+            v = add_vinit_contribution(neuroLib.vLeak, cross.vCross.back(), dt);
         }
         for (i=head; i>=tail_l; i--) {
             dt = t - input.dt[i];
             if (dt > tol_tl) break;
             it = static_cast<size>(round(dt));
-            if (!input.inTref[i]) {
-                add_input_i_contribution(i,it,neuroLib,input,v);
-            }
+            add_input_i_contribution(i,it,neuroLib,input,v);
         }
         return v;
     }
@@ -32,7 +30,7 @@ namespace jl{
         double t_cross1, t_cross2, t_cross;
         do {
             assert(neuron.vThres >= v_left);
-            if (abs(t_right - t_left)<1e-10) {
+            if (abs(t_right - t_left)<1e-14) {
                 v = v_right;
                 return t_right;
             }
@@ -121,6 +119,6 @@ namespace jl{
     void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tCross, double vCross, size i_prior, size tail, size head, size corrSize, std::vector<double>&tsp, bool spiked);
 }
 
-unsigned int nsyn_jLinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, std::vector<double> &v, size corrSize, std::vector<double> &tsp, double vStop, vector<bool> &ei, int afterSpikeBehavior);
+unsigned int nsyn_jLinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, std::vector<double> &v, size corrSize, std::vector<double> &tsp, double vStop, vector<bool> &ei, int afterSpikeBehavior, bool spikeShape);
 
 #endif

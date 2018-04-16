@@ -70,13 +70,13 @@ void CrossData::initialize(size nt, double vinit) {
 
 BilinearRelationships::BilinearRelationships(size corrSize) {
     dTijr.reserve(corrSize);
-    idt.reserve(corrSize);
     ID.reserve(corrSize);
 }
 
 Inputs::Inputs(size rSize){
     t.reserve(rSize); 
     dt.reserve(rSize); 
+    idt.reserve(rSize); 
     tMax.reserve(rSize); 
     cCross.reserve(rSize);
     dTijr.reserve(rSize); 
@@ -89,6 +89,7 @@ Inputs::Inputs(size rSize){
 void Inputs::initialize(size rSize) {
     t.clear(); 
     dt.clear(); 
+    idt.clear(); 
     tMax.clear(); 
     cCross.clear();
     dTijr.clear(); 
@@ -110,8 +111,9 @@ void Inputs::initialize(size rSize) {
 }
 void Inputs::junk_this() {
     t.push_back(0); 
-    ID.push_back(-1);
     dt.push_back(0);
+    idt.push_back(0);
+    ID.push_back(-1);
     tMax.push_back(0); 
     cCross.push_back(0);
     dTijr.push_back(IJR(0,1,0)); 
@@ -123,6 +125,7 @@ void Inputs::junk_this() {
 void Inputs::assert_size() {
     size Size = t.size(); 
     assert(dt.size() == Size); 
+    assert(idt.size() == Size); 
     assert(tMax.size() == Size); 
     assert(cCross.size() == Size);
     assert(dTijr.size() == Size); 
@@ -136,6 +139,8 @@ void Inputs::assert_size() {
 }   
 void Inputs::print_this(int i) {
     cout << "t: " << t[i] << endl;
+    cout << "dt: " << dt[i] << endl;
+    cout << "idt: " << idt[i] << endl;
     cout << "ID: " << ID[i] << endl;
     cout << "V index: " << Vijr[i].i << ", " << Vijr[i].j << ", " << Vijr[i].r << endl;
     cout << "dT index: " << dTijr[i].i << ", " << dTijr[i].j << ", " << dTijr[i].r << endl;

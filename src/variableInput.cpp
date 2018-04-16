@@ -6,7 +6,7 @@ int main(int argc, char **argv)
 {
     //bool win = true;
     //feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
-    ofstream data_file, tIncome_file, raster_file, jND_file;
+    ofstream data_file, tIncome_file, raster_file, jND_file, cpu_file;
     double cpu_t_sim, cpu_t_bilinear, cpu_t_linear, cpu_t_bilinear0;
     double cpu_t_jbilinear, cpu_t_jlinear;
     clockid_t clk_id = CLOCK_PROCESS_CPUTIME_ID;
@@ -14,7 +14,6 @@ int main(int argc, char **argv)
     vector<double> simV;
     vector<double> biV, biV0;
     vector<double> liV;
-    vector<double> jlv, jbv;
     vector<double> tsp_sim, tsp_bi, tsp_jbi, tsp_li, tsp_jli, tsp_bi0;
 
     InputArgsCA1 inputArg = input_args_CA1();
@@ -47,10 +46,11 @@ int main(int argc, char **argv)
         cout << endl;
     }
     string prefix = inputArg.theme + "-s" + to_string(static_cast<unsigned int>(inputArg.seed));
-	data_file.open(prefix + "-Data.bin", ios::out|ios::binary);
-	raster_file.open(prefix + "-Raster.bin", ios::out|ios::binary);
-	tIncome_file.open(prefix + "-tIn.bin", ios::out|ios::binary);
-	jND_file.open(prefix + "-jND.bin", ios::out|ios::binary);
+	data_file.open("Data-" + prefix + ".bin", ios::out|ios::binary);
+	raster_file.open("Raster-" + prefix + ".bin", ios::out|ios::binary);
+	tIncome_file.open("tIn-" + prefix + ".bin", ios::out|ios::binary);
+	jND_file.open("jND-" + prefix + ".bin", ios::out|ios::binary);
+	cpu_file.open("cpuTime-" + prefix + ".bin", ios::out|ios::binary);
 
     double tstep = neuroLib.tstep;
     cout << "using tstep: " << tstep << " ms" << endl;
@@ -141,18 +141,13 @@ int main(int argc, char **argv)
         vector<double> plchldr_vec;
         vector<long> s1(neuroLib.nSyn,0);
         vector<vector<double>> RList(neuroLib.nSyn,vector<double>(2,0));
-        //for (int ir=0; ir<neuroLib.nSyn; ir++) {
-        //    RList[ir][0] = 1.89e-13*(ir*1.0/(neuroLib.nSyn*1.0));
-        //    RList[ir][1] = 2.89e-53*(ir*1.0/(neuroLib.nSyn*1.0));
-        //}
         unsigned int nc = 0;
         // NEURON
         neuron.vThres = inputArg.vThres;
         cout << " yale NEURON begin" << endl;
         cout << " point of no return unless spike " << inputArg.vThres << endl;
         vector<double> dendVclamp(neuroLib.nSyn,1000); // 1000 default no dend clamp
-        nc = Py_proceed(cell, v0, RList, s1,  spikeTrain, neuroLib.nSyn, inputArg.trans0, inputArg.trans0 + run_t, plchldr_double, inputArg.tRef, inputArg.vThres, 1, simV, plchldr_size0, tsp_sim, 0, inputArg.tstep[ii], dendVclamp, 1, dendV);
-        //}
+        nc = Py_proceed(cell, v0, RList, s1,  spikeTrain, neuroLib.nSyn, inputArg.trans0, inputArg.trans0 + run_t, plchldr_double, inputArg.tRef, inputArg.vThres, 1, simV, plchldr_size0, tsp_sim, 0, inputArg.tstep[ii], dendVclamp, -1, 1, dendV);
         clock_gettime(clk_id,&tpE);
         
         cpu_t_sim = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
@@ -165,7 +160,7 @@ int main(int argc, char **argv)
         cout << " bilinear begin" << endl;
         clock_gettime(clk_id,&tpS);
 
-        nc = bilinear_nSyn(biV, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi, vCrossb, vBackb, neuron.ei, inputArg.afterSpikeBehavior);
+        nc = bilinear_nSyn(cell, spikeTrain, dendVclamp, biV, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi, vCrossb, vBackb, neuron.ei, inputArg.afterCrossBehavior, inputArg.spikeShape);
         clock_gettime(clk_id,&tpE);
         cpu_t_bilinear = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
         cout << "bilinear est. ended, took " << cpu_t_bilinear << "s" << endl;
@@ -188,10 +183,10 @@ int main(int argc, char **argv)
             inputb.initialize(rSize);
             crossb.initialize(nt,v0);
         }
-        neuron.vThres = vCrossb;
 
         cout << " jBilinear begin" << endl;
-        nc = nsyn_jBilinear(neuron, neuroLib, inputb, jndb, crossb, run_t, jbv, corrSize, tsp_jbi, vBackb, neuron.ei, inputArg.afterSpikeBehavior);
+        //nc = nsyn_jBilinear(neuron, neuroLib, inputb, jndb, crossb, run_t, corrSize, tsp_jbi, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape);
+        nc = nsyn_jBilinear(neuron, neuroLib, inputb, jndb, crossb, run_t,inputArg.ignoreT, corrSize, tsp_jbi, vCrossb vBackb, inputArg.afterCrossBehavior, false);
 
         clock_gettime(clk_id,&tpE);
         cpu_t_jbilinear = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
@@ -199,7 +194,6 @@ int main(int argc, char **argv)
         cout << "spikes: " << nc << endl;
         cout << endl;
 
-        cout << " jLinear begin" << endl;
         clock_gettime(clk_id,&tpS);
         rSize = static_cast<size>((totalRate)*run_t);
         corrSize = static_cast<size>((totalRate)*neuroLib.nt);
@@ -211,9 +205,10 @@ int main(int argc, char **argv)
             inputl.initialize(rSize);
             crossl.initialize(nt,v0);
         }
-        neuron.vThres = vCrossl;
         
-        nc = nsyn_jLinear(neuron, neuroLib, inputl, jndl, crossl, run_t, jlv, corrSize, tsp_jli, vBackl, neuron.ei, inputArg.afterSpikeBehavior);
+        cout << " jLinear begin" << endl;
+        //nc = nsyn_jLinear(neuron, neuroLib, inputl, jndl, crossl, run_t, corrSize, tsp_jli, vBackl, inputArg.afterCrossBehavior, inputArg.spikeShape);
+        nc = nsyn_jLinear(neuron, neuroLib, inputl, jndl, crossl, run_t,inputArg.ignoreT, corrSize, tsp_jli, vCrossl, vBackl, inputArg.afterCrossBehavior, false);
 
         clock_gettime(clk_id,&tpE);
         cpu_t_jlinear = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
@@ -225,7 +220,7 @@ int main(int argc, char **argv)
         clock_gettime(clk_id,&tpS);
         nc = 0;
 
-        nc = linear_nSyn(liV, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_li, vCrossl, vBackl, neuron.ei, inputArg.afterSpikeBehavior);
+        nc = linear_nSyn(cell, spikeTrain, dendVclamp, liV, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_li, vCrossl, vBackl, neuron.ei, inputArg.afterCrossBehavior, inputArg.spikeShape);
 
         clock_gettime(clk_id,&tpE);
         cpu_t_linear = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
@@ -235,13 +230,20 @@ int main(int argc, char **argv)
         cout << endl;
         cout << " bilinear0 begin: " << endl;
         clock_gettime(clk_id,&tpS);
-            nc = bilinear0_nSyn(biV0, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi0, vCrossb, vBackb, neuron.ei, inputArg.afterSpikeBehavior, inputArg.kVStyle);
+            nc = bilinear0_nSyn(cell, spikeTrain, dendVclamp, biV0, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi0, vCrossb, vBackb, neuron.ei, inputArg.afterCrossBehavior, inputArg.spikeShape, inputArg.kVStyle);
         clock_gettime(clk_id,&tpE);
         cpu_t_bilinear0 = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
         cout << "bilinear0 est. ended, took " << cpu_t_bilinear0 << "s" << endl;
         cout << "spikes: " << nc << endl;
         cout << endl;
-        nc = 0;
+
+        cpu_file.write((char*)&(cpu_t_sim),sizeof(double));
+        cpu_file.write((char*)&(cpu_t_bilinear), sizeof(double));
+        cpu_file.write((char*)&(cpu_t_linear), sizeof(double));
+        cpu_file.write((char*)&(cpu_t_jbilinear), sizeof(double));
+        cpu_file.write((char*)&(cpu_t_jlinear), sizeof(double));
+        cpu_file.write((char*)&(cpu_t_bilinear0), sizeof(double));
+
         neuron.writeAndUpdateIn(neuron.tin.size(), tIncome_file);
         vector<double>* output[4] = {&simV,&biV,&liV,&biV0};
         assert(simV.size()==nt0);
@@ -318,8 +320,6 @@ int main(int argc, char **argv)
         simV.clear();
         biV.clear();
         biV0.clear();
-        jlv.clear();
-        jbv.clear();
         liV.clear();
 
         tsp_sim.clear();
@@ -343,6 +343,7 @@ int main(int argc, char **argv)
     if (jND_file.is_open())         jND_file.close();
     if (raster_file.is_open())      raster_file.close();
     if (tIncome_file.is_open())     tIncome_file.close();
+    if (cpu_file.is_open())         cpu_file.close();
     neuroLib.clearLib();
     NEURON_cleanup(cell);
     cout << " cell cleaned " << endl;
