@@ -1,6 +1,6 @@
 #include "linear_bilinear.h"
 
-unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape){
+unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape){
     bool debug;
     double vTarget, dtTarget, dtTarget1;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
@@ -102,17 +102,17 @@ unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, d
             crossed = false;
             ith = i;
             for (k=vs;k<vc;k++) {
-                while(v[k] > vCross) {
+                while (v[k] > vCross) {
                     assert(k<vc);
                     crossed = true;
                     ncross = ncross +1;
                     if (lb::debug) {
-                        std::cout << "crossed at " << k*tstep << ", start ith " << ith << " t= " << neuron.tin[ith] << std::endl;
-                        std::cout << "v[vs] " << v[k]  << " vCross " << vCross << std::endl;
+                        cout << "crossed at " << k*tstep << ", start ith " << ith << " t= " << neuron.tin[ith] << endl;
+                        cout << "v[vs] " << v[k]  << " vCross " << vCross << endl;
                     }
                     ith_old = ith; 
                     if (spikeShape) {
-                        neuroAlterB(neuron, neuroLib, v, ith, vs, run_nt, tstep, tsp, vinit, ve, vBack, cell, ei, spikeTrain, s0, s1, dendVclamp);
+                        neuroAlterB(neuron, neuroLib, v, ith, vs, run_nt, tstep, tsp, vinit, ve, vBack, cell, spikeTrain, s0, s1, dendVclamp);
                     } else {
                         spiked = 1;
                         double tmpTsp = k*neuroLib.tstep+neuron.tRef/2;
@@ -138,8 +138,8 @@ unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, d
                         assert(ith>=ith_old);
                         i_b = ith + 1;
                         if (lb::debug) {
-                            std::cout << "backed at " << vs*tstep << ", end ith " << ith << " t= " << neuron.tin[ith] << std::endl;
-                            std::cout << "v[ve] " << v[vs]  << " vBack " << vBack << std::endl;
+                            cout << "backed at " << vs*tstep << ", end ith " << ith << " t= " << neuron.tin[ith] << endl;
+                            cout << "v[ve] " << v[vs]  << " vBack " << vBack << endl;
                         }
                         if (vs + l0 <= run_lt) {
                             tl = nt0;
@@ -209,7 +209,7 @@ unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, d
                             if (v[j] > vCross) {
                                 k = j;
                                 if (lb::debug) {
-                                    std::cout << "cross again at " << k << std::endl;
+                                    cout << "cross again at " << k << endl;
                                 }
                                 break;
                             }
@@ -232,11 +232,11 @@ unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, d
             //cout << "i back" << i << "ve " << vs << endl;
         }
     }
-    std::cout << "crossed " << ncross << " times" << std::endl;
+    cout << "crossed " << ncross << " times" << endl;
     return spikeCount;
 }
 
-unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape){
+unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape){
     double vTarget, dtTarget;
     size tl, vs, ve, vc, i, j, k, ith_old, ith;
     double tstep = neuroLib.tstep;
@@ -308,12 +308,12 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
                     crossed = true;
                     ncross = ncross +1;
                     if (lb::debug) {
-                        std::cout << "crossed at " << k*tstep << ", start ith " << ith << " t= " << neuron.tin[ith] << std::endl;
-                        std::cout << "v[vs] " << v[k]  << " vCross " << vCross << std::endl;
+                        cout << "crossed at " << k*tstep << ", start ith " << ith << " t= " << neuron.tin[ith] << endl;
+                        cout << "v[vs] " << v[k]  << " vCross " << vCross << endl;
                     }
                     ith_old = ith; 
                     if (spikeShape) {
-                        neuroAlterB(neuron, neuroLib, v, ith, vs, run_nt, tstep, tsp, vinit, ve, vBack, cell, ei, spikeTrain, s0, s1, dendVclamp);
+                        neuroAlterB(neuron, neuroLib, v, ith, vs, run_nt, tstep, tsp, vinit, ve, vBack, cell, spikeTrain, s0, s1, dendVclamp);
                     } else {
                         spiked = 1;
                         double tmpTsp = k*neuroLib.tstep+neuron.tRef/2;
@@ -338,8 +338,8 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
                         ith--;
                         assert(ith>=ith_old);
                         if (lb::debug) {
-                            std::cout << "backed at " << vs*tstep << ", end ith " << ith <<  " t= " << neuron.tin[ith] << std::endl;
-                            std::cout << "v[ve] " << v[vs]  << " vBack " << vCross << " vBack " << vBack << std::endl;
+                            cout << "backed at " << vs*tstep << ", end ith " << ith <<  " t= " << neuron.tin[ith] << endl;
+                            cout << "v[ve] " << v[vs]  << " vBack " << vCross << " vBack " << vBack << endl;
                         }
                         if (vs + l0 <= run_lt) {
                             tl = nt0;
@@ -387,7 +387,7 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
                             if (v[j] > vCross) {
                                 k = j;
                                 if (lb::debug) {
-                                    std::cout << "cross again at " << k << std::endl;
+                                    cout << "cross again at " << k << endl;
                                 }
                                 break;
                             }
@@ -409,11 +409,11 @@ unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, dou
             vs = ve;
         }
     }
-    std::cout << "crossed " << ncross << " times" << std::endl;
+    cout << "crossed " << ncross << " times" << endl;
     return spikeCount;
 }
 
-unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, vector<std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape, bool kVStyle){
+unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, vector<vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool kVStyle){
     double vTarget, dtTarget, dtTarget1;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
     double tstep = neuroLib.tstep;
@@ -522,17 +522,17 @@ unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vect
             crossed = false;
             ith = i;
             for (k=vs;k<vc;k++) {
-                while(v[k] > vCross) {
+                while (v[k] > vCross) {
                     assert(k<vc);
                     crossed = true;
                     ncross = ncross +1;
                     if (lb::debug) {
-                        std::cout << "crossed at " << k*tstep << ", start ith " << ith << " t= " << neuron.tin[ith] << std::endl;
-                        std::cout << "v[vs] " << v[k]  << " vCross " << vCross << std::endl;
+                        cout << "crossed at " << k*tstep << ", start ith " << ith << " t= " << neuron.tin[ith] << endl;
+                        cout << "v[vs] " << v[k]  << " vCross " << vCross << endl;
                     }
                     ith_old = ith; 
                     if (spikeShape) {
-                        neuroAlterB(neuron, neuroLib, v, ith, vs, run_nt, tstep, tsp, vinit, ve, vBack, cell, ei, spikeTrain, s0, s1, dendVclamp);
+                        neuroAlterB(neuron, neuroLib, v, ith, vs, run_nt, tstep, tsp, vinit, ve, vBack, cell, spikeTrain, s0, s1, dendVclamp);
                     } else {
                         spiked = 1;
                         double tmpTsp = k*neuroLib.tstep+neuron.tRef/2;
@@ -558,8 +558,8 @@ unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vect
                         assert(ith>=ith_old);
                         i_b = ith + 1;
                         if (lb::debug) {
-                            std::cout << "backed at " << vs*tstep << ", end ith " << ith << " t= " << neuron.tin[ith] << std::endl;
-                            std::cout << "v[ve] " << v[vs]  << " vBack " << vBack << std::endl;
+                            cout << "backed at " << vs*tstep << ", end ith " << ith << " t= " << neuron.tin[ith] << endl;
+                            cout << "v[ve] " << v[vs]  << " vBack " << vBack << endl;
                         }
                         if (vs + l0 <= run_lt) {
                             tl = nt0;
@@ -632,7 +632,7 @@ unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vect
                             if (v[j] > vCross) {
                                 k = j;
                                 if (lb::debug) {
-                                    std::cout << "cross again at " << k << std::endl;
+                                    cout << "cross again at " << k << endl;
                                 }
                                 break;
                             }

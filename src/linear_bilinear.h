@@ -4,6 +4,9 @@
 #include <vector>
 #include "nNeuroSt.h"
 #include "Yale_NEURON_PyAPI.h"
+using cout;
+using endl;
+using vector;
 namespace lb{
     const bool debug = false;
     const bool debug2 = false;
@@ -29,7 +32,7 @@ inline void getNear(T *range, size n, double target, double &ratio, size &istart
     }
 }
 
-inline void interpPSP(std::vector<double> &v, size vs, double ****PSP, double *vRange, size *idtRange, size iSyn, int nv, size ndt, double vTar, double dtTar, size limit) {
+inline void interpPSP(vector<double> &v, size vs, double ****PSP, double *vRange, size *idtRange, size iSyn, int nv, size ndt, double vTar, double dtTar, size limit) {
     size iv, jv, idt, jdt;
     size k;
     double rv, rdt, base;
@@ -61,7 +64,7 @@ inline void interpPSP(std::vector<double> &v, size vs, double ****PSP, double *v
     }
 }
 
-inline void interpPSP0(std::vector<double> &v, size vs, double ****PSP, double *vRange, int nv, double vTar, size tl, int iSyn) {
+inline void interpPSP0(vector<double> &v, size vs, double ****PSP, double *vRange, int nv, double vTar, size tl, int iSyn) {
     size i,j,k;
     double r, base;
     getNear(vRange,nv,vTar,r,i,j);
@@ -72,7 +75,7 @@ inline void interpPSP0(std::vector<double> &v, size vs, double ****PSP, double *
     }
 }
 
-inline void interpkV(std::vector<double> &v, size vs, double ******kV, double *vRange, size *idtRange, int nv, size ndt, double vTar, double dtTar0, double dtTar1, size tl, size iSyn, size jSyn) {
+inline void interpkV(vector<double> &v, size vs, double ******kV, double *vRange, size *idtRange, int nv, size ndt, double vTar, double dtTar0, double dtTar1, size tl, size iSyn, size jSyn) {
     size iv ,jv;
     size idt_,jdt_;
     size idt,jdt;
@@ -122,7 +125,7 @@ inline void interpkV(std::vector<double> &v, size vs, double ******kV, double *v
     }
 }
 
-inline void interpPSP_nV(std::vector<double> &v, size vs, double ****PSP, size *idtRange, size ndt, size iSyn, double dtTar, size limit, size iv0, bool kVStyle) {
+inline void interpPSP_nV(vector<double> &v, size vs, double ****PSP, size *idtRange, size ndt, size iSyn, double dtTar, size limit, size iv0, bool kVStyle) {
     size k;
     if (dtTar!=0) {
         if (kVStyle) {
@@ -150,7 +153,7 @@ inline void interpPSP_nV(std::vector<double> &v, size vs, double ****PSP, size *
     }
 }
 
-inline void interpkV0(std::vector<double> &v, size vs, double ****kV0, size *idtRange, size ndt, double dtTar0, double dtTar1, size tl, size iSyn, size jSyn) {
+inline void interpkV0(vector<double> &v, size vs, double ****kV0, size *idtRange, size ndt, double dtTar0, double dtTar1, size tl, size iSyn, size jSyn) {
     size idt,jdt;
     size k;
     double rdt;
@@ -175,7 +178,7 @@ inline void interpkV0(std::vector<double> &v, size vs, double ****kV0, size *idt
     }
 }
 
-inline void interpVinit(std::vector<double> &v, size vs,  double **vLeak, double *vRange, size nv, double vTar, size tl) {
+inline void interpVinit(vector<double> &v, size vs,  double **vLeak, double *vRange, size nv, double vTar, size tl) {
     size i,j,k;
     double r;
     getNear(vRange,nv,vTar,r,i,j);
@@ -183,10 +186,10 @@ inline void interpVinit(std::vector<double> &v, size vs,  double **vLeak, double
         v[vs+k] = vLeak[i][k] + r*(vLeak[j][k]-vLeak[i][k]);
 }
 
-unsigned int bilinear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape);
+unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape);
 
-unsigned int linear_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape);
+unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape);
 
-unsigned int bilinear0_nSyn(std::vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, std::vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape, bool kVStyle);
+unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, vector<bool> &ei, int afterCrossBehavior, bool spikeShape, bool kVStyle);
 
 #endif

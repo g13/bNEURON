@@ -79,7 +79,7 @@ void NEURON_cleanup(Cell &cell) {
     Py_CLEAR(cell.Py_vecStimList);
 }
 
-unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, long insert, bool getDendV, vector<vector<double>> &dendV = &vector<vector<double>>()) {
+unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, long insert, bool getDendV=0, vector<vector<double>> &dendV = vector<vector<double>>()) {
 
     PyObject **pRList = new PyObject*[n];
     PyObject *pFunc;
@@ -301,7 +301,7 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
     return static_cast<unsigned int>(fired);
 }
 
-size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jND &jnd, double end_t, double it, double &tBack, double &vBack, double tstep, std::vector<double> &tsp, double vStop, unsigned int &nc, Cell &cell, vector<bool> &ei, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp) {
+size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jND &jnd, double end_t, double it, double &tBack, double &vBack, double tstep, std::vector<double> &tsp, double vStop, unsigned int &nc, Cell &cell, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp) {
     if (it!=round(it)) {
         cout << "it needs roud off" << it << " != " << round(it) << endl;
         it = round(it);
@@ -318,7 +318,7 @@ size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jN
     vector<vector<double>> RList(neuron.nSyn,vector<double>(2,0));
     long nin = neuron.inID.size();
     
-    get_RList(spikeTrain, s0, s1, t0, RList, ei, neuroLib.gList);
+    get_RList(spikeTrain, s0, s1, t0, RList, neuron.ei, neuroLib.gList);
 
     npy_intp dim;
     //cross.v.push_back(vinit);
@@ -354,7 +354,7 @@ size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jN
     return ith;
 }
 
-size neuroAlterB(nNS &neuron, nNL &neuroLib, vector<double> &v, size &ith, size vs, size run_nt, double tstep, vector<double> &tsp, double vinit, size &ve, double vBack, Cell &cell, vector<bool> &ei, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp) {
+size neuroAlterB(nNS &neuron, nNL &neuroLib, vector<double> &v, size &ith, size vs, size run_nt, double tstep, vector<double> &tsp, double vinit, size &ve, double vBack, Cell &cell, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp) {
     size i,j,k;
     double t = vs*tstep;
     double vThres = neuron.vThres;
@@ -384,14 +384,14 @@ size neuroAlterB(nNS &neuron, nNL &neuroLib, vector<double> &v, size &ith, size 
         cout << "   rope's ends tightened" << endl;
     }
 
-    get_RList(spikeTrain, s0, s1, t, RList, ei, neuroLib.gList);
+    get_RList(spikeTrain, s0, s1, t, RList, neuron.ei, neuroLib.gList);
 
     if (yn::debug) {
         cout << "   rope is ready" << endl;
     }
     double tend = trans + (run_nt-1)*tstep;
     npy_intp dim;
-    size nc = Py_proceed(cell, vinit, RList, s1, spikeTrain, neuron.nSyn, trans, tend, vBack, tref, vThres, 0, v, lCross, tsp, t, tstep, dendVclamp,vs,false); 
+    size nc = Py_proceed(cell, vinit, RList, s1, spikeTrain, neuron.nSyn, trans, tend, vBack, tref, vThres, 0, v, lCross, tsp, t, tstep, dendVclamp,vs, false); 
 
     for (ith = ith; ith < nin; ith++) {
         if (neuron.tin[ith] > t+(lCross-1)*tstep) {
