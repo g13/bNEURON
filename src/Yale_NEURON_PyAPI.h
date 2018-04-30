@@ -12,6 +12,9 @@ using std::vector;
 using std::cout;
 using std::endl;
 
+namespace yl {
+    const bool debug = true;
+}
 const double tau_er = 0.098814229249;
 const double tau_ed = 8.333333333333;
 const double tau_ir = 0.98814229249;
@@ -88,6 +91,6 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
 
 size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jND &jnd, double end_t, double it, double &tBack, double &vBack, double tstep, std::vector<double> &tsp, double vStop, unsigned int &nc, Cell &cell, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp);
 
-size neuroAlterB(nNS &neuron, nNL &neuroLib, vector<double> &v, size &ith, size vs, size run_nt, double tstep, vector<double> &tsp, double vinit, size &ve, double vBack, Cell cell, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp);
+size neuroAlterB(nNS &neuron, nNL &neuroLib, vector<double> &v, size &ith, size &vs, size run_nt, double tstep, vector<double> &tsp, double vinit, double vBack, Cell &cell, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp);
 
 #endif

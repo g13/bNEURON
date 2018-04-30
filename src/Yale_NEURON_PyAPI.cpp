@@ -1,8 +1,5 @@
 #include "Yale_NEURON_PyAPI.h"
 
-namespace yn{
-    const bool debug = true;
-}
 
 get_cell::get_cell(SynSet syn) {
     PyObject *pName, *pFunc;
@@ -79,8 +76,14 @@ void NEURON_cleanup(Cell &cell) {
     Py_CLEAR(cell.Py_vecStimList);
 }
 
-unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, long insert, bool getDendV=0, vector<vector<double>> &dendV = vector<vector<double>>()) {
+unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>>
+&RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n,
+double trans, double tend, double vBack, double tref, double vThres, long
+oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0,
+double tstep, vector<double> &dendVclamp, long insert, bool getDendV=0,
+vector<vector<double>> &dendV = dummy_dendV) {
 
+    cout << "its here " << vinit << endl;
     PyObject **pRList = new PyObject*[n];
     PyObject *pFunc;
     PyObject *pArgs, *pValue, *Py_dendVclamp;
@@ -93,15 +96,15 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
     int countdown = 10;
 
     if (cell.pModule != NULL) {
-        if (yn::debug) {
+        if (yl::debug) {
             cout << "       module intact" << endl;
         }
         pFunc = PyObject_GetAttrString(cell.pModule,"proceed");
-        if (yn::debug) {
+        if (yl::debug) {
             cout << "       proceed" << endl;
         }
         if (pFunc!=NULL && PyCallable_Check(pFunc)) {
-            if (yn::debug) {
+            if (yl::debug) {
                 if (cell.Py_Cell != NULL) {
                     cout << countdown-- << " ";
                 } else {
@@ -130,17 +133,17 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
                 cout << "cell prepared" << endl;
                 cout << endl;
             }
-            if (yn::debug) {
+            if (yl::debug) {
                 cout << "       vecTuple = (";
             }
             for (long i=0; i<n; i++){
                 dim = spikeTrain[i].size()-s1[i];
-                if (yn::debug) {
+                if (yl::debug) {
                     assert(dim>0);
                 }
                 Py_spikeTrain[i] = PyArray_SimpleNewFromData(1,&dim,NPY_DOUBLE,&spikeTrain[i][s1[i]]);
 
-                if (yn::debug) {
+                if (yl::debug) {
                     cout << "       np.array([";
                     for (long j=0; j<dim; j++) {
                         cout << spikeTrain[i][s1[i]+j];
@@ -156,25 +159,25 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
                 
                 PyTuple_SetItem(Py_spikeTrainTuple,i,Py_spikeTrain[i]);
             }
-            if (yn::debug) {
+            if (yl::debug) {
                 cout << ")" << endl; 
                 cout << "       RList = [";
             }
             for (long i=0; i<n; i++){
                 dim = RList[i].size();
                 pRList[i] = PyArray_SimpleNewFromData(1,&dim,NPY_DOUBLE,RList[i].data());
-                if (yn::debug) {
+                if (yl::debug) {
                     if (!pRList[i]) {
                         cout << "-----------> RList " << i << " wrapper failed" << endl;
                     }
                 }
                 PyTuple_SetItem(Py_RList,i,pRList[i]);
-                if (yn::debug) {
+                if (yl::debug) {
                     cout << "[" << RList[i][0] << ", " << RList[i][1] << "]";
                     if (i != n-1) cout << ", ";
                 }
             }
-            if (yn::debug) {
+            if (yl::debug) {
                 cout << "]" << endl;
                 cout << "       dendVclamp = np.array([";
                 for (long i=0; i<n; i++) {
@@ -186,7 +189,7 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
 
             dim = dendVclamp.size();     
             Py_dendVclamp = PyArray_SimpleNewFromData(1,&dim,NPY_DOUBLE,dendVclamp.data());
-            if (yn::debug) {
+            if (yl::debug) {
                 if (!Py_dendVclamp) {
                     cout << "-----------> vCap wrapper failed" << endl;
                 }
@@ -222,12 +225,12 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
             } else {
                 PyTuple_SetItem(pArgs,20,Py_False);
             }
-            if (yn::debug) {
+            if (yl::debug) {
                 cout << "       ..." << endl;
             }
             pValue = PyObject_CallObject(pFunc,pArgs);
             Py_DECREF(pArgs);
-            if (yn::debug) {
+            if (yl::debug) {
                 cout << " and back to earth"; 
             }
             if (pValue!=NULL) {
@@ -238,11 +241,11 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
                 PyObject *Py_ntrans = PyTuple_GetItem(pValue,3);
                 long gone = PyLong_AsLong(Py_ntrans);
 
-                if (yn::debug) {
+                if (yl::debug) {
                     cout << " safe, crossed " <<  nt-gone <<  " planets, last trans included" << endl;
                 }
 
-                if (insert<0) {
+                if (insert>=0) {
                     for (long i = gone; i<nt; i++) {
                         v[insert+gone-i] = v_p[i];
                     }
@@ -251,7 +254,7 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
                         v.push_back(v_p[i]);
                     }
                 }
-                if (yn::debug) {
+                if (yl::debug) {
                     cout << v_p[static_cast<int>(gone)] << ", " << v_p[static_cast<int>(gone)+1]<<"; " << v.back()  << "==" << v_p[nt-1] << "; " <<  v_p[static_cast<int>(gone)] - v_p[static_cast<int>(gone)+1] << endl;
                 }
 
@@ -267,7 +270,7 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
                 }
                 
                 if (getDendV) {
-                    if (yn::debug) {
+                    if (yl::debug) {
                         cout << " getting dend V " << endl;
                     }
                     PyObject *Py_dendV = PyTuple_GetItem(pValue,4);
@@ -283,7 +286,7 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
                 Py_DECREF(pValue);
             } else {
                 Py_DECREF(pFunc);
-                if (yn::debug) {
+                if (yl::debug) {
                     char pause;
                     cout << " but, the universe has rejected us" << endl;
                     std::cin >> pause;
@@ -292,7 +295,7 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
         }
         Py_XDECREF(pFunc);
     } else {
-        if (yn::debug) {
+        if (yl::debug) {
             cout << " Houston we have a trouble!" << endl;
         }
     }
@@ -328,7 +331,7 @@ size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jN
         assert(cross.t.size() == cross.v.size());
     }
     size nt = 0;
-    nc = nc + Py_proceed(cell, vinit, RList, s1, spikeTrain, neuron.nSyn, trans, trans + end_t, vStop, tref, vThres, 0, cross.v, nt, tsp, t0, tstep, dendVclamp); 
+    nc = nc + Py_proceed(cell, vinit, RList, s1, spikeTrain, neuron.nSyn, trans, trans + end_t, vStop, tref, vThres, 0, cross.v, nt, tsp, t0, tstep, dendVclamp, -1, false); 
     assert(nt == cross.v.size() - lastSize);
     tBack = round(it + nt-1);
     assert(int(tBack) == tBack);
@@ -354,7 +357,7 @@ size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jN
     return ith;
 }
 
-size neuroAlterB(nNS &neuron, nNL &neuroLib, vector<double> &v, size &ith, size vs, size run_nt, double tstep, vector<double> &tsp, double vinit, size &ve, double vBack, Cell &cell, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp) {
+size neuroAlterB(nNS &neuron, nNL &neuroLib, vector<double> &v, size &ith, size &vs, size run_nt, double tstep, vector<double> &tsp, double vinit, double vBack, Cell &cell, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp) {
     size i,j,k;
     double t = vs*tstep;
     double vThres = neuron.vThres;
@@ -364,45 +367,37 @@ size neuroAlterB(nNS &neuron, nNL &neuroLib, vector<double> &v, size &ith, size 
     vector<vector<double>> RList(neuron.nSyn,vector<double>(2,0));
     long nin = neuron.inID.size();
 
-    if (yn::debug) {
+    if (yl::debug) {
         cout << "houston, we are now inside the cave, will retreat if temp goes below: " << vBack << endl;
     }
     for (i=0; i< neuron.nSyn; i++){
         while (spikeTrain[i][s0[i]] < t - neuroLib.tol_tl) {
             s0[i]++; 
         }
-        assert(s0[i] < spikeTrain[i].size());
+        if (s1[i] < s0[i]) {
+            s1[i] = s0[i] + 1;
+        }
         while (spikeTrain[i][s1[i]] < t) {
             s1[i]++;
         }
-        if (yn::debug) {
+        if (yl::debug) {
             cout << "   s0 " << s0[i] << "s1 " << s1[i] << endl;
             assert(s1[i] < spikeTrain[i].size());
         }
     }
-    if (yn::debug) {
+    if (yl::debug) {
         cout << "   rope's ends tightened" << endl;
     }
 
     get_RList(spikeTrain, s0, s1, t, RList, neuron.ei, neuroLib.gList);
 
-    if (yn::debug) {
+    if (yl::debug) {
         cout << "   rope is ready" << endl;
     }
     double tend = trans + (run_nt-1)*tstep;
     npy_intp dim;
     size nc = Py_proceed(cell, vinit, RList, s1, spikeTrain, neuron.nSyn, trans, tend, vBack, tref, vThres, 0, v, lCross, tsp, t, tstep, dendVclamp,vs, false); 
 
-    for (ith = ith; ith < nin; ith++) {
-        if (neuron.tin[ith] > t+(lCross-1)*tstep) {
-            break;                
-        }
-    }
-    ith--;
-
-    ve = vs + lCross - 1;
-    if (yn::debug) {
-        assert(neuron.tin[ith] <= t+(lCross-1)*tstep);
-    }
+    vs = vs + lCross - 1;
     return nc;
 }

@@ -18,7 +18,7 @@ struct nNeuroLib {
            ****kV0,     *kV0_ptr,
            *vRange, *dtRange, tstep,
            **vLeak, *vLeak_ptr;
-    double ***tMax, *tMax_ptr;
+    size ***tMax, *tMax_ptr;
     double ***dendVleak, *dendVleak_ptr;
     int *loc;
     int **fireCap,  *fireCap_ptr;

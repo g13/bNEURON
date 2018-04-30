@@ -3,7 +3,7 @@ function setInput(write_inputTable, write_levels,cfgfile)
     inputLevels = [10,20,30,40];
     runTime = [100,200,300];
     dt = [0.1,0.1,0.01];
-    inputs = [ones(6,1);zeros(3,1)+0.5];
+    inputs = [ones(2,1);zeros(2,1)+0.5];
     dt = zeros(nLevel,1);
     runTime = zeros(nLevel,1);
     inputLevels = zeros(nLevel,1);

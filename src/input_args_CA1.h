@@ -16,8 +16,9 @@ struct input_args_CA1 : input_args {
     double trans0;
     double rBiLinear;
     int kVStyle;
-    int afterSpikeBehavior;
+    int afterCrossBehavior;
     bool spikeShape;
+    bool dtSquare;
     unsigned int vInit;
     input_args_CA1();
     using input_args::read;

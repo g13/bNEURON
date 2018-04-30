@@ -5,7 +5,7 @@ nNeuroLib::nNeuroLib(const char *filename) {
     MATFile *pmat;
     const char **var;
     mxArray *tmp;
-    size arraySize, dimSize[5];
+    size arraySize, dimSize[6];
     file = filename;
     int i,n;
     
@@ -38,10 +38,15 @@ nNeuroLib::nNeuroLib(const char *filename) {
     nt = dimSize[3];
     
     readArray(tmp,"tmax", dimSize, arraySize, pmat, file);
-    tMax_ptr = new double[arraySize];
-    memcpy((void *) tMax_ptr, (void *)(mxGetPr(tmp)),arraySize*sizeof(double));
+    double *dtMax_ptr = new double[arraySize];
+    memcpy((void *) dtMax_ptr, (void *)(mxGetPr(tmp)),arraySize*sizeof(double));
+    tMax_ptr = new size[arraySize];
+    for (i=0; i<arraySize; i++) {
+        tMax_ptr[i] = static_cast<size>(dtMax_ptr[i]);
+    }
     pointer3d(tMax,tMax_ptr,dimSize);
     mxDestroyArray(tmp);
+    delete[] dtMax_ptr;
 
     readArray(tmp,"dendvleak", dimSize, arraySize, pmat, file);
     dendVleak_ptr = new double[arraySize];

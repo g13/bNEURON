@@ -17,6 +17,7 @@ input_args_CA1::input_args_CA1() {
         ("dendClampRatio",po::value<double>(&dendClampRatio),"dendrite dV contribution ratio")
         ("afterCrossBehavior",po::value<int>(&afterCrossBehavior)->default_value(0), "0:no linear or bilinear extension after spike. 1:no bilinear extension. 2: all extend.")
         ("kVStyle",po::value<int>(&kVStyle)->default_value(0), "bilinear0 after spike kV style, 0: kV0 style. 1: kV style.")
+        ("dtSquare",po::value<bool>(&dtSquare)->default_value(false)," if true, the second dt variable of kV is considered a second tier variable when interpolating")
         ("spikeShape",po::value<bool>(&spikeShape)->default_value(true),"if false, crossing is spiking")
 		("ignoreT", po::value<double>(&ignoreT),"ingore time while applying bilinear rules");
         

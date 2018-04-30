@@ -22,12 +22,12 @@ namespace jl {
         // else v = neuron.vReset (presetted)
     
         if (dt < tol_tb) {
-            move_corr_window(input, tail_l, t, tol_tb, neuroLib.tstep)
+            move_corr_window_i(input.t, tail_l, t, tol_tb);
         } else {
             if (dt < tol_tl) {
-                move_corr_window(input, tail_l, t, dt, neuroLib.tstep)
+                move_corr_window_i(input.t, tail_l, t, dt);
             } else {
-                move_corr_window(input, tail_l, t, tol_tl, neuroLib.tstep)
+                move_corr_window_i(input.t, tail_l, t, tol_tl);
             }
         }
     
@@ -128,7 +128,7 @@ namespace jl {
 
     bool check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tol_tl, double tol_tb, double end_t, size tail_l, size head, jND &jnd, double &t_cross, double vC);
 
-    bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &neuroLib, nNS &neuron, size head, size tail_l, size old_tail_l, double tol_tl, double tol_tb, double end_t, jND &jnd, double &t_cross, double vC, size corrSize);
+    bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &neuroLib, nNS &neuron, size head, size &tail_l, size old_tail_l, double tol_tl, double tol_tb, double end_t, jND &jnd, double &t_cross, double vC, size corrSize);
 
     void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tCross, double vCross, size i_prior, size &tail, size head, size corrSize, int afterCrossBehavior);
 }

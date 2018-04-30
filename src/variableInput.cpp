@@ -75,7 +75,12 @@ int main(int argc, char **argv)
         double run_t = inputArg.runTime[ii];
         cout << "generating inputs" << endl;
         neuron.initialize(inputArg.runTime[ii],tstep,t0,rate[ii]);
+        if (inputArg.vInit >= neuroLib.nv) {
+            cout << "vInit " << inputArg.vInit << " out of range, nv " << neuroLib.nv << endl;
+            assert(inputArg.vInit < neuroLib.nv);
+        }
         double v0 = neuroLib.vRange[inputArg.vInit];
+        cout << "start v: " << v0 << endl;
         while (neuron.status) neuron.getNextInput(rate[ii]);
         cout << "done" << endl;
         cout << endl;
@@ -118,7 +123,6 @@ int main(int argc, char **argv)
             dendV[i].reserve(nt0);
         }
         simV.reserve(nt0);
-        //simV.push_back(v0);
         biV.reserve(nt);
         biV.push_back(v0);
         biV0.reserve(nt);
@@ -160,7 +164,7 @@ int main(int argc, char **argv)
         cout << " bilinear begin" << endl;
         clock_gettime(clk_id,&tpS);
 
-        nc = bilinear_nSyn(cell, spikeTrain, dendVclamp, biV, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi, vCrossb, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape);
+        nc = bilinear_nSyn(cell, spikeTrain, dendVclamp, biV, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi, vCrossb, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape, inputArg.dtSquare);
         clock_gettime(clk_id,&tpE);
         cpu_t_bilinear = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
         cout << "bilinear est. ended, took " << cpu_t_bilinear << "s" << endl;
@@ -185,8 +189,7 @@ int main(int argc, char **argv)
         }
 
         cout << " jBilinear begin" << endl;
-        //nc = nsyn_jBilinear(neuron, neuroLib, inputb, jndb, crossb, run_t, corrSize, tsp_jbi, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape);
-        nc = nsyn_jBilinear(neuron, neuroLib, inputb, jndb, crossb, run_t,inputArg.ignoreT, corrSize, tsp_jbi, vCrossb, vBackb, inputArg.afterCrossBehavior, false);
+        nc = nsyn_jBilinear(neuron, neuroLib, inputb, jndb, crossb, run_t, inputArg.ignoreT, corrSize, tsp_jbi, vCrossb, vBackb, inputArg.afterCrossBehavior, false, inputArg.dtSquare);
 
         clock_gettime(clk_id,&tpE);
         cpu_t_jbilinear = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
@@ -207,8 +210,7 @@ int main(int argc, char **argv)
         }
         
         cout << " jLinear begin" << endl;
-        //nc = nsyn_jLinear(neuron, neuroLib, inputl, jndl, crossl, run_t, corrSize, tsp_jli, vBackl, inputArg.afterCrossBehavior, inputArg.spikeShape);
-        nc = nsyn_jLinear(neuron, neuroLib, inputl, jndl, crossl, run_t,inputArg.ignoreT, corrSize, tsp_jli, vCrossl, vBackl, inputArg.afterCrossBehavior, false);
+        nc = nsyn_jLinear(neuron, neuroLib, inputl, jndl, crossl, run_t,inputArg.ignoreT, corrSize, tsp_jli, vCrossl, vBackl, inputArg.afterCrossBehavior, false); //inputArg.spikeShape
 
         clock_gettime(clk_id,&tpE);
         cpu_t_jlinear = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
@@ -230,7 +232,7 @@ int main(int argc, char **argv)
         cout << endl;
         cout << " bilinear0 begin: " << endl;
         clock_gettime(clk_id,&tpS);
-            nc = bilinear0_nSyn(cell, spikeTrain, dendVclamp, biV0, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi0, vCrossb, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape, inputArg.kVStyle);
+            nc = bilinear0_nSyn(cell, spikeTrain, dendVclamp, biV0, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi0, vCrossb, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape, inputArg.kVStyle, inputArg.dtSquare);
         clock_gettime(clk_id,&tpE);
         cpu_t_bilinear0 = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
         cout << "bilinear0 est. ended, took " << cpu_t_bilinear0 << "s" << endl;

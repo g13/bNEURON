@@ -4,7 +4,7 @@
 #SBATCH --mem=60G
 #SBATCH --cpus-per-task=1
 #SBATCH --time=1:00:00
-#SBATCH -o brun_%A.out
+#SBATCH -o gC_%A.out
 #SBATCH --job-name=gC
 
 module purge

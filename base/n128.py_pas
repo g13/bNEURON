@@ -45,9 +45,9 @@ class RealisticNeuron(object):
         gna = 0.03   # 0.03
         gkdr = 0.005 # 0.005
         gka = 0.005  # 0.005
-        ghd = 2.0e-5 # 2.0e-5
         gka_dist = gka
         gka_prox = gka
+        ghd = 2.0e-5 # 2.0e-5
         gh_soma = ghd
         gh_end = 10.0*ghd
         # soma
@@ -85,6 +85,8 @@ class RealisticNeuron(object):
             sec.g_pas = 1/RmAx
             sec.Ra = RaAll
             sec.cm = Cm
+            # sec.push()
+            # print h.secname()
         #
         gna = 0.03   # 0.03
         gkdr = 0.005 # 0.005

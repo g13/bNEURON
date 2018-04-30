@@ -1,7 +1,7 @@
 #!/bin/bash
 n128=0
 dir0=library
-theme='test'
+theme='valgrind'
 dir=$dir0/$theme
 
 if [ -d "./$dir" ]; then
