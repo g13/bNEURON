@@ -321,6 +321,21 @@ size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jN
     vector<vector<double>> RList(neuron.nSyn,vector<double>(2,0));
     long nin = neuron.inID.size();
     
+    for (i=0; i< neuron.nSyn; i++){
+        while (spikeTrain[i][s0[i]] < t0 - neuroLib.tol_tl) {
+            s0[i]++; 
+        }
+        if (s1[i] < s0[i]) {
+            s1[i] = s0[i] + 1;
+        }
+        while (spikeTrain[i][s1[i]] < t0) {
+            s1[i]++;
+        }
+        if (yl::debug) {
+            cout << "   s0 " << s0[i] << "s1 " << s1[i] << endl;
+            assert(s1[i] < spikeTrain[i].size());
+        }
+    }
     get_RList(spikeTrain, s0, s1, t0, RList, neuron.ei, neuroLib.gList);
 
     npy_intp dim;

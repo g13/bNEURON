@@ -189,7 +189,7 @@ int main(int argc, char **argv)
         }
 
         cout << " jBilinear begin" << endl;
-        nc = nsyn_jBilinear(neuron, neuroLib, inputb, jndb, crossb, run_t, inputArg.ignoreT, corrSize, tsp_jbi, vCrossb, vBackb, inputArg.afterCrossBehavior, false, inputArg.dtSquare);
+        nc = nsyn_jBilinear(cell, spikeTrain, dendVclamp, neuron, neuroLib, inputb, jndb, crossb, run_t, inputArg.ignoreT, corrSize, tsp_jbi, vCrossb, vBackb, inputArg.afterCrossBehavior, false, inputArg.dtSquare);
 
         clock_gettime(clk_id,&tpE);
         cpu_t_jbilinear = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
@@ -210,7 +210,7 @@ int main(int argc, char **argv)
         }
         
         cout << " jLinear begin" << endl;
-        nc = nsyn_jLinear(neuron, neuroLib, inputl, jndl, crossl, run_t,inputArg.ignoreT, corrSize, tsp_jli, vCrossl, vBackl, inputArg.afterCrossBehavior, false); //inputArg.spikeShape
+        nc = nsyn_jLinear(cell, spikeTrain, dendVclamp, neuron, neuroLib, inputl, jndl, crossl, run_t,inputArg.ignoreT, corrSize, tsp_jli, vCrossl, vBackl, inputArg.afterCrossBehavior, false); //inputArg.spikeShape
 
         clock_gettime(clk_id,&tpE);
         cpu_t_jlinear = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;

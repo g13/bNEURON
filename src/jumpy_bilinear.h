@@ -4,6 +4,7 @@
 #include <vector>
 #include "typedefs.h"
 #include "nNeuroSt.h"
+#include "Yale_NEURON_PyAPI.h"
 
 using std::vector;
 using std::cout;
@@ -327,6 +328,6 @@ bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &n
 
 void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tCross, double vCross, size i_prior, size &tail_l, size &tail_b, size head, size corrSize, int afterCrossBehavior);
 
-unsigned int nsyn_jBilinear(nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterSpikeBehavior, bool spikeShape, bool dtSquare);
+unsigned int nsyn_jBilinear(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape, bool dtSquare);
 
 #endif
