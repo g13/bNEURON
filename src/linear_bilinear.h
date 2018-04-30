@@ -21,7 +21,6 @@ inline void getNear(T *range, size n, double target, double &ratio, size &istart
     } else if (target >= range[n-1]) {
         istart = n-2; jnext = n-1;
         ratio = (target-range[istart])/(range[jnext]-range[istart]);
-        }
     } else {
         for (i=0;i<n-1;i++) {
             if (target >= range[i] && target < range[i+1] ) {
@@ -77,13 +76,7 @@ inline void interpkV(vector<double> &v, size vs, double ******kV, double *vRange
     size iv,jv;
     double rdt0,rdt1,rv;
     getNear(vRange,nv,vTar,rv,iv,jv);
-    if (iSyn == jSyn) {
-        getNear(idtRange+1,ndt-1,dtTar0,rdt0,idt0,jdt0);
-        idt0++;
-        jdt0++;
-    } else {
-        getNear(idtRange,ndt,dtTar0,rdt0,idt0,jdt0);
-    }
+    getNear(idtRange,ndt,dtTar0,rdt0,idt0,jdt0);
     
     if (lb::debug2) {
         cout << " idt0 " << idt0 << endl;
@@ -165,13 +158,7 @@ inline void interpkV0(vector<double> &v, size vs, double ****kV0, size *idtRange
     size k;
     double rdt;
     double base;
-    if (iSyn == jSyn) {
-        getNear(idtRange+1,ndt-1,dtTar0,rdt,idt,jdt);
-        idt++;
-        jdt++;
-    } else {
-        getNear(idtRange,ndt,dtTar0,rdt,idt,jdt);
-    }
+    getNear(idtRange,ndt,dtTar0,rdt,idt,jdt);
     size idt0 = static_cast<size>(dtTar1-dtTar0);
     for (k=1;k<tl;k++) {
         base = kV0[idt][iSyn][jSyn][idtRange[idt]+idt0+k];

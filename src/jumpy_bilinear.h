@@ -91,7 +91,7 @@ inline void add_new_input_info(double *vRange, size nv, Input &input, Cross &cro
     jb::getNear(vRange, nv, v, r_,i_,j_);
     input.Vijr.push_back(IJR(i_,j_,r_));
     input.dTijr.push_back(IJR(0,1,0));
-    if (j_ >= sfireCap[ID][0] && r_ > 0.1) {
+    if (j_ >= sfireCap[0][ID] && r_ > 0.1) {
         // if sufficiently close to spike case
         input.tMax.push_back(tMax[j_][0][ID]);
     } else {

@@ -68,12 +68,8 @@ def get0J(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,v
     bfire = np.empty(ndt)
     kv = np.zeros((ndt,run_nt))
     if i == j:
-        if idt == 0:
-            s.send(np.array([kv,bfire,j]))
-            return
-        else:
-            spikes = np.array([[]])
-            sel = [i]
+        spikes = np.array([[]])
+        sel = [i]
     else:
         spikes = np.array([np.array([]),np.array([])])
         sel = [i, j]
@@ -85,8 +81,11 @@ def get0J(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,v
         dtt = dtRange[jdt]
         RList = np.zeros((n,2))
         if i == j:
-            rl0 = getGH(dt,gList[i])
-            RList[i,:] = getGH(dtt-dt,gList[i],rl0[0],rl0[1])
+            if idt == 0:
+                RList[i,:] = getGH(dt,2*gList[i])
+            else:
+                rl0 = getGH(dt,gList[i])
+                RList[i,:] = getGH(dtt-dt,gList[i],rl0[0],rl0[1])
         else:
             RList[i,:] = getGH(dtt,gList[i])
             RList[j,:] = getGH(dtt-dt,gList[j])
@@ -172,12 +171,8 @@ def getJ(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vS
     bfire = np.empty(ndt)
     kv = np.zeros((ndt,run_nt))
     if i == j:
-        if idt == 0:
-            s.send(np.array([kv,bfire,j]))
-            return
-        else:
-            spikes = np.array([[]])
-            sel = [i]
+        spikes = np.array([[]])
+        sel = [i]
     else:
         spikes = np.array([np.array([]),np.array([])])
         sel = [i, j]
@@ -189,8 +184,11 @@ def getJ(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vS
         dtt = dtRange[jdt]
         RList = np.zeros((n,2))
         if i == j:
-            rl0 = getGH(dt,gList[i])
-            RList[i,:] = getGH(dtt-dt,gList[i],rl0[0],rl0[1])
+            if idt == 0:
+                RList[i,:] = getGH(dt,2*gList[i])
+            else:
+                rl0 = getGH(dt,gList[i])
+                RList[i,:] = getGH(dtt-dt,gList[i],rl0[0],rl0[1])
         else:
             RList[i,:] = getGH(dtt,gList[i])
             RList[j,:] = getGH(dtt-dt,gList[j])
@@ -276,8 +274,8 @@ def getJ0(i,j,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,
     print " j = ", j
     if i == j:
         if idt == 0:
-            s.send(np.array([kv0,j]))
-            return
+            spikes = np.array([[0.0]])
+            sel = [i]
         else:
             spikes = np.array([[0.0, dt]])
             sel = [i]
@@ -285,16 +283,21 @@ def getJ0(i,j,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,
         spikes = np.array([np.array([0.0]),np.array([dt])])
         sel = [i, j]
     RList = np.zeros((n,2))
-    if idt == ndt-1:
-        relit = run_nt - idtRange[idt]
-        relt = run_t-dt
+    #if idt == ndt-1:
+    relit = run_nt - idtRange[idt]
+    relt = run_t-dt
+    if idt == 0 and i == j:
+        gList0 = gList
+        gList0[i] = 2*gList[i];
         v, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + run_t , 0, tstep, '')
-        v = v[ntrans+idtRange[idt]:ntrans+run_nt]
     else:
-        relit = tol_nt - idtRange[idt]
-        relt = tol_t-dt
-        v, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + tol_t, 0, tstep, '')
-        v = v[ntrans+idtRange[idt]:ntrans+tol_nt]
+        v, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + run_t , 0, tstep, '')
+    v = v[ntrans+idtRange[idt]:ntrans+run_nt]
+    #else:
+    #    relit = tol_nt - idtRange[idt]
+    #    relt = tol_t-dt
+    #    v, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + tol_t, 0, tstep, '')
+    #    v = v[ntrans+idtRange[idt]:ntrans+tol_nt]
     print relit, ' == ', v.size
     assert(v.size == relit)
     v = v - vrest
@@ -377,8 +380,8 @@ def getNib(argv):
     run_t = 225.0
     trans = 110.0
     #==================
-    run_t = 100.0
-    trans = 10.0
+    #run_t = 100.0
+    #trans = 10.0
     rdpi = 300
     
     #dtRange = np.array([0,70,140],dtype='float')
@@ -388,7 +391,7 @@ def getNib(argv):
     dtRangeI = np.array([0,0.5,1,1.5,2,4,40,50,60,70,80,90,110,125,150,175],dtype='float')
     dtRange = np.sort(np.hstack([dtRangeE,dtRangeI]))
     #===========================================================
-    dtRange = np.array([0,30,60],dtype='float')
+    #dtRange = np.array([0,30,60],dtype='float')
 
     #dtRange = np.array([0,12,24,60],dtype='float')
     #dtRange = np.array([0,8,20,130],dtype='float')
@@ -404,17 +407,18 @@ def getNib(argv):
     locI = np.array([14, 28, 40],dtype='int')
     vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
     #===========================================================
+    #vRange = np.array([-74,-70,-65,-61],dtype='double')
+    #locE = np.array([72,79],dtype='int')
+    #locI = np.array([14,40],dtype='int')
+
     #vRange = np.arange(-74,-59)
-    vRange = np.array([-74,-70,-65,-61],dtype='double')
     #locE = np.array([60, 72, 78, 84, 98],dtype='int')
     #locE = np.array([60, 72],dtype='int')
     #locE = np.array([52, 60, 72, 78, 84, 98],dtype='int')
     #locE = np.array([52, 60, 72],dtype='int')
-    locE = np.array([72,79],dtype='int')
     #locI = np.random.randint(1,75,3)
     #locI = np.array([41, 42, 43],dtype='int')
     #locI = np.array([40],dtype='int')
-    locI = np.array([14,40],dtype='int')
     ### swap one
     #swap = locE[0]
     #locE[0] = locI[-1]

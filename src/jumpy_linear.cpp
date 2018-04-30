@@ -177,7 +177,7 @@ void jl::update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS 
                 input.dt[i] = tCross;
                 input.cCross[i] = cross.nCross;
                 input.Vijr[i] = cross.vCross.back();
-                if (input.Vijr[i].j >= neuroLib.sfireCap[input.ID[i]][input.dTijr[i].i] && input.dTijr[i].r > 0.1) {
+                if (input.Vijr[i].j >= neuroLib.sfireCap[input.dTijr[i].i][input.ID[i]] && input.dTijr[i].r > 0.1) {
                     // if sufficiently close to spike case
                     input.tMax[i] = neuroLib.tMax[input.Vijr[i].j][input.dTijr[i].i][input.ID[i]];
                 } else {
@@ -222,7 +222,7 @@ void jl::update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS 
             input.dTijr.push_back(IJR(i_,j_,r_));
             input.cCross.push_back(cross.nCross);
             input.Vijr.push_back(cross.vCross.back());
-            if (input.Vijr[i].j >= neuroLib.sfireCap[input.ID[i]][input.dTijr[i].i] && input.dTijr[i].r > 0.1) {
+            if (input.Vijr[i].j >= neuroLib.sfireCap[input.dTijr[i].i][input.ID[i]] && input.dTijr[i].r > 0.1) {
                 // if sufficiently close to spike case
                 input.tMax.push_back(neuroLib.tMax[input.Vijr[i].j][input.dTijr[i].i][input.ID[i]]);
             } else {
