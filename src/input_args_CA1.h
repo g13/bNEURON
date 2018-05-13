@@ -18,6 +18,7 @@ struct input_args_CA1 : input_args {
     int kVStyle;
     int afterCrossBehavior;
     bool spikeShape;
+    bool pas;
     bool dtSquare;
     unsigned int vInit;
     input_args_CA1();

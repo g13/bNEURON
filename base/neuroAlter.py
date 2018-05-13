@@ -51,28 +51,25 @@ def getR(RList, gList, spikeTrain, t0, rel, front, sel, ampa, gaba):
             RList[i] = recep.Rinf + (R - recep.Rinf) * recep.expr
             RList[i] = R * np.exp (- recep.b * (t0 - (lastRel + recep.c)))
 
-def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, printR = False, alphaR = True, loc=np.array([]), pos=np.array([])):
+def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, printR = False, alphaR = True, loc=np.array([]), pos=np.array([]), pas = False, v=h.Vector, t=h.Vector()):
     f = open('pylog','a')
     nc = 0
     cell.init()
     print " cell initiated"
     print >>f, " cell initiated"
     steps = 0
-    if oneGo:
-        tsps = np.empty(int((h.tstop-t0)/h.dt))
-    else:
-        tsps = np.empty(1)
-    tsp = 0
+    tsps = np.empty(int((h.tstop-t0)/h.dt/2))
+    tsp = -tref
     #plusOne = 0
     vold = v0
-    fired = 0 
+    firing = 0 
     h.t = t0
     print  "t0 = ", h.t
     print >>f,  "t0 = ", h.t
     while round(h.t/h.dt) < round((t0+trans)/h.dt):
         h.fadvance()
         steps = steps + 1
-        #print  cell.soma(0.0).v
+        #print  cell.soma(0.5).v
         #print >>f,  steps, h.t
     for i in xrange(n):
         #print  str(i), "th's Synapse = ", RList[i]
@@ -83,25 +80,63 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, prin
         else:
             synList[i].R = RList[i]
     #oldProgress = 0
-    print  trans, "ms trans complete, used ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.0).v
-    print >>f,  trans, "ms trans complete, used ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.0).v
+    print  trans, "ms trans complete, used ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.5).v
+    print >>f,  trans, "ms trans complete, used ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.5).v
     if len(loc)>0:
         for i in xrange(n): 
             print " dend[", loc[i], "]" ,"(",pos[i],").v = ", cell.dend[loc[i]](pos[i]).v
             print >> f, " dend[", loc[i], "]" ,"(",pos[i],").v = ", cell.dend[loc[i]](pos[i]).v
     checkList = [];
-    #while ( ((cell.soma(0.0).v > vBack and not fired ) or ( (h.t < trans + tsp + tref or cell.soma(0.0).v > vThres-2)  and fired ) or oneGo) and h.t < h.tstop):
-    while ( ((cell.soma(0.0).v > vBack and not fired ) or ( (h.t < trans + tsp + tref)  and fired ) or oneGo) and h.t < h.tstop):
-        h.fadvance()
-        if cell.soma(0.0).v > vThres+15 and cell.soma(0.0).v < vold and not fired:
-            tsp = h.t-trans
-            tsps[nc] = tsp
-            fired = 1
-            nc = nc + 1
-            print  tsp, "fired expecting finish ", tsp + tref
-            print >>f,  tsp, "fired expecting finish ", tsp + tref
-        vold = cell.soma(0.0).v
+    if not pas:
         if oneGo:
+            while (round(h.t/h.dt) < round(h.tstop/h.dt)):
+                h.fadvance()
+                if cell.soma(0.5).v > vThres+15 and cell.soma(0.5).v < vold and not firing:
+                    tsp = h.t-trans
+                    print "nc1 = ", nc
+                    print "tsps size = ", tsps.size 
+                    tsps[nc] = tsp
+                    firing = 1
+                    nc = nc + 1
+                    print  tsp + trans, "fired expecting finish ", tsp + tref + trans
+                    print >>f,  tsp + trans, "fired expecting finish ", tsp + tref + trans
+                vold = cell.soma(0.5).v
+                if len(checkList) > 0 and len(loc) > 0:
+                    for checkTime in checkList:
+                        if abs(h.t-checkTime-trans) < 1e-10:
+                            print " check at ", checkTime
+                            for i in xrange(n): 
+                                print "     dend[", loc[i], "]" ,"(",pos[i],").v = ", cell.dend[loc[i]](pos[i]).v
+                                print >> f, "   dend[", loc[i], "]" ,"(",pos[i],").v = ", cell.dend[loc[i]](pos[i]).v
+                if (cell.soma(0.5).v <= vThres+7.5):
+                    firing = 0
+        else:
+            while ((cell.soma(0.5).v > vBack or h.t < trans + tsp + tref or firing) and round(h.t/h.dt) < round(h.tstop/h.dt)):
+                h.fadvance()
+                if cell.soma(0.5).v > vThres+15 and cell.soma(0.5).v < vold and not firing:
+                    tsp = h.t-trans
+                    print "nc = ", nc
+                    print "tsps size = ", tsps.size 
+                    tsps[nc] = tsp
+                    firing = 1
+                    nc = nc + 1
+                    print  tsp + trans, "fired expecting finish ", tsp + tref + trans
+                    print >>f,  tsp + trans, "fired expecting finish ", tsp + tref + trans
+                vold = cell.soma(0.5).v
+                if (cell.soma(0.5).v <= vThres+7.5):
+                    firing = 0
+    else:
+        assert(oneGo==1)
+        while (round(h.t/h.dt) < round(h.tstop/h.dt)):
+            if cell.soma(0.5).v >= vThres:
+                tsp = h.t-trans
+                print "nc1 = ", nc
+                print "tsps size = ", tsps.size 
+                tsps[nc] = tsp
+                nc = nc + 1
+                print  tsp + trans, "fired expecting finish ", tsp + tref + trans
+                print >>f,  tsp + trans, "fired expecting finish ", tsp + tref + trans
+
             if len(checkList) > 0 and len(loc) > 0:
                 for checkTime in checkList:
                     if abs(h.t-checkTime-trans) < 1e-10:
@@ -109,15 +144,21 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, prin
                         for i in xrange(n): 
                             print "     dend[", loc[i], "]" ,"(",pos[i],").v = ", cell.dend[loc[i]](pos[i]).v
                             print >> f, "   dend[", loc[i], "]" ,"(",pos[i],").v = ", cell.dend[loc[i]](pos[i]).v
-            if (h.t > tsp + trans + tref) or (cell.soma(0.0).v <= vThres+15) :
-                fired = 0
-            #progress = h.t/h.tstop*100 % 10
-            #if progress > oldProgress + 1:
-            #    print  progress
-            #    print >>f,  progress
-            #    oldProgress = progress
-    print  "stopping with v ", cell.soma(0.0).v, " t ", h.t
-    print >>f,  "stopping with v ", cell.soma(0.0).v, " t ", h.t
+
+            if h.t < trans + tsp + tref:
+                for sec in cell.all: 
+                    sec.v = cell.Vrest
+                h.t = h.t + h.dt
+                v.append(cell.soma(0.5).v)
+                t.append(h.t)
+            else:
+                h.fadvance()
+
+    print "((", cell.soma(0.5).v > vBack, " or ", h.t < trans + tsp + tref, " or ", firing > 0, ") and ", round(h.t/h.dt) < round(h.tstop/h.dt), ")"
+    print >> f, "((", cell.soma(0.5).v > vBack, " or ", h.t < trans + tsp + tref, " or ", firing > 0, ") and ", round(h.t/h.dt) < round(h.tstop/h.dt), ")"
+
+    print  "stopping with v ", cell.soma(0.5).v, " < ", vBack, " firing = ", firing, " or t ", h.t, " == ", h.tstop
+    print  >> f, "stopping with v ", cell.soma(0.5).v, " < ", vBack, " firing = ", firing, " or t ", h.t, " == ", h.tstop
     f.close()
     return nc, tsps[:nc]
 
@@ -165,10 +206,8 @@ def prepCell(gList, loc, pos, n, v0, alphaR = True):
     f.close()
     return cell, vecStimList, synList
 
-def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, vBack, tref, vThres, oneGo, t0, tstep, loc=np.array([]), pos=np.array([]), dendVclamp=np.array([]), printR = False, alphaR = True, getDendV = False, monitorDend = False):
+def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, vBack, tref, vThres, oneGo, t0, tstep, loc=np.array([]), pos=np.array([]), dendVclamp=np.array([]), printR = False, alphaR = True, getDendV = False, monitorDend = False, pas = False):
     f = open('pylog','a')
-    ferr = open('pyerr','w')
-    #sys.stderr = ferr
     h.tstop = tend
     print   "     ", t0, ' with ', trans, ' trans ', ' to ', tend , ', tref: ', tref
     print >>f,   "     ", t0, ' with ', trans, ' trans ', ' to ', tend , ', tref: ', tref
@@ -186,11 +225,10 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
     print >>f, pos
     print dendVclamp 
     print >>f, dendVclamp 
-
     h.dt = tstep
     v = h.Vector()
     t = h.Vector()
-    v.record(cell.soma(0.0)._ref_v)
+    v.record(cell.soma(0.5)._ref_v)
     t.record(h._ref_t)
     if trans > 0:
         cell.soma.push()
@@ -263,31 +301,29 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
                 synList[i].deltat = h.dt
     print   "ready to run"
     print >>f, "ready to run"
-    fired, tsp = run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, printR, alphaR, loc, pos)
+    fired, tsp = run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, printR, alphaR, loc, pos, pas, v, t)
     #print   "i ran and i killed ", fired, " bedbug(s)"
     #print >>f,   "i ran and i killed ", fired, " bedbug(s)"
     v1 = v.as_numpy()
-    if oneGo:
+    if oneGo or round(h.t/h.dt) > round(h.tstop/h.dt):
         ntotal = int(round((tend-t0)/tstep)+1)
-        if __name__ == '__main__':
-            t1 = t.as_numpy()
-        if v1.size!=ntotal:
-            print " steps ", v1.size, ", ntotal ", ntotal
-            print " remove extra step"
-            print >>f, " remove extra step"
-            v1 = v1[:-1]
-            if __name__ == '__main__':
-                t1 = t1[:-1]
     else:
         ntotal = int(round((h.t-t0)/tstep)+1)
+    #if __name__ == '__main__':
+    t1 = t.as_numpy()
+    if v1.size!=ntotal:
+        print " steps ", v1.size, ", ntotal ", ntotal
+        print " remove extra step"
+        print >>f, " remove extra step"
+        v1 = v1[:-1]
+        #if __name__ == '__main__':
+        t1 = t1[:-1]
+    assert(t1.size == v1.size)
     print   " is this nan ", v1[-1], v1[0]
     print >>f,   " is this nan ", v1[-1], v1[0]
     print   " v size ", v1.size
     print >>f,   " v size ", v1.size
     ntrans = int(round(trans/tstep))
-    #if v1[ntrans] == v1[ntrans-1]:
-    #    ntrans = ntrans+1
-    #assert(v1[ntrans] != v1[ntrans-1])
     print " trans size ", ntrans
     print   " trans end, v0, v1", v1[ntrans-1], v1[ntrans], v1[-1]
     print >>f,   " trans end, v0, v1", v1[ntrans-1], v1[ntrans], v1[-1]
@@ -295,68 +331,83 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
     print >>f,   " v w/o trans size ", v1.size - ntrans
     if trans > 0:
         vHold = None
-    if oneGo and __name__ == '__main__':
-        pyplot.figure('slice',figsize=(8,4))
-        if not monitorDend:
-            pyplot.plot(t1[ntrans:]-trans,v1[ntrans:])
-        else:
-            nt = ntrans
-            dendVec = np.empty((3*cell.ndend,ntotal),dtype='float')
-            for i in xrange(cell.ndend):
-                dendVec[3*i,:] = dendv[3*i].as_numpy()
-                dendVec[3*i+1,:] = dendv[3*i+1].as_numpy()
-                dendVec[3*i+2,:] = dendv[3*i+2].as_numpy()
-            v1 = v.as_numpy()
-            t1 = t.as_numpy()
-            apicalDend = (dendv[3*121].as_numpy() + dendv[3*121+1].as_numpy() + dendv[3*121+2].as_numpy())/3.0
-            basalDend = (dendv[3*153].as_numpy() + dendv[3*153+1].as_numpy() + dendv[3*153+2].as_numpy())/3.0
-            dendVec = np.reshape(dendVec,(3,199,ntotal))
-            mdend = np.average(dendVec, axis = 0)
-            print 'mdend ',mdend.shape
-            #qdendlow = np.percentile(mdend,10, axis = 0)
-            qdendlow = np.amin(mdend, axis = 0)
-            print 'qdendlow',qdendlow.shape
-            #qdendhigh = np.percentile(mdend,90, axis = 0)
-            qdendhigh = np.amax(mdend, axis = 0)
-            print 'qdendhigh',qdendhigh.shape
-            dendAverage = np.average(mdend, axis=0)
-            print 'dendAverage',dendAverage.shape
-            denderrbar = np.vstack((qdendlow,qdendhigh))
-            print 'denderrbar',denderrbar.shape
-            #istart = 0 
-            istart = nt 
-            t2 = t1[istart:]
-            pyplot.plot(t2-istart*tstep,v1[istart:])
-            dA = dendAverage[istart:]
-            dE = denderrbar[:,istart:]
-            select = np.arange(0,t2.size,20)
-            t2 = t2[select] - istart*tstep
-            print 't2',t2.shape
-            dA = dA[select]
-            print 'dA',dA.shape
-            dE = dE[:,select]
-            print 'dE',dE.shape
-            pyplot.errorbar(t2,dA,np.absolute(np.vstack((dA,dA))-dE))
-            qdendlow = np.percentile(mdend,5, axis = 0)
-            qdendhigh = np.percentile(mdend,95, axis = 0)
-            denderrbar = np.vstack((qdendlow,qdendhigh))
-            dE = denderrbar[:,istart:]
-            dE = dE[:,select]
-            pyplot.errorbar(t2+0.2,dA,np.absolute(np.vstack((dA,dA))-dE),ls = 'None')
-            qdendlow = np.percentile(mdend,25, axis = 0)
-            qdendhigh = np.percentile(mdend,75, axis = 0)
-            denderrbar = np.vstack((qdendlow,qdendhigh))
-            dE = denderrbar[:,istart:]
-            dE = dE[:,select]
-            pyplot.errorbar(t2+0.4,dA,np.absolute(np.vstack((dA,dA))-dE),ls = 'None')
-            qdendlow = np.percentile(mdend,45, axis = 0)
-            qdendhigh = np.percentile(mdend,55, axis = 0)
-            denderrbar = np.vstack((qdendlow,qdendhigh))
-            dE = denderrbar[:,istart:]
-            dE = dE[:,select]
-            pyplot.errorbar(t2+0.6,dA,np.absolute(np.vstack((dA,dA))-dE),ls = 'None')
-        pyplot.draw()
-        #pyplot.savefig('slice.png',format='png',bbox_inches='tight',dpi=900)
+
+    #if oneGo and __name__ == '__main__':
+    print "figure"
+    print >> f,  "figure"
+    pyplot.figure('slice',figsize=(8,4))
+    print "created"
+    print >> f,  "created"
+    if not monitorDend:
+        print "default"
+        print >> f, "default"
+        pyplot.plot(t1[ntrans:]-trans,v1[ntrans:])
+        print "plotted"
+        print >> f, "plotted"
+    elif oneGo and __name__ == '__main__':
+        print "oneGo and __main__ "
+        print >> f, "oneGo and __main__ "
+        nt = ntrans
+        dendVec = np.empty((3*cell.ndend,ntotal),dtype='float')
+        for i in xrange(cell.ndend):
+            dendVec[3*i,:] = dendv[3*i].as_numpy()
+            dendVec[3*i+1,:] = dendv[3*i+1].as_numpy()
+            dendVec[3*i+2,:] = dendv[3*i+2].as_numpy()
+        v1 = v.as_numpy()
+        t1 = t.as_numpy()
+        apicalDend = (dendv[3*121].as_numpy() + dendv[3*121+1].as_numpy() + dendv[3*121+2].as_numpy())/3.0
+        basalDend = (dendv[3*153].as_numpy() + dendv[3*153+1].as_numpy() + dendv[3*153+2].as_numpy())/3.0
+        dendVec = np.reshape(dendVec,(3,199,ntotal))
+        mdend = np.average(dendVec, axis = 0)
+        print 'mdend ',mdend.shape
+        #qdendlow = np.percentile(mdend,10, axis = 0)
+        qdendlow = np.amin(mdend, axis = 0)
+        print 'qdendlow',qdendlow.shape
+        #qdendhigh = np.percentile(mdend,90, axis = 0)
+        qdendhigh = np.amax(mdend, axis = 0)
+        print 'qdendhigh',qdendhigh.shape
+        dendAverage = np.average(mdend, axis=0)
+        print 'dendAverage',dendAverage.shape
+        denderrbar = np.vstack((qdendlow,qdendhigh))
+        print 'denderrbar',denderrbar.shape
+        #istart = 0 
+        istart = nt 
+        t2 = t1[istart:]
+        pyplot.plot(t2-istart*tstep,v1[istart:])
+        dA = dendAverage[istart:]
+        dE = denderrbar[:,istart:]
+        select = np.arange(0,t2.size,20)
+        t2 = t2[select] - istart*tstep
+        print 't2',t2.shape
+        dA = dA[select]
+        print 'dA',dA.shape
+        dE = dE[:,select]
+        print 'dE',dE.shape
+        pyplot.errorbar(t2,dA,np.absolute(np.vstack((dA,dA))-dE))
+        qdendlow = np.percentile(mdend,5, axis = 0)
+        qdendhigh = np.percentile(mdend,95, axis = 0)
+        denderrbar = np.vstack((qdendlow,qdendhigh))
+        dE = denderrbar[:,istart:]
+        dE = dE[:,select]
+        pyplot.errorbar(t2+0.2,dA,np.absolute(np.vstack((dA,dA))-dE),ls = 'None')
+        qdendlow = np.percentile(mdend,25, axis = 0)
+        qdendhigh = np.percentile(mdend,75, axis = 0)
+        denderrbar = np.vstack((qdendlow,qdendhigh))
+        dE = denderrbar[:,istart:]
+        dE = dE[:,select]
+        pyplot.errorbar(t2+0.4,dA,np.absolute(np.vstack((dA,dA))-dE),ls = 'None')
+        qdendlow = np.percentile(mdend,45, axis = 0)
+        qdendhigh = np.percentile(mdend,55, axis = 0)
+        denderrbar = np.vstack((qdendlow,qdendhigh))
+        dE = denderrbar[:,istart:]
+        dE = dE[:,select]
+        pyplot.errorbar(t2+0.6,dA,np.absolute(np.vstack((dA,dA))-dE),ls = 'None')
+    #pyplot.draw()
+    print "figure"
+    print >> f,  "figure"
+    #pyplot.savefig('slice.png',format='png',bbox_inches='tight',dpi=900)
+    print "saved"
+    print >> f,  "saved"
         
     #print "highest voltage ", np.amax(v1), " in ", v1.size, " steps"
     #print >>f, "highest voltage ", np.amax(v1), " in ", v1.size, " steps"
@@ -377,8 +428,6 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
 
 def leaky(cell, v0, synList, RList, vecStimList, n, trans, tend, tstep, loc, pos, printR = False, alphaR = True):
     f = open('pylog','a')
-    ferr = open('pyerr','w')
-    #sys.stderr = ferr
     h.tstop = tend
     print loc
     print >>f, loc
@@ -388,7 +437,7 @@ def leaky(cell, v0, synList, RList, vecStimList, n, trans, tend, tstep, loc, pos
     h.dt = tstep
     v = h.Vector()
     t = h.Vector()
-    v.record(cell.soma(0.0)._ref_v)
+    v.record(cell.soma(0.5)._ref_v)
     t.record(h._ref_t)
     if trans > 0:
         cell.soma.push()
@@ -466,7 +515,7 @@ def sproceed(cell, v0, synList, gList, RList, vecStimList, spike, n, sel, trans,
     h.dt = tstep
     v = h.Vector()
     t = h.Vector()
-    v.record(cell.soma(0.0)._ref_v)
+    v.record(cell.soma(0.5)._ref_v)
     t.record(h._ref_t)
     if trans > 0:
         vHold = h.SEClamp(0.5)
@@ -527,7 +576,7 @@ def bproceed0(cell, v0, synList, gList, RList, vecStimList, spikeTrain, n, sel, 
         dendv = h.Vector()
         dendv.record(cell.dend[sel[0]](pos)._ref_v)
     t = h.Vector()
-    v.record(cell.soma(0.0)._ref_v)
+    v.record(cell.soma(0.5)._ref_v)
     t.record(h._ref_t)
     if printR:
         if alphaR:
@@ -619,7 +668,7 @@ def bproceed(cell, v0, synList, gList, RList, vecStimList, spikeTrain, n, sel, t
         dendv = h.Vector()
         dendv.record(cell.dend[sel[0]](pos)._ref_v)
     t = h.Vector()
-    v.record(cell.soma(0.0)._ref_v)
+    v.record(cell.soma(0.5)._ref_v)
     t.record(h._ref_t)
     if printR:
         if alphaR:
@@ -711,27 +760,25 @@ def srun(cell, v0, trans, t0):
     while round(h.t/h.dt) < round((t0+trans)/h.dt):
         h.fadvance()
         steps = steps + 1
-    print trans, "ms trans complete, used ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.0).v
+    print trans, "ms trans complete, used ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.5).v
     print' distant apical dend v = ', '%7.5f.' % cell.dend[121](0.0).v
     print' distant basal dend v = ', '%7.5f.' % cell.dend[153](0.0).v
-    print >>f,  trans, "ms trans complete, used ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.0).v
+    print >>f,  trans, "ms trans complete, used ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.5).v
     print >>f, ' distant apical dend v = ', '%7.5f.' % cell.dend[121](0.0).v
     print >>f, ' distant basal dend v = ', '%7.5f.' % cell.dend[153](0.0).v
     while (h.t < h.tstop):
         h.fadvance()
         steps = steps + 1
-    print "srun ended in ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.0).v
+    print "srun ended in ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.5).v
     print ' distant apical dend v = ', '%7.5f.' % cell.dend[121](0.0).v
     print ' distant basal dend v = ', '%7.5f.' % cell.dend[153](0.0).v
-    print >>f,  " srun ended in ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.0).v
+    print >>f,  " srun ended in ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.5).v
     print >>f, ' distant apical dend v = ', '%7.5f.' % cell.dend[121](0.0).v
     print >>f, ' distant basal dend v = ', '%7.5f.' % cell.dend[153](0.0).v
     f.close()
 
 def clampEffects(cell, v0, trans, tend, t0, tstep, clampDend):
     f = open('pylog','a')
-    #ferr = open('pyerr','w')
-    #sys.stderr = ferr
     h.tstop = tend
     print   "     ", t0, ' with ', trans, ' trans ', ' to ', tend
     print >>f,   "     ", t0, ' with ', trans, ' trans ', ' to ', tend 
@@ -739,7 +786,7 @@ def clampEffects(cell, v0, trans, tend, t0, tstep, clampDend):
     h.dt = tstep
     v = h.Vector()
     t = h.Vector()
-    v.record(cell.soma(0.0)._ref_v)
+    v.record(cell.soma(0.5)._ref_v)
     t.record(h._ref_t)
     if trans > 0:
         cell.soma.push()
@@ -821,77 +868,118 @@ def clampEffects(cell, v0, trans, tend, t0, tstep, clampDend):
 
 if __name__ == '__main__':
     tstep = 1.0/10.0
-    run_t = 200 
+    run_t = 1200 
     #dtv = [10,25,50,100,170,240]
     run_nt = int(round(run_t/tstep))
     tol_t = min([300,run_t])
     tol_nt = int(round(tol_t/tstep))+1
-    seed = 13
+    seed = 231278 
     np.random.seed(seed)
     #locE = np.array([36, 53, 74, 79, 83, 90, 97, 101, 117, 125, 132, 174],dtype='int')
     #locE = np.array([36, 74, 83, 97, 117, 132],dtype='int')
     #locE = np.array([36, 73, 97, 117, 146, 180],dtype='int')
-    locE = np.array([32, 52, 66, 78, 98, 136],dtype='int')
+    locE = np.array([79, 82, 83, 108, 124, 129],dtype='int') #79
+    locI = np.array([14, 28, 40],dtype='int')
+    #locE = np.array([32, 52, 66, 78, 98, 136],dtype='int')
     #locE = np.array([74],dtype='int')
     #gE = 1e-4 + np.random.random_sample(locE.size) * (1e-4-1e-4) + 2e-2 + 1e-3*3
     #gE = 3.2e-2 * (1 + np.random.random_sample(locE.size) * 0.2 - 0.1)
-    gE = 1e-5 + np.random.random_sample(locE.size) * (1e-2-1e-5)
+    gE = (1e-1 + np.random.random_sample(locE.size) * (1-1e-1)) * 0.07/2.0
     posE = np.random.random_sample(locE.size)
-    locI = np.array([2, 14, 28],dtype='int')
+    #locI = np.array([2, 14, 28],dtype='int')
     #locI = np.array([7, 28, 137],dtype='int')
     #locI = np.array([28],dtype='int')
-    gI = (1e-5 + np.random.random_sample(locI.size) * (2e-3-1e-5)) * (-1.0/2.0)
-    #gI = (1e-5 + np.random.random_sample(locI.size) * (1e-4-1e-5)) * (-0) - 8e-3 - 1e-3*3
-    #gI = -1e-3 * (1 + np.random.random_sample(locI.size) * 0.2 - 0.1)
+    gI = (1e-1 + np.random.random_sample(locI.size) * (1-1e-1)) * (-0.3/2.0)
     posI = np.random.random_sample(locI.size)
     pos = np.concatenate((posE, posI))
     loc = np.concatenate((locE, locI))
     gList = np.concatenate((gE, gI))
+    print gList
     #loc = np.array([28])
     #gList = np.array([-1e-2])    
     #pos = np.array([0.5])
     #loc = np.array([137,101])
     #gList = np.array([-6.3e-04,1.16e-03])    
     #pos = np.array([0.08,0.01])
+    v0 = -70
     n = loc.size
     alphaR = True 
-    cell, vecStimList, synList = prepCell(gList, loc, pos, n, -70, alphaR)
+    cell, vecStimList, synList = prepCell(gList, loc, pos, n, v0, alphaR)
 
     sel = range(n)
 
-    #vecTuple = (np.array([84.7, 85.4, 108.8, 113, 117.9, 120, 134.7, 151, 181.5, 187.7, 197.8, 210.5]), np.array([56, 57.1, 70.4, 87.4, 97.9, 120.9, 124.6, 142, 162.7, 175.9, 186.9, 189.8, 210.4]), np.array([72.7, 75.7, 85.7, 86.7, 109.3, 112.4, 114.8, 122.5, 134.4, 141.7, 150.4, 153.5, 164.5, 167.6, 174.8, 179.4, 192.6, 193.1, 203.9]), np.array([71.3, 79, 89.6, 108.2, 113.8, 125, 147.2, 149.8, 161.4, 162.9, 173.6, 178.1, 197.9, 210.5]), np.array([73.7, 78.4, 83.5, 85.8, 87.2, 109.1, 111.2, 111.6, 129.9, 139.5, 141.7, 142.9, 143.6, 155.5, 175.4, 184.8, 193.4, 202.5]), np.array([90.2, 102.1, 123.6, 125.2, 132.8, 139.6, 148.2, 148.4, 154.4, 162.2, 163.9, 174.9, 175.8, 187, 224.2]), np.array([97.1, 178.3, 208.7]), np.array([60.3, 63.1, 102.6, 103.4, 149.2, 200.1]), np.array([188.2, 252.6]))
-    #RList = [[0.00198759, 8.09972e-13], [0.000117574, 3.95497e-51], [0.00158127, 4.12393e-14], [0.00143576, 2.9786e-05], [0.000711666, 1.24271e-20], [0.000134815, 1.92519e-57], [2.32916e-06, 3.49001e-09], [1.80668e-05, 1.5604e-17], [4.35576e-06, 1.38783e-16]]
-    #dendVclamp = np.array([-69.5971, -66.8555, -66.0087, -67.1818, -65.2955, -67.8925, 1000, 1000, -69.4652])
-    #vecTuple = (np.array([15.6, 37.7, 40.6, 44.5, 49.7, 50.9, 84.7, 85.4, 108.8, 113, 117.9, 120, 134.7, 151, 181.5, 187.7, 197.8, 210.5]), np.array([20.1, 36, 42.3, 56, 57.1, 70.4, 87.4, 97.9, 120.9, 124.6, 142, 162.7, 175.9, 186.9, 189.8, 210.4]), np.array([27, 38.8, 49.8, 50.6, 72.7, 75.7, 85.7, 86.7, 109.3, 112.4, 114.8, 122.5, 134.4, 141.7, 150.4, 153.5, 164.5, 167.6, 174.8, 179.4, 192.6, 193.1, 203.9]), np.array([43.8, 52.6, 71.3, 79, 89.6, 108.2, 113.8, 125, 147.2, 149.8, 161.4, 162.9, 173.6, 178.1, 197.9, 210.5]), np.array([0.7, 7, 49.1, 73.7, 78.4, 83.5, 85.8, 87.2, 109.1, 111.2, 111.6, 129.9, 139.5, 141.7, 142.9, 143.6, 155.5, 175.4, 184.8, 193.4, 202.5]), np.array([1.8, 6, 8.1, 11.8, 12.6, 40.8, 90.2, 102.1, 123.6, 125.2, 132.8, 139.6, 148.2, 148.4, 154.4, 162.2, 163.9, 174.9, 175.8, 187, 224.2]), np.array([12.7, 22.5, 43.7, 97.1, 178.3, 208.7]), np.array([18.5, 22.1, 60.3, 63.1, 102.6, 103.4, 149.2, 200.1]), np.array([25.1, 188.2, 252.6]))
+    #vecTuple = (np.array([0, run_t+1]),np.array([100,run_t+1]),np.array([200,run_t+1]),np.array([300,run_t+1]),np.array([400,run_t+1]),np.array([500,run_t+1]),np.array([600,run_t+1]),np.array([800,run_t+1]),np.array([1000,run_t+1]))
+    #vecTuple = (np.array([0,20,40, run_t+1]),np.array([100,120,140,run_t+1]),np.array([200,220,240,run_t+1]),np.array([300,320,340,run_t+1]),np.array([400,420,440,run_t+1]),np.array([500,520,540,run_t+1]),np.array([600,620,640,run_t+1]),np.array([800,run_t+1]),np.array([1000,run_t+1]))
+    vecTuple = (np.array([100,run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]))
+    #vecTuple = (np.array([0,330,run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([0,660,run_t+1]))
     RList = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-    vecTuple = ()
-    #RList = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
     dendVclamp = np.array([1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000])
-    #v_pre = -60.9841
-    #t0 = 53.4
-    v_pre = -66
-    #v_pre = -74
-    t0 = 0.0
-    tref = 3
-    vThres = -62.5
-    vBack = -63.5
+    v_pre = -70
+    t0 = 0
+    tref = 13
+    vThres = -59.0
+    vBack = -60.0
     printR = False
-    getDendV = True 
+    getDendV = False 
     #RList = np.zeros((n,2))
     oneGo = 1
     clampDend = False 
-    monitorDend = True 
-    v0 = -74
-    trans = 100
-    clampEffects(cell, v0, trans, trans+run_t, t0, tstep, clampDend)
-    trans = 200
-    clampEffects(cell, v0, trans, trans+run_t, t0, tstep, clampDend)
-    trans = 250
-    clampEffects(cell, v0, trans, trans+run_t, t0, tstep, clampDend)
+    monitorDend = False 
+    trans = 110 
+    pas = True 
+    #trans = 100
+    #clampEffects(cell, v0, trans, trans+run_t, t0, tstep, clampDend)
+    #trans = 200
+    #clampEffects(cel, v0, trans, trans+run_t, t0, tstep, clampDend)
+    #trans = 250
+    #clampEffects(cell, v0, trans, trans+run_t, t0, tstep, clampDend)
+    for i in range(1,2):
+        gList1 = gList*i
+        print gList1
+        cell, vecStimList, synList = prepCell(gList1, loc, pos, n, v0, alphaR)
+        #stim = h.IClamp(cell.soma(0.5))
+        #stim.delay = trans + 100 
+        #stim.dur = 300
+        #stim.amp = 0.0
+        v, fired, tsp, ntrans = proceed(cell, v_pre, synList, RList, vecStimList, vecTuple, n, trans, trans+run_t, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, printR, alphaR, getDendV, monitorDend, pas)
+    pyplot.savefig('slice.png',format='png',bbox_inches='tight',dpi=900)
+    #cell.soma.push()
+    #h.psection()
+    #h.pop_section()
+    #for i in range(2):
+    #    if i==1:
+    #        gE = gE* 1.0 #(0.35/2.0) / (0.07/2.0)
+    #        gI = gI* 1.0 #(1.0/2.0) / (0.3/2.0)
+    #        gList = np.concatenate((gE, gI))
+    #    print gList
+    #    cell, vecStimList, synList = prepCell(gList, loc, pos, n, v0, alphaR)
+    #    if i==1:
+    #        gka = 0.005  # 0.005
+    #        gka_dist = gka # gka
+    #        gka_prox = gka # gka
+    #        for sec in cell.apical_dends:
+    #            sec.insert('kap')
+    #            sec.insert('kad')
+    #            for seg in sec:
+    #                segX = sec(seg.x)
+    #                xdist = h.distance(seg.x)
+    #                if xdist < 100:
+    #                    segX.gkabar_kad = 0
+    #                    segX.gkabar_kap = gka_prox*(1.0+xdist/70.0)
+    #                elif xdist < 350:
+    #                    segX.gkabar_kap = 0
+    #                    segX.gkabar_kad = gka_dist*(1.0+xdist/70.0)
+    #                else:
+    #                    segX.gkabar_kap = 0
+    #                    segX.gkabar_kad = gka_dist*6
+    #    v, fired, tsp, ntrans = proceed(cell, v_pre, synList, RList, vecStimList, vecTuple, n, trans, trans+run_t, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, printR, alphaR, getDendV, monitorDend)
+
     #v, fired, tsp, ntrans, _ = proceed(cell, v_pre, synList, RList, vecStimList, vecTuple, n, trans, trans+run_t, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, printR, alphaR, getDendV, monitorDend)
-    #v, fired, tsp, ntrans, _ = proceed(cell, v_pre, synList, RList, vecStimList, vecTuple, n, trans, trans+run_t, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, printR, alphaR, getDendV, monitorDend)
-    pyplot.show()
+    #pyplot.show()
     #print v
     #print fired
     #print tsp 
     #print ntrans
+    #cell.soma.push()
+    #h.psection()
+    #h.pop_section()

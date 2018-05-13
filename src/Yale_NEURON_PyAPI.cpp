@@ -76,14 +76,8 @@ void NEURON_cleanup(Cell &cell) {
     Py_CLEAR(cell.Py_vecStimList);
 }
 
-unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>>
-&RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n,
-double trans, double tend, double vBack, double tref, double vThres, long
-oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0,
-double tstep, vector<double> &dendVclamp, long insert, bool getDendV=0,
-vector<vector<double>> &dendV = dummy_dendV) {
+unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, long insert, bool getDendV=false, vector<vector<double>> &dendV = dummy_dendV, bool pas = false) {
 
-    cout << "its here " << vinit << endl;
     PyObject **pRList = new PyObject*[n];
     PyObject *pFunc;
     PyObject *pArgs, *pValue, *Py_dendVclamp;
@@ -194,7 +188,7 @@ vector<vector<double>> &dendV = dummy_dendV) {
                     cout << "-----------> vCap wrapper failed" << endl;
                 }
             }
-            pArgs = PyTuple_New(21);
+            pArgs = PyTuple_New(23);
             Py_INCREF(cell.Py_Cell);
             PyTuple_SetItem(pArgs, 0,cell.Py_Cell);
             PyTuple_SetItem(pArgs, 1,PyFloat_FromDouble(vinit));
@@ -225,6 +219,12 @@ vector<vector<double>> &dendV = dummy_dendV) {
             } else {
                 PyTuple_SetItem(pArgs,20,Py_False);
             }
+            PyTuple_SetItem(pArgs,21,Py_False);
+            if (pas) {
+                PyTuple_SetItem(pArgs,22,Py_True);
+            } else {
+                PyTuple_SetItem(pArgs,22,Py_False);
+            }
             if (yl::debug) {
                 cout << "       ..." << endl;
             }
@@ -247,7 +247,7 @@ vector<vector<double>> &dendV = dummy_dendV) {
 
                 if (insert>=0) {
                     for (long i = gone; i<nt; i++) {
-                        v[insert+gone-i] = v_p[i];
+                        v[insert-gone+i] = v_p[i];
                     }
                 } else {
                     for (long i = gone; i<nt; i++) {
@@ -255,7 +255,11 @@ vector<vector<double>> &dendV = dummy_dendV) {
                     }
                 }
                 if (yl::debug) {
-                    cout << v_p[static_cast<int>(gone)] << ", " << v_p[static_cast<int>(gone)+1]<<"; " << v.back()  << "==" << v_p[nt-1] << "; " <<  v_p[static_cast<int>(gone)] - v_p[static_cast<int>(gone)+1] << endl;
+                    if (nt-gone > 1) {
+                        cout << "dv start" << v_p[static_cast<int>(gone)]-v_p[static_cast<int>(gone)+1] << endl;
+                        cout << "gone (trans) " << gone << endl;
+                        cout << "nt (trans+run_nt) " << nt << endl;
+                    }
                 }
 
                 PyObject *Py_fired = PyTuple_GetItem(pValue,1);
@@ -326,13 +330,13 @@ size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jN
             s0[i]++; 
         }
         if (s1[i] < s0[i]) {
-            s1[i] = s0[i] + 1;
+            s1[i] = s0[i];
         }
         while (spikeTrain[i][s1[i]] < t0) {
             s1[i]++;
         }
         if (yl::debug) {
-            cout << "   s0 " << s0[i] << "s1 " << s1[i] << endl;
+            cout << "   s0 " << s0[i] << ", s1 " << s1[i] << endl;
             assert(s1[i] < spikeTrain[i].size());
         }
     }
@@ -350,10 +354,12 @@ size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jN
     assert(nt == cross.v.size() - lastSize);
     tBack = round(it + nt-1);
     assert(int(tBack) == tBack);
-    size ith = i_prior_cross + 1;
-    while (neuron.tin[ith]-1e-10 < tBack*tstep+1e-10) {
+    size ith = i_prior_cross;
+    while (neuron.tin[ith]-1e-14 < tBack*tstep+1e-14) {
         ith++;
-        if ( ith == nin) break;
+        if (ith == nin) {
+            break;
+        }
     }
     ith--;
     //std::cout << "back at i " << ith << std::endl;
@@ -364,10 +370,6 @@ size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jN
         cout << cross.t.size() << "==" << cross.v.size() << endl;
         assert(cross.t.size() == cross.v.size());
     }
-    cross.tCross.push_back(tBack);
-    cross.iCross.push_back(cross.v.size());
-    cross.nCross++;
-    cout << cross.nCross << "th cross" << endl;
     vBack = cross.v.back(); 
     return ith;
 }
@@ -390,13 +392,13 @@ size neuroAlterB(nNS &neuron, nNL &neuroLib, vector<double> &v, size &ith, size 
             s0[i]++; 
         }
         if (s1[i] < s0[i]) {
-            s1[i] = s0[i] + 1;
+            s1[i] = s0[i];
         }
         while (spikeTrain[i][s1[i]] < t) {
             s1[i]++;
         }
         if (yl::debug) {
-            cout << "   s0 " << s0[i] << "s1 " << s1[i] << endl;
+            cout << "   s0 " << s0[i] << ", s1 " << s1[i] << endl;
             assert(s1[i] < spikeTrain[i].size());
         }
     }

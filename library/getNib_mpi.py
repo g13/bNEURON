@@ -104,8 +104,9 @@ def get0J(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,v
         print relit, ' == ', v.size
         assert(v.size == relit)
         v = v - leakyV[:relit]
-        print "max V = ", np.amax(v)
-        print "max it = ", np.argmax(v)
+        print "max V = ", np.amax(np.absolute(v))
+        it = np.argmax(np.absolute(v))
+        print "max it = ", it
         dtij = idtRange[jdt] - idtRange[idt]
         idtij = np.argwhere(idtRange - dtij == 0)
         assert(idtij.size==1 or idtij.size==0)
@@ -128,11 +129,14 @@ def get0J(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,v
             t = np.arange(run_nt)*tstep
             tSel = np.arange(idtRange[jdt],idtRange[jdt]+relit)
             ax1 = dtfig.add_subplot(111)         
-            ax1.plot(t[tSel],v,'c',lw=3)
-            ax1.plot(t[tSel],v1[jdt,i,tSel],'r',lw=2)
-            ax1.plot(t[tSel],v2,'b',lw=1)
-            ax1.plot(t[tSel],addv,':g',lw=1)
+            ax1.plot(t[tSel],v,'c',lw=0.6)
+            ax1.plot(t[tSel],v1[jdt,i,tSel],'r',lw=0.4)
+            ax1.plot(t[tSel],v2,'b',lw=0.2)
+            ax1.plot(t[tSel],addv,':g',lw=0.2)
             ax1.plot(t[tSel],kvtmp,':k')
+            if idt == jdt:
+                v10 = v1[jdt,i,tSel]
+                pyplot.title('k = '+str(kvtmp[it]/(v10[it]+v2[it])))
     if savePlot and plotData:
         pyplot.figure(dtfigname)
         pyplot.savefig(directory+'/'+dtfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
@@ -207,8 +211,9 @@ def getJ(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vS
         print relit, ' == ', v.size
         assert(v.size == relit)
         v = v - leakyV[:relit]
-        print "max V = ", np.amax(v)
-        print "max it = ", np.argmax(v)
+        print "max V = ", np.amax(np.absolute(v))
+        it = np.argmax(np.absolute(v))
+        print "max it = ", it
         dtij = idtRange[jdt] - idtRange[idt]
         idtij = np.argwhere(idtRange - dtij == 0)
         assert(idtij.size==1 or idtij.size==0)
@@ -231,11 +236,14 @@ def getJ(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vS
             t = np.arange(run_nt)*tstep
             tSel = np.arange(idtRange[jdt],idtRange[jdt]+relit)
             ax1 = dtfig.add_subplot(111)         
-            ax1.plot(t[tSel],v,'c',lw=3)
-            ax1.plot(t[tSel],v1[jdt,i,tSel],'r',lw=2)
-            ax1.plot(t[tSel],v2,'b',lw=1)
-            ax1.plot(t[tSel],addv,':g',lw=1)
+            ax1.plot(t[tSel],v,'c',lw=0.6)
+            ax1.plot(t[tSel],v1[jdt,i,tSel],'r',lw=0.4)
+            ax1.plot(t[tSel],v2,'b',lw=0.2)
+            ax1.plot(t[tSel],addv,':g',lw=0.2)
             ax1.plot(t[tSel],kvtmp,':k')
+            if idt == jdt:
+                v10 = v1[jdt,i,tSel]
+                pyplot.title('k = '+str(kvtmp[it]/(v10[it]+v2[it])))
     if savePlot and plotData:
         pyplot.figure(dtfigname)
         pyplot.savefig(directory+'/'+dtfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
@@ -301,8 +309,9 @@ def getJ0(i,j,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,
     print relit, ' == ', v.size
     assert(v.size == relit)
     v = v - vrest
-    print "max V = ", np.amax(v)
-    print "max it = ", np.argmax(v)
+    print "max V = ", np.amax(np.absolute(v))
+    it = np.argmax(np.absolute(v))
+    print "max it = ", it
     v10 = v1[0,i,idtRange[idt]:idtRange[idt]+relit]
     v2 = v1[0,j,:relit]
     addv =  v10 + v2 
@@ -314,11 +323,12 @@ def getJ0(i,j,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,
         dtfign0 = 'kv0-v'+str(vid)+'-i'+str(i)+'-j'+str(j)+'-dt'+str(idt)
         dtfig0 = pyplot.figure(dtfign0,figsize = (8,4))
         ax1 = dtfig0.add_subplot(111)         
-        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],v,'c',lw=2)
-        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],v10,'r',lw=2)
-        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],v2,'b',lw=1)
-        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],addv,'g',lw=1)
+        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],v,'c',lw=0.2)
+        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],v10,'r',lw=0.2)
+        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],v2,'b',lw=0.1)
+        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],addv,'g',lw=0.1)
         ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],kvtmp,':k')
+        pyplot.title('k = '+str(kvtmp[it]/(v10[it]+v2[it])))
         if savePlot:
             pyplot.savefig(directory+'/'+dtfign0+'.png',format='png',bbox_inches='tight',dpi=rdpi);
             pyplot.close(dtfign0)
@@ -377,7 +387,7 @@ def getNib(argv):
     seed = 231278
     tstep = 1.0/10.0
     #==================
-    run_t = 225.0
+    run_t = 340.0
     trans = 110.0
     #==================
     #run_t = 100.0
@@ -386,10 +396,11 @@ def getNib(argv):
     
     #dtRange = np.array([0,70,140],dtype='float')
     #dtRange = np.array([0,2,4,6,8,10,12,15,20,25,30,50,70,140,210],dtype='float')
+    dtRange = np.array([0,4,8,15,20,25,30,50,70,140,210],dtype='float')
     #===========================================================
-    dtRangeE = np.array([6,8,10,12,15,17,19,21,23,26,30],dtype='float')
-    dtRangeI = np.array([0,0.5,1,1.5,2,4,40,50,60,70,80,90,110,125,150,175],dtype='float')
-    dtRange = np.sort(np.hstack([dtRangeE,dtRangeI]))
+    #dtRangeE = np.array([6,8,10,12,15,17,19,21,23,26,30],dtype='float')
+    #dtRangeI = np.array([0,0.5,1,1.5,2,4,40,50,60,70,80,90,110,125,150,175],dtype='float')
+    #dtRange = np.sort(np.hstack([dtRangeE,dtRangeI]))
     #===========================================================
     #dtRange = np.array([0,30,60],dtype='float')
 
@@ -426,7 +437,7 @@ def getNib(argv):
 
     #locE = np.array([32, 52, 66, 78, 98, 136],dtype='int')
     #locE = np.array([74],dtype='int')
-    gE = (1e-5 + np.random.random_sample(locE.size) * (1e-1-1e-5)) * (2.0/2.0)
+    gE = (1e-1 + np.random.random_sample(locE.size) * (1-1e-1)) * (0.10/2.0)
     #gE = np.array([2e-2])
     posE = np.random.random_sample(locE.size)
     #posE = np.array([0.6])
@@ -434,7 +445,7 @@ def getNib(argv):
     #locI = np.array([7, 28, 137],dtype='int')
     #locI = np.array([2, 14, 28],dtype='int')
     #locI = np.array([28],dtype='int')
-    gI = (1e-5 + np.random.random_sample(locI.size) * (1e-1-1e-5)) * (-1.0/2.0)
+    gI = (1e-1 + np.random.random_sample(locI.size) * (1-1e-1)) * (-0.3/2.0)
     posI = np.random.random_sample(locI.size)
     #posI = np.ones(locI.size)*0.5
 

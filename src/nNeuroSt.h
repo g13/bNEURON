@@ -64,7 +64,6 @@ struct Inputs {
     std::vector<double> t,dt,tMax;
     std::vector<biR> bir;
     std::vector<size> ID, idt;
-    std::vector<bool> inTref;
     Inputs(size rSize);
     void initialize(size rSize);
     void junk_this();

@@ -84,7 +84,6 @@ Inputs::Inputs(size rSize){
     ID.reserve(rSize);
     Tmpijr.reserve(rSize); 
     bir.reserve(rSize);
-    inTref.reserve(rSize);
 }
 void Inputs::initialize(size rSize) {
     t.clear(); 
@@ -97,7 +96,6 @@ void Inputs::initialize(size rSize) {
     ID.clear();
     Tmpijr.clear(); 
     bir.clear();
-    inTref.clear();
     t.reserve(rSize); 
     dt.reserve(rSize); 
     tMax.reserve(rSize); 
@@ -107,7 +105,6 @@ void Inputs::initialize(size rSize) {
     ID.reserve(rSize);
     Tmpijr.reserve(rSize); 
     bir.reserve(rSize);
-    inTref.reserve(rSize);
 }
 void Inputs::junk_this() {
     t.push_back(0); 
@@ -120,7 +117,6 @@ void Inputs::junk_this() {
     Vijr.push_back(IJR(0,1,0));
     Tmpijr.push_back(IJR(0,1,0)); 
     bir.push_back(BilinearRelationships(0));
-    inTref.push_back(0);
 }   
 void Inputs::assert_size() {
     size Size = t.size(); 
@@ -135,7 +131,6 @@ void Inputs::assert_size() {
     }
     assert(Tmpijr.size() == Size); 
     assert(bir.size() == Size);
-    assert(inTref.size() == Size);
 }   
 void Inputs::print_this(int i) {
     cout << "t: " << t[i] << endl;

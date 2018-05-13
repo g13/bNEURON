@@ -22,8 +22,12 @@ fi
 
 if [ "$n128" == "0" ]; then
     cp base/n128.py_pas $dir/n128.py
-else
+fi
+if [ "$n128" == "1" ]; then
     cp base/n128.py_active $dir/n128.py
+fi
+if [ "$n128" == "2" ]; then
+    cp base/n128.py_simple $dir/n128.py
 fi
 
 if [ "$newInput" == "1" ]; then

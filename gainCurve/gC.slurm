@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --mem=60G
-#SBATCH --cpus-per-task=1
+##SBATCH --mem=60G
+#SBATCH --cpus-per-task=15
 #SBATCH --time=1:00:00
 #SBATCH -o gC_%A.out
 #SBATCH --job-name=gC

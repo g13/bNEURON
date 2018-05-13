@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --mem=40G
+#SBATCH --mem=80G
 #SBATCH --cpus-per-task=1
-#SBATCH --time=0:15:00
+#SBATCH --time=0:30:00
 #SBATCH -o readLib_%A.out
 
 module purge
@@ -11,7 +11,7 @@ module load matlab
 
 date
 
-theme='valgrind'
+theme='h_pas'
 echo $theme
 matlab -nodesktop -nosplash -r "readNib4('$theme');exit;"
 

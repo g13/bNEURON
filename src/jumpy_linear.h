@@ -10,8 +10,8 @@ using std::endl;
 using std::vector;
 
 namespace jl {
-    const bool debug = false;
-    const bool debug2 = false;
+    const bool debug = true;
+    const bool debug2 = true;
 
     inline double find_v_at_t(Input &input, nNL &neuroLib, Cross &cross, size head, size tail_l, double t, double tCross, double tol_tl, double tol_tb, double v) {
         size i, j, idt;
@@ -48,7 +48,7 @@ namespace jl {
             if (debug) {
                 assert(vC >= v_left);
             }
-            if (abs(t_right - t_left)<1e-14) {
+            if (abs(t_right - t_left)<pow(2,-52)) {
                 v = v_right;
                 return t_right;
             }

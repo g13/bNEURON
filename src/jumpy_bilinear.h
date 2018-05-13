@@ -10,8 +10,8 @@ using std::vector;
 using std::cout;
 using std::endl;
 namespace jb {
-    const bool debug = false;
-    const bool debug2 = false;
+    const bool debug = true;
+    const bool debug2 = true;
     template<typename T>
     inline void getNear(T *range, size n, double target, double &ratio, size &istart, size &jnext) {
         size i;

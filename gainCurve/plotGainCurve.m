@@ -32,8 +32,8 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
     filter = [1,5];
     fdr = fdr(filter,:);
     fnstr = strjoin(fdr(1,:))
-    load(p.libFile,'tstep','n','gList','dtRange');
-    ldur = dtRange(end) - p.ignoreT;
+    load(p.libFile,'tstep','n','gList','dtRange','sPSP');
+    ldur = size(sPSP,1) - p.ignoreT;
 
     nE = 0;
     nI = 0;
@@ -44,7 +44,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
             nI = nI + 1;
         end
     end
-    datafilePattern = ['(Data|jND|Raster|tIn|cpuTime)-,'p.theme,'\-s\d*\.bin'];
+    datafilePattern = ['(Data|jND|Raster|tIn|cpuTime)-',p.theme,'\-s\d*\.bin'];
     datafile = regexp(fnstr, datafilePattern,'match')
     assert(length(datafile)==5);
     dimsFid = fopen(dimsFn,'r');
@@ -172,32 +172,10 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
             t0 = linspace(0,nDimSim(i)-1,nDimSim(i)) * dt(i);
             t = linspace(0,nDim(i)-1,nDim(i)) * tstep;
             assert(t(end)==t0(end));
+            xl = [0, t(end)];
+
             figure;
             subplot(2,1,1)
-            hold on
-            if ss(i) > 0
-                plot(ts{i},ones(1,ss(i)),'.k','MarkerSize',6,'LineStyle','none');
-            end
-            if sb(i) > 0
-                plot(tb{i},ones(1,sb(i))+1,'.b','MarkerSize',6,'LineStyle','none');
-            end
-            if sl(i) > 0
-                plot(tl{i},ones(1,sl(i))+2,'.r','MarkerSize',6,'LineStyle','none');
-            end
-            if sjb(i) > 0
-                plot(tjb{i},ones(1,sjb(i))+3,'ob','MarkerSize',3,'LineStyle','none');
-            end
-            if sjl(i) > 0
-                plot(tjl{i},ones(1,sjl(i))+4,'or','MarkerSize',3,'LineStyle','none');
-            end
-            if sb0(i) > 0
-                plot(tb0{i},ones(1,sb0(i))+5,'og','MarkerSize',3,'LineStyle','none');
-            end
-            ylim([0,6]);
-            xl = [0, t(end)];
-            xlim(xl);
-
-            subplot(2,1,2)
             hold on
             if datafid
                 simV{i} = fread(datafid, nDimSim(i), 'double');
@@ -208,10 +186,10 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
                     dendV{i,j} = fread(datafid, nDimSim(i), 'double');
                 end
             end
-            plot(t0,simV{i},'k');
-            plot(t,biV{i},'b');
-            plot(t,liV{i},'r');
-            plot(t,biV0{i},'g');
+            hs = plot(t0,simV{i},'k');
+            hb = plot(t,biV{i},'b');
+            hl = plot(t,liV{i},'r');
+            hb0 = plot(t,biV0{i},'g');
             minV0 = min([min(simV{i}),min(biV{i}),min(liV{i}),min(biV0{i})]);
             maxV0 = min([-50,max([max(simV{i}),max(biV{i}),max(liV{i}),max(biV0{i})])]);
             vStretch = maxV0-minV0;
@@ -223,31 +201,34 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
                 jbSize = fread(jNDfid,1,sizeSize);
                 jbt{i} = fread(jNDfid,jbSize,'double')*tstep;
                 jbv{i} = fread(jNDfid,jbSize,'double');
-                plot(jbt{i},jbv{i},'.b','MarkerSize',3);
+                hjb = plot(jbt{i},jbv{i},'.b','MarkerSize',3);
                 jbnCross = fread(jNDfid,1,'int')
                 jbCrossT{i} = [];
                 for j=1:jbnCross
                     tmpSize = fread(jNDfid, 1, sizeSize)
                     tmpCrossT = fread(jNDfid, tmpSize, 'double')*tstep;
                     tmpCrossV = fread(jNDfid, tmpSize, 'double');
-                    jbCrossT{i} = [jbCrossT{i}, tmpCrossT];
-                    jbCrossV{i} = [jbCrossV{i}, tmpCrossV];
+                    jbCrossT{i} = [jbCrossT{i}; tmpCrossT];
+                    jbCrossV{i} = [jbCrossV{i}; tmpCrossV];
                     plot(tmpCrossT, tmpCrossV,':b');
                 end
                 jlSize = fread(jNDfid,1,sizeSize);
                 jlt{i} = fread(jNDfid,jlSize,'double')*tstep;
                 jlv{i} = fread(jNDfid,jlSize,'double');
-                plot(jlt{i},jlv{i},'.r','MarkerSize',3);
+                hjl = plot(jlt{i},jlv{i},'.r','MarkerSize',3);
                 jlnCross = fread(jNDfid,1,'int')
                 jlCrossT{i} = [];
-                for j=1:jbnCross
+                for j=1:jlnCross
                     tmpSize = fread(jNDfid, 1, sizeSize)
                     tmpCrossT = fread(jNDfid, tmpSize, 'double')*tstep;
                     tmpCrossV = fread(jNDfid, tmpSize, 'double');
-                    jlCrossT{i} = [jlCrossT{i}, tmpCrossT];
-                    jlCrossV{i} = [jlCrossV{i}, tmpCrossV];
+                    jlCrossT{i} = [jlCrossT{i}; tmpCrossT];
+                    jlCrossV{i} = [jlCrossV{i}; tmpCrossV];
                     plot(tmpCrossT, tmpCrossV,':r');
                 end
+                legend([hs,hb,hl,hb0,hjb,hjl],{'sim','bi','li','bi0','jb','jl'});
+            else
+                legend([hs,hb,hl,hb0,hjb,hjl],{'sim','bi','li','bi0'});
             end
             if plotInput
                 ntmp = fread(tInfid,[1,1],sizeSize);
@@ -306,6 +287,49 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
                 end
             end
             xlim(xl);
+
+            if dt(i) == tstep
+                subplot(2,2,3)
+            else 
+                subplot(2,1,2)
+            end
+            hold on
+            if ss(i) > 0
+                plot(ts{i},ones(1,ss(i)),'.k','MarkerSize',6,'LineStyle','none');
+            end
+            if sb(i) > 0
+                plot(tb{i},ones(1,sb(i))+1,'.b','MarkerSize',6,'LineStyle','none');
+            end
+            if sl(i) > 0
+                plot(tl{i},ones(1,sl(i))+2,'.r','MarkerSize',6,'LineStyle','none');
+            end
+            if sjb(i) > 0
+                plot(tjb{i},ones(1,sjb(i))+3,'ob','MarkerSize',3,'LineStyle','none');
+            end
+            if sjl(i) > 0
+                plot(tjl{i},ones(1,sjl(i))+4,'or','MarkerSize',3,'LineStyle','none');
+            end
+            if sb0(i) > 0
+                plot(tb0{i},ones(1,sb0(i))+5,'og','MarkerSize',3,'LineStyle','none');
+            end
+            ylim([0,6]);
+            xlim(xl);
+
+            if dt(i) == tstep
+                subplot(2,2,4)
+                hold on
+                berr = biV{i} - simV{i};
+                lerr = liV{i} - simV{i};
+                b0err = biV0{i} - simV{i};
+                hberr = plot(t0, berr, 'b');
+                hlerr = plot(t0, lerr,'r');
+                hb0err = plot(t0, b0err, 'g');
+                errorbar(t0(end)+1, mean(abs(berr)), std(berr),'*b');
+                errorbar(t0(end)+2, mean(abs(lerr)), std(lerr),'*r');
+                errorbar(t0(end)+3, mean(abs(b0err)), std(b0err),'*g');
+                xlim(xl);
+            end
+
             if ~isempty(ext)
                 saveas(gcf,[p.theme,'-trial',num2str(i),'.',ext],format);
             end
