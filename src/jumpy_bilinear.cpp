@@ -411,7 +411,7 @@ void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neu
     }
 }
 
-unsigned int nsyn_jBilinear(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape, bool dtSquare) {
+unsigned int nsyn_jBilinear(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape, bool dtSquare) {
     size i, j, i_prior_cross;
     double tstep = neuroLib.tstep;
     unsigned int nc_old, nc = 0;
@@ -497,6 +497,7 @@ unsigned int nsyn_jBilinear(Cell &cell, vector<vector<double>> &spikeTrain, vect
             }
             nc_old = nc;
             if (spikeShape) {
+                clampDend(neuroLib, neuron.nSyn, input, t_cross, neuron.vRest, cross, tail_l, i_prior_cross, dendVclamp, rd);
                 i = neuroAlter(neuron, neuroLib, cross, i_prior_cross, jnd, end_t, round(t_cross), tBack, vBack, tstep, tsp, vB, nc, cell, spikeTrain, s0, s1, dendVclamp);
                 spiked = nc > nc_old;
             } else {

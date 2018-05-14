@@ -235,6 +235,36 @@ inline double linear_interp_kV_old(double ******kV, IJR &v, IJR &ijdT, size dT, 
     }
 }
 
+inline void clampDend(nNL &neuroLib, int n, Input &input, double tCross, double v0, Cross &cross, size tail, size head, vector<double> &dendVclamp, double rd) {
+    double dt, dv;
+    size i, ID, idt;
+    struct IJR vinit = cross.vCross.back();
+    vector<double> dendv(n,0);
+    for (i = head; i>tail; i--) {
+        dt = tCross - input.dt[i];
+        idt = static_cast<size>(round(dt));
+        ID = input.ID[i];
+        if (jb::debug2) {
+            cout << "it " << idt << endl;
+            cout << "v " << input.Vijr[i].i  << ", " << input.Vijr[i].j << ", " << input.Vijr[i].r << endl;
+            cout << "idt " << input.dTijr[i].i << ", " <<  input.dTijr[i].j << ", " << input.dTijr[i].r << endl;
+        }
+        dv = linear_interp_PSP(neuroLib.dendv, input.Vijr[i], input.dTijr[i], ID, idt, neuroLib.idtRange);
+        if (jb::debug) {
+            cout << i << "th input " << ID << " dv = " << dv << endl;
+        }
+        dendv[ID] += dv;
+    }
+    for (int i=0; i<n; i++) {
+        if (abs(dendv[i] - 0) > pow(2,-52)) {
+            dendVclamp[i] = v0 + dendv[i] * rd;
+            if (jb::debug) {
+                cout << "   dend " << i << " will be clamped at " << dendVclamp[i] << endl;
+            }
+        }
+    }
+}
+
 inline void add_input_i_contribution(size i, size idt, nNL &neuroLib, Input &input, double &v) {
     //cout << "synapse " << input.ID[i] << " contributing " << input.t[i] << endl;
     v = v + linear_interp_PSP(neuroLib.sPSP, 
@@ -328,6 +358,6 @@ bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &n
 
 void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tCross, double vCross, size i_prior, size &tail_l, size &tail_b, size head, size corrSize, int afterCrossBehavior);
 
-unsigned int nsyn_jBilinear(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape, bool dtSquare);
+unsigned int nsyn_jBilinear(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape, bool dtSquare);
 
 #endif

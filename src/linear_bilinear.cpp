@@ -1,6 +1,6 @@
 #include "linear_bilinear.h"
 
-unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool dtSquare){
+unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool dtSquare){
     bool debug;
     double vTarget, dtTarget;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
@@ -40,8 +40,11 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
     unsigned int spikeCount = 0;
     vector<size> s0(neuroLib.nSyn,0);
     vector<size> s1(neuroLib.nSyn,0);
+    double tCross_old = 0;
+    vector<double> vS(neuron.tin.size(),neuron.vRest);
     
     double vinit = v[0];
+    double vCross_old = vinit;
     v.assign(run_nt, neuron.vRest);
     if (l0 > run_lt) {
         tl = run_nt;
@@ -61,6 +64,7 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
                 break;
             }
             vTarget = v[vs];
+            vS[i] = vTarget;
 
             if (vs+l0 > run_lt) {
                 tl = run_nt - vs;
@@ -129,6 +133,7 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
                     }
                     if (spikeShape) {
                         vs = k;
+                        clampDendRaw(neuroLib, neuron, t1, vs*tstep, neuron.vRest, dendVclamp, ith, rd, tCross_old, vCross_old, vS);
                         spiked = neuroAlterB(neuron, neuroLib, v, ith, vs, run_nt, tstep, tsp, v[vs], vBack, cell, spikeTrain, s0, s1, dendVclamp);
                     } else {
                         spiked = 1;
@@ -154,6 +159,8 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
                         cout << "backed at " << vs*tstep << ", end ith " << ith << " t= " << neuron.tin[ith] << endl;
                         cout << "v[ve] " << v[vs]  << " vBack " << vBack << endl;
                     }
+                    tCross_old = vs*step;
+                    vCross_old = v[vs];
                     if (v[vs] > vBack) {
                         if (vs < run_lt) {
                             cout << " NEURON simulation has some problem" << endl;
@@ -271,7 +278,7 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
     return spikeCount;
 }
 
-unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape){
+unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape){
     double vTarget, dtTarget;
     size tl, vs, ve, vc, i, j, k, ith_old, ith;
     size nin = neuron.tin.size(), nv = neuroLib.nv, ndt = neuroLib.ndt;
@@ -464,7 +471,7 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
     return spikeCount;
 }
 
-unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool kVStyle, bool dtSquare){
+unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool kVStyle, bool dtSquare){
     double vTarget, dtTarget;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
     size nin = neuron.tin.size(), nv = neuroLib.nv, ndt = neuroLib.ndt;

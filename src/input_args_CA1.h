@@ -15,6 +15,7 @@ struct input_args_CA1 : input_args {
     double trans;
     double trans0;
     double rBiLinear;
+    double rd;
     int kVStyle;
     int afterCrossBehavior;
     bool spikeShape;

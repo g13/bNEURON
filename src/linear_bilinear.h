@@ -70,6 +70,50 @@ inline void interpPSP0(vector<double> &v, size vs, double ****PSP, double *vRang
     }
 }
 
+inline void clampDendRaw(nNL &neuroLib, nNS &neuron, double tol_tb, double tCross, double v0, vector<double> &dendVclamp, size head, double rd, double tCross_old, double vCross_old, vector<double>& vS) {
+    double dt, vbase, dv;
+    size i, ID, idt, iDt;
+    double rv, rdt;
+    size iv, jv;
+    size iidt, jjdt;
+    vector<double> dendv(neuron.nSyn,0);
+    for (i = head; i>0; i--) {
+        if (tCross - neuron.tin[i] > tol_tb) break;
+        if (neuron.tin[i] > tCross_old) {
+            dt = tCross - neuron.tin[i];
+            getNear(neuroLib.vRange,neuroLib.nv,vS[i],rv,iv,jv); 
+            iidt = 0; jjdt = 1; rdt = 0;
+        } else {
+            dt = tCross - tCross_old;
+            iDt = static_cast<size>(round((tCross_old - neuron.tin[i])/neuroLib.tstep));
+            getNear(neuroLib.vRange,neuroLib.nv,vCross_old,rv,iv,jv); 
+            getNear(neuroLib.idtRange,neuroLib.ndt,iDt,rdt,iidt,jjdt);
+        }
+        idt = static_cast<size>(round(dt/neuroLib.tstep));
+        ID = neuron.inID[i];
+        if (lb::debug2) {
+            cout << "it " << idt << endl;
+            cout << "v " << iv << ", " << jv << ", " << rv << endl;
+            cout << "idt " << iidt << ", " << jjdt << ", " << rdt << endl;
+        }
+        vbase = neuroLib.dendv[iv][iidt][ID][neuroLib.idtRange[iidt]+idt];
+        dv = vbase + rv * (neuroLib.dendv[jv][iidt][ID][neuroLib.idtRange[iidt]+idt] - vbase)
+                   + rdt * (neuroLib.dendv[iv][jjdt][ID][neuroLib.idtRange[jjdt]+idt] - vbase);
+        if (lb::debug) {
+            cout << i << "th input " << ID << " dv = " << dv << endl;
+        }
+        dendv[ID] += dv;
+    }
+    for (int i=0; i<neuron.nSyn; i++) {
+        if (abs(dendv[i] - 0) > pow(2,-52)) {
+            dendVclamp[i] = v0 + dendv[i] * rd;
+            if (lb::debug) {
+                cout << "   dend " << i << " will be clamped at " << dendVclamp[i] << endl;
+            }
+        }
+    }
+}
+
 inline void interpkV(vector<double> &v, size vs, double ******kV, double *vRange, size *idtRange, int nv, size ndt, double vTar, double dtTar0, double dtTar1, size tl, size iSyn, size jSyn, bool dtSquare) {
     size idt0,jdt0;
     size idt1,jdt1;
@@ -180,10 +224,10 @@ inline void interpVinit(vector<double> &v, size vs,  double **vLeak, double *vRa
         v[vs+k] = vLeak[i][k] + r*(vLeak[j][k]-vLeak[i][k]);
 }
 
-unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool dtSquare);
+unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool dtSquare);
 
-unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape);
+unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape);
 
-unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool kVStyle, bool dtSquare);
+unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool kVStyle, bool dtSquare);
 
 #endif
