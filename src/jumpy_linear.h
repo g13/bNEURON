@@ -48,11 +48,16 @@ namespace jl {
             if (debug) {
                 assert(vC >= v_left);
             }
-            if (abs(t_right - t_left)<pow(2,-52)) {
+            assert(t_right >= t_left);
+            if (t_right - t_left <= 1) {
                 v = v_right;
                 return t_right;
             }
-            t_cross1 = t_left + (vC - v_left)/(v_right-v_left)*(t_right-t_left);
+            double dt = (vC - v_left)/(v_right-v_left)*(t_right-t_left);
+            if (dt < 1.0) {
+                dt = 1.0;
+            }
+            t_cross1 = t_left + dt;
             //t_cross1 = ceil(t_cross1);
             if (debug2) {
                 cout << " find v at " << t_cross1 << endl;
@@ -65,24 +70,12 @@ namespace jl {
                 cout << v_left << ", " << v1 << ", " << v_right << endl;
                 ival++;
             }
-            if (fabs(v1-vC)<vtol) {
+            if (v1-vC<vtol && v1>vC) {
                 v = v1;
                 t_cross = t_cross1;
                 break;
             }
     
-            if (t_cross1-t_left <= 1 || t_right-t_cross1 <=1) {
-                if (t_cross1-t_left <= 1) {
-                    v = v1; 
-                } else {
-                    v = v_right;
-                }
-                t_cross = t_cross1;
-                if (debug2) {
-                    cout << "temp resol reached " << endl;
-                }
-                break;
-            }
             // solve for a, b of f(t)-v_left = a(t-t_left)^2 + b(t-t_left);
             // solve for t when a(t-t_left)^2 + b(t-t_left) = (vThres - v_left)
             t_cross2 = parabola(t_left,v_left,t_right,v_right,t_cross1, v1, vC);
@@ -102,7 +95,7 @@ namespace jl {
             if (debug2) {
                 ival++;
             }
-            if (fabs(v2-vC)<vtol) {
+            if (v2-vC<vtol && v2>vC) {
                 v = v2;
                 t_cross = t_cross2;
                 break;

@@ -129,14 +129,14 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
 
     subplot(2,2,4)
     hold on
-    plot(inputLevel,cpuTime(i,:),'-*k');
-    plot(inputLevel,cpuTime(i,:),'-*b');
-    plot(inputLevel,cpuTime(i,:),'-*r');
-    plot(inputLevel,cpuTime(i,:),'-oc');
-    plot(inputLevel,cpuTime(i,:),'-om');
-    plot(inputLevel,cpuTime(i,:),'-*g');
+    plot(inputLevel,cpuTime(1,:),'-*k');
+    plot(inputLevel,cpuTime(2,:),'-*b');
+    plot(inputLevel,cpuTime(3,:),'-*r');
+    plot(inputLevel,cpuTime(4,:),'-oc');
+    plot(inputLevel,cpuTime(5,:),'-om');
+    plot(inputLevel,cpuTime(6,:),'-*g');
     xlim([0,inputLevel(nTrial)*1.1]);
-    legend(['sim','bilinear','linear','jb','jl','bilinear0']);
+    legend({'sim','bilinear','linear','jb','jl','bilinear0'});
     xlabel('input rate Hz');
     ylabel('cpuTime s');
 

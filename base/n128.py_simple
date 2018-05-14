@@ -42,26 +42,15 @@ class RealisticNeuron(object):
         Cm = 1
         RaAll = 80
         Vrest = self.Vrest
-        gna = 0.03   # 0.03
-        gkdr = 0.005 # 0.005
-        gka = 0.005  # 0.005
-        gka_dist = gka
-        gka_prox = gka
         ghd = 2.0e-5 # 2.0e-5
         gh_soma = ghd
         gh_end = 10.0*ghd
         # soma
         self.soma.push()
         h.distance()
-        self.soma.insert('na3')
-        self.soma.gbar_na3 = gna
-        self.soma.insert('kdr')
-        self.soma.gkdrbar_kdr = gkdr
         self.soma.insert('hd')
         self.soma.ghdbar_hd = gh_soma
         self.soma.vhalfl_hd = -73
-        self.soma.insert('kap')
-        self.soma.gkabar_kap = gka_prox
         self.soma.insert('pas')
         self.soma.e_pas = Vrest
         self.soma.g_pas = 1/RmSoma
@@ -69,63 +58,26 @@ class RealisticNeuron(object):
         self.soma.cm = Cm
         h.pop_section()
         #
-        gna = 0.03   # 0.03
-        gka = 0.05  # 0.005
-        gkdr = 0.005  # 0.005
-        gka_prox = gka
-        #
         for sec in self.axon_secs:
-            sec.insert('nax')
-            sec.gbar_nax = 2*gna
-            sec.insert('kdr')
-            sec.gkdrbar_kdr = gkdr
-            sec.insert('kap')
-            sec.gkabar_kap = gka_prox
             sec.insert('pas')
             sec.e_pas = Vrest
             sec.g_pas = 1/RmAx
             sec.Ra = RaAll
             sec.cm = Cm
-            # sec.push()
-            # print h.secname()
         #
-        gna = 0.03   # 0.03
-        gkdr = 0.005 # 0.005
-        gka = 0.005  # 0.005
-        gka_prox = gka # gka
         for sec in self.basal_dends:
-            sec.insert('na3')
-            sec.gbar_na3 = gna
-            sec.insert('kdr')
-            sec.gkdrbar_kdr = gkdr
-            sec.insert('kap')
-            sec.gkabar_kap = gka_prox
             sec.insert('pas')
             sec.e_pas = Vrest
             sec.g_pas = 1/Rm
             sec.Ra = RaAll
             sec.cm = Cm
         #
-        gna = 0.00   # 0.03
-        gkdr = 0.000 # 0.005
-        ghd = 2.0e-5 # 2.0e-5
-        gka = 0.000  # 0.005
-        gka_dist = gka # gka
-        gka_prox = gka # gka
-        gh_soma = ghd
-        gh_end = 10.0*ghd
         for sec in self.apical_dends:
+            sec.insert('hd')
             sec.insert('pas')
             sec.e_pas = Vrest
             sec.Ra = RaAll
             sec.cm = Cm
-            sec.insert('na3')
-            sec.gbar_na3 = gna
-            sec.insert('kdr')
-            sec.gkdrbar_kdr = gkdr
-            sec.insert('hd')
-            sec.insert('kap')
-            sec.insert('kad')
             sec.push()
             for seg in sec:
                 segX = sec(seg.x)
@@ -137,20 +89,6 @@ class RealisticNeuron(object):
                     sec.vhalfl_hd = -73
                 else:
                     sec.vhalfl_hd = -81
-                if xdist > 300:
-                    segX.ar2_na3 = 0.3
-                else:
-                    segX.ar2_na3 = 0.9 - xdist*(0.9-0.3)/300.0
-                if xdist < 100:
-                    segX.gkabar_kad = 0
-                    segX.gkabar_kap = gka_prox*(1.0+xdist/70.0)
-                elif xdist < 350:
-                    segX.gkabar_kap = 0
-                    segX.gkabar_kad = gka_dist*(1.0+xdist/70.0)
-                else:
-                    segX.gkabar_kap = 0
-                    segX.gkabar_kad = gka_dist*6
-            #
             h.pop_section()
     #
     def build_subsets(self):
@@ -5081,10 +5019,6 @@ class RealisticNeuron(object):
     def current_balance(self,v0):
         for sec in self.all:
             sec.push()
-            if h.ismembrane("na3") or h.ismembrane("nax"):
-                sec.ena = 55
-            if h.ismembrane("kap") or h.ismembrane("kad") or h.ismembrane("kdr"):
-                sec.ek = -90
             if h.ismembrane("hd"):
                 sec.ehd_hd = -30
             h.pop_section()
@@ -5094,10 +5028,13 @@ class RealisticNeuron(object):
             sec.push()
             for seg in sec:
                 segX = sec(seg.x)
-                if h.ismembrane("na_ion") or h.ismembrane("k_ion"):
-                    segX.e_pas = segX.v + (segX.ina + segX.ik)/segX.g_pas
                 if h.ismembrane("hd"):
-                    segX.e_pas = segX.e_pas + segX.i_hd/segX.g_pas
+                    segX.e_pas = segX.v + segX.i_hd/segX.g_pas
             h.fcurrent()
             h.pop_section()
+        if h.cvode.active():
+            h.cvode.re_init()
+        else:
+            h.fcurrent()
+        h.frecord_init()
     #

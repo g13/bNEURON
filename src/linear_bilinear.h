@@ -8,8 +8,8 @@ using std::cout;
 using std::endl;
 using std::vector;
 namespace lb{
-    const bool debug = true;
-    const bool debug2 = true;
+    const bool debug = false;
+    const bool debug2 = false;
 }
 
 template<typename T>

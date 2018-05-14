@@ -2,8 +2,7 @@
 
 namespace po = boost::program_options;
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     //bool win = true;
     //feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
     ofstream data_file, tIncome_file, raster_file, jND_file, cpu_file;
@@ -129,7 +128,6 @@ int main(int argc, char **argv)
         biV0.push_back(v0);
         liV.reserve(nt);
         liV.push_back(v0);
-        clock_gettime(clk_id,&tpS);
         neuron.vReset = inputArg.vRest;
         neuron.vRest = inputArg.vRest;
         double vCrossl = inputArg.vRest + (inputArg.vThres - inputArg.vRest)*inputArg.rLinear;
@@ -147,6 +145,7 @@ int main(int argc, char **argv)
         vector<vector<double>> RList(neuroLib.nSyn,vector<double>(2,0));
         unsigned int nc = 0;
         // NEURON
+        clock_gettime(clk_id,&tpS);
         neuron.vThres = inputArg.vThres;
         cout << " yale NEURON begin" << endl;
         cout << " point of no return unless spike " << inputArg.vThres << endl;

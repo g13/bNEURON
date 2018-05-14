@@ -360,8 +360,6 @@ def getI0(i,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,to
 
 def getSinglets(i,idt,dt,gList,pos,cell,v0,sL,vSL,n,trans,ntrans,relt,tstep,relit,run_nt,idtRange,leakyV,leakyDendV,spikes,s):
     print " i = ", i
-    v1 = np.zeros((run_nt),dtype='double')
-    dendDv = np.zeros((run_nt),dtype='double')
     sel = [i]
     RList = np.zeros((n,2))
     RList[i,:] = getGH(dt,gList[i])
@@ -415,6 +413,7 @@ def getNib(argv):
     #locE = np.random.randint(75,134,6)
     #===========================================================
     locE = np.array([79, 82, 83, 108, 124, 129],dtype='int')
+    #locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
     locI = np.array([14, 28, 40],dtype='int')
     vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
     #===========================================================
@@ -437,7 +436,8 @@ def getNib(argv):
 
     #locE = np.array([32, 52, 66, 78, 98, 136],dtype='int')
     #locE = np.array([74],dtype='int')
-    gE = (1e-1 + np.random.random_sample(locE.size) * (1-1e-1)) * (0.10/2.0)
+    #gE = (1e-1 + np.random.random_sample(locE.size) * (1-1e-1)) * (0.10/2.0)
+    gE = (1e-1 + np.random.random_sample(locE.size) * (1-1e-1)) * (0.07/2.0)
     #gE = np.array([2e-2])
     posE = np.random.random_sample(locE.size)
     #posE = np.array([0.6])
@@ -445,7 +445,7 @@ def getNib(argv):
     #locI = np.array([7, 28, 137],dtype='int')
     #locI = np.array([2, 14, 28],dtype='int')
     #locI = np.array([28],dtype='int')
-    gI = (1e-1 + np.random.random_sample(locI.size) * (1-1e-1)) * (-0.3/2.0)
+    gI = (1e-1 + np.random.random_sample(locI.size) * (1-1e-1)) * (-0.1/2.0)
     posI = np.random.random_sample(locI.size)
     #posI = np.ones(locI.size)*0.5
 

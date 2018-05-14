@@ -405,7 +405,7 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
     #pyplot.draw()
     print "figure"
     print >> f,  "figure"
-    #pyplot.savefig('slice.png',format='png',bbox_inches='tight',dpi=900)
+    pyplot.savefig('slice.png',format='png',bbox_inches='tight',dpi=900)
     print "saved"
     print >> f,  "saved"
         
@@ -873,13 +873,13 @@ if __name__ == '__main__':
     run_nt = int(round(run_t/tstep))
     tol_t = min([300,run_t])
     tol_nt = int(round(tol_t/tstep))+1
-    seed = 231278 
+    seed = 231271 
     np.random.seed(seed)
     #locE = np.array([36, 53, 74, 79, 83, 90, 97, 101, 117, 125, 132, 174],dtype='int')
     #locE = np.array([36, 74, 83, 97, 117, 132],dtype='int')
     #locE = np.array([36, 73, 97, 117, 146, 180],dtype='int')
-    locE = np.array([79, 82, 83, 108, 124, 129],dtype='int') #79
-    locI = np.array([14, 28, 40],dtype='int')
+    locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
+    locI = np.array([14, 28, 30],dtype='int')
     #locE = np.array([32, 52, 66, 78, 98, 136],dtype='int')
     #locE = np.array([74],dtype='int')
     #gE = 1e-4 + np.random.random_sample(locE.size) * (1e-4-1e-4) + 2e-2 + 1e-3*3
@@ -889,7 +889,7 @@ if __name__ == '__main__':
     #locI = np.array([2, 14, 28],dtype='int')
     #locI = np.array([7, 28, 137],dtype='int')
     #locI = np.array([28],dtype='int')
-    gI = (1e-1 + np.random.random_sample(locI.size) * (1-1e-1)) * (-0.3/2.0)
+    gI = (1e-1 + np.random.random_sample(locI.size) * (1-1e-1)) * (-0.2/2.0)
     posI = np.random.random_sample(locI.size)
     pos = np.concatenate((posE, posI))
     loc = np.concatenate((locE, locI))
@@ -908,9 +908,9 @@ if __name__ == '__main__':
 
     sel = range(n)
 
-    #vecTuple = (np.array([0, run_t+1]),np.array([100,run_t+1]),np.array([200,run_t+1]),np.array([300,run_t+1]),np.array([400,run_t+1]),np.array([500,run_t+1]),np.array([600,run_t+1]),np.array([800,run_t+1]),np.array([1000,run_t+1]))
+    vecTuple = (np.array([0, run_t+1]),np.array([100,run_t+1]),np.array([200,run_t+1]),np.array([300,run_t+1]),np.array([400,run_t+1]),np.array([500,run_t+1]),np.array([600,run_t+1]),np.array([800,run_t+1]),np.array([1000,run_t+1]))
     #vecTuple = (np.array([0,20,40, run_t+1]),np.array([100,120,140,run_t+1]),np.array([200,220,240,run_t+1]),np.array([300,320,340,run_t+1]),np.array([400,420,440,run_t+1]),np.array([500,520,540,run_t+1]),np.array([600,620,640,run_t+1]),np.array([800,run_t+1]),np.array([1000,run_t+1]))
-    vecTuple = (np.array([100,run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]))
+    #vecTuple = (np.array([100,run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]))
     #vecTuple = (np.array([0,330,run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([0,660,run_t+1]))
     RList = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
     dendVclamp = np.array([1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000])
@@ -926,7 +926,7 @@ if __name__ == '__main__':
     clampDend = False 
     monitorDend = False 
     trans = 110 
-    pas = True 
+    pas = False 
     #trans = 100
     #clampEffects(cell, v0, trans, trans+run_t, t0, tstep, clampDend)
     #trans = 200

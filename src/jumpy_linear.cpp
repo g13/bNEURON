@@ -36,7 +36,7 @@ bool jl::check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, 
         if (jl::debug) {
             cout << "v " << v << " > vThres, find t and v for cross" << endl;
         }
-        if (fabs(v-vC)>neuron.vTol && t-jnd.t.back()>1) {
+        if (v-vC>neuron.vTol && t-jnd.t.back()>1) {
             if (jl::debug) {
                 cout << "t_left " << jnd.t.back() << ", t_right " << t << endl;
                 cout << "v_left " << jnd.v.back() << ", v_right " << v << endl;

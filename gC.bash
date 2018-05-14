@@ -1,5 +1,5 @@
 #!/bin/bash
-n128=0
+n128=1
 dir0='gainCurve'
 
 fdr=$1
