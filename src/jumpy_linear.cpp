@@ -276,7 +276,7 @@ void jl::update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS 
     }
 }
 
-unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape) {
+unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape) {
     size i, j, i_prior_cross;
     double tstep = neuroLib.tstep;
     unsigned int nc_old, nc = 0;

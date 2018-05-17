@@ -2,7 +2,7 @@
 
 double interp_for_t_cross(double v_right, double v_left, double t_right, double t_left, size head, size tail_l, size tail_b, double tCross, double tol_tl, double tol_tb, nNL &neuroLib, Cross &cross, Input &input, double v0, double vtol, double vC, double &v, bool debug, bool dtSquare) {
     size ival = 0;
-    double v1, v2;
+    double v1, v2, vC_;
     double t_cross1, t_cross2, t_cross;
     do {
         if (jb::debug2) {
@@ -13,9 +13,13 @@ double interp_for_t_cross(double v_right, double v_left, double t_right, double 
             v = v_right;
             return t_right;
         }
-        double dt = (vC - v_left)/(v_right-v_left)*(t_right-t_left);
+        double k = (t_right-t_left)/(v_right-v_left);
+        double dt = (vC - v_left) * k;
         if (dt < 1.0) {
             dt = 1.0;
+            vC_ = v_left + 1.0/k;
+        } else {
+            vC_ = vC;
         }
         t_cross1 = t_left + dt;
         //t_cross1 = ceil(t_cross1);
@@ -30,15 +34,37 @@ double interp_for_t_cross(double v_right, double v_left, double t_right, double 
             cout << v_left << ", " << v1 << ", " << v_right << endl;
             ival++;
         }
-        if (v1-vC<vtol && v1>vC) {
-            v = v1;
+        if (abs(v1-vC)<vtol) {
             t_cross = t_cross1;
+            v = v1;
             break;
+        } else {
+            if (dt-1.0 < pow(2,-52) && v1>vC) {
+                if (v1-vC > vC-v_left) {
+                    t_cross = t_left;
+                    v = v_left;
+                } else {
+                    t_cross = t_cross1;
+                    v = v1;
+                }
+                break;
+            } else {
+                if (t_right - t_cross1 - 1.0 < pow(2,-52) && v1<vC) {
+                    if (vC-v1 > v_right-vC) {
+                        t_cross = t_right;
+                        v = v_right;
+                    } else {
+                        t_cross = t_cross1;
+                        v = v1;
+                    }
+                    break;
+                }
+            }
         }
 
         // solve for a, b of f(t)-v_left = a(t-t_left)^2 + b(t-t_left);
         // solve for t when a(t-t_left)^2 + b(t-t_left) = (vThres - v_left)
-        t_cross2 = parabola(t_left,v_left,t_right,v_right,t_cross1, v1, vC);
+        t_cross2 = parabola(t_left,v_left,t_right,v_right,t_cross1, v1, vC,vC_);
         //t_cross2 = ceil(t_cross2);
         if (jb::debug2) {
             cout << " v: " << v_left << ", " << v1 << ", " << v_right << endl;
@@ -55,11 +81,34 @@ double interp_for_t_cross(double v_right, double v_left, double t_right, double 
         if (jb::debug2) {
             ival++;
         }
-        if (v2-vC<vtol && v2>vC) {
+        if (abs(v2-vC)<vtol) {
             v = v2;
             t_cross = t_cross2;
             break;
+        } else {
+            if (dt-1.0 < pow(2,-52) && v2>vC) {
+                if (v2-vC > vC-v_left) {
+                    t_cross = t_left;
+                    v = v_left;
+                } else {
+                    t_cross = t_cross2;
+                    v = v2;
+                }
+                break;
+            } else {
+                if (t_right - t_cross2 - 1.0 < pow(2,-52) && v2<vC) {
+                    if (vC-v2 > v_right-vC) {
+                        t_cross = t_right;
+                        v = v_right;
+                    } else {
+                        t_cross = t_cross2;
+                        v = v2;
+                    }
+                    break;
+                }
+            }
         }
+
         if (jb::debug2) {
             cout << " v: " << v_left << ", " << v1 << ", " << v2 << ", " << v_right << endl;
             cout << " t: " << t_left << ", " << t_cross1 << ", " << t_cross2 << ", " << t_right << endl;
@@ -114,7 +163,7 @@ bool check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, doub
         // bilinear confirm crossed
         // perform linear (and parabola) interp iteration until tolerance reaches
         if (jb::debug) {
-            cout << "v " << v << " > vThres, find t and v for cross" << endl;
+            cout << "v " << v << " > vThres" << vC << ", find t and v for cross" << endl;
         }
         if (v-vC>neuron.vTol && t-jnd.t.back()>1) {
             if (jb::debug) {
@@ -497,7 +546,7 @@ unsigned int nsyn_jBilinear(Cell &cell, vector<vector<double>> &spikeTrain, vect
             }
             nc_old = nc;
             if (spikeShape) {
-                clampDend(neuroLib, neuron.nSyn, input, t_cross, neuron.vRest, cross, tail_l, i_prior_cross, dendVclamp, rd);
+                clampDend(neuroLib, neuron.nSyn, input, t_cross, vC, neuron.vRest, cross, tail_l, i_prior_cross, dendVclamp, rd);
                 i = neuroAlter(neuron, neuroLib, cross, i_prior_cross, jnd, end_t, round(t_cross), tBack, vBack, tstep, tsp, vB, nc, cell, spikeTrain, s0, s1, dendVclamp);
                 spiked = nc > nc_old;
             } else {

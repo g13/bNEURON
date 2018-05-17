@@ -141,8 +141,8 @@ def getWfig(fign,k,coef,b,directory,savePlot,EItype,it=-1):
     sid = coef.argsort()
     pyplot.plot(coef[sid],pred[sid])
     pyplot.xlabel(r'$v_'+EItype[0]+'v_'+EItype[1] + ' (mV^2)$')
-    pyplot.title(r'$R^2 = ' + '%.2f'%rs + '$')
-    pyplot.ylabel('k'+EItype+ r' $(mV^{-1})$')
+    pyplot.title(r'$R^2 = ' + '%.2f'%rs + ', k = ' + '%.2f'%k[it] + '$')
+    pyplot.ylabel('v'+EItype+ r' $(mV^{-1})$')
 
     if np.absolute(pred0).max()> np.absolute(coef).max()*3:
         if np.absolute(coef.max()) > np.absolute(coef.min()):
@@ -258,8 +258,10 @@ run_nt = np.round(run_t/tstep + 1).astype('int')
 ntrans = np.round(trans/tstep).astype('int')
 print "run steps: ", run_nt, tstep, "ms per step"
 np.random.seed(seed)
-locE = np.random.randint(52,134,nloc)
-locI = np.random.randint(0,52,nloc)
+#locE = np.random.randint(52,134,nloc)
+#locI = np.random.randint(0,52,nloc)
+locE = np.array([79, 82, 83, 108, 124, 129],dtype='int')
+locI = np.array([14, 28, 40],dtype='int')
 ng = gList0.size
 idt = np.round(dt/tstep).astype('int')
 end_t = run_t-dt

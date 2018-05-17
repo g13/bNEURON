@@ -138,7 +138,7 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
                 Py_spikeTrain[i] = PyArray_SimpleNewFromData(1,&dim,NPY_DOUBLE,&spikeTrain[i][s1[i]]);
 
                 if (yl::debug) {
-                    cout << "       np.array([";
+                    cout << "np.array([";
                     for (long j=0; j<dim; j++) {
                         cout << spikeTrain[i][s1[i]+j];
                         if (j!=dim-1) cout << ", ";

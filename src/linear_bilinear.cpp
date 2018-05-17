@@ -133,7 +133,7 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
                     }
                     if (spikeShape) {
                         vs = k;
-                        clampDendRaw(neuroLib, neuron, t1, vs*tstep, neuron.vRest, dendVclamp, ith, rd, tCross_old, vCross_old, vS);
+                        clampDendRaw(neuroLib, neuron, t1, vs*tstep, vCross, dendVclamp, ith, rd, tCross_old, vCross_old, vS);
                         spiked = neuroAlterB(neuron, neuroLib, v, ith, vs, run_nt, tstep, tsp, v[vs], vBack, cell, spikeTrain, s0, s1, dendVclamp);
                     } else {
                         spiked = 1;
@@ -159,7 +159,7 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
                         cout << "backed at " << vs*tstep << ", end ith " << ith << " t= " << neuron.tin[ith] << endl;
                         cout << "v[ve] " << v[vs]  << " vBack " << vBack << endl;
                     }
-                    tCross_old = vs*step;
+                    tCross_old = vs*tstep;
                     vCross_old = v[vs];
                     if (v[vs] > vBack) {
                         if (vs < run_lt) {

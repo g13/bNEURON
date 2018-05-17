@@ -14,12 +14,11 @@ input_args_CA1::input_args_CA1() {
         ("rBiLinear", po::value<double>(&rBiLinear), "bilinear model spiking threshold")
         ("vTol",po::value<double>(&vTol),"crossing threshold tolerance")
         ("vBuffer",po::value<double>(&vBuffer),"return threshold buffer")
-        ("dendClampRatio",po::value<double>(&dendClampRatio),"dendrite dV contribution ratio")
+        ("dendClampRatio",po::value<double>(&dendClampRatio)->default_value(1.0),"dendrite dV contribution ratio")
         ("afterCrossBehavior",po::value<int>(&afterCrossBehavior)->default_value(0), "0:no linear or bilinear extension after spike. 1:no bilinear extension. 2: all extend.")
         ("kVStyle",po::value<int>(&kVStyle)->default_value(0), "bilinear0 after spike kV style, 0: kV0 style. 1: kV style.")
         ("dtSquare",po::value<bool>(&dtSquare)->default_value(false)," if true, the second dt variable of kV is considered a second tier variable when interpolating")
         ("spikeShape",po::value<bool>(&spikeShape)->default_value(true),"if false, crossing is spiking")
-        ("dendClampRatio",po::value<double>(&rd)->default_value(1.0),"percentage of dendv contribute to dend vClamp in bilinear-sim transfer"),
         ("pas",po::value<bool>(&pas)->default_value(false),"if true, crossing is spiking and reset")
 		("ignoreT", po::value<double>(&ignoreT),"ingore time while applying bilinear rules");
         

@@ -3,7 +3,7 @@
 #SBATCH --ntasks=1
 ##SBATCH --mem=60G
 #SBATCH --cpus-per-task=15
-#SBATCH --time=1:00:00
+#SBATCH --time=2:00:00
 #SBATCH -o gC_%A.out
 #SBATCH --job-name=gC
 
@@ -17,7 +17,7 @@ date
 
 echo $ext
 
-./gainCurve && matlab -nodisplay -nosplash -r "plotGainCurve('input.cfg','$ext');exit;"
+./gainCurve && matlab -nodisplay -nosplash -r "plotGainCurve('input.cfg','$ext',true,false);exit;"
 
 date
 hostname

@@ -2,9 +2,9 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem-per-cpu=6G
-#SBATCH --time=8:00:00
-#SBATCH -a 1-3
+#SBATCH --mem-per-cpu=10G
+#SBATCH --time=24:00:00
+#SBATCH -a 1-4
 #SBATCH -o cK_%A_%a.out
 #SBATCH --job-name=cK
 #SBATCH --mail-type=END,FAIL

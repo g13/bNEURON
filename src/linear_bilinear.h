@@ -8,7 +8,7 @@ using std::cout;
 using std::endl;
 using std::vector;
 namespace lb{
-    const bool debug = false;
+    const bool debug = true;
     const bool debug2 = false;
 }
 
@@ -77,36 +77,45 @@ inline void clampDendRaw(nNL &neuroLib, nNS &neuron, double tol_tb, double tCros
     size iv, jv;
     size iidt, jjdt;
     vector<double> dendv(neuron.nSyn,0);
-    for (i = head; i>0; i--) {
-        if (tCross - neuron.tin[i] > tol_tb) break;
-        if (neuron.tin[i] > tCross_old) {
-            dt = tCross - neuron.tin[i];
-            getNear(neuroLib.vRange,neuroLib.nv,vS[i],rv,iv,jv); 
-            iidt = 0; jjdt = 1; rdt = 0;
-        } else {
-            dt = tCross - tCross_old;
-            iDt = static_cast<size>(round((tCross_old - neuron.tin[i])/neuroLib.tstep));
-            getNear(neuroLib.vRange,neuroLib.nv,vCross_old,rv,iv,jv); 
-            getNear(neuroLib.idtRange,neuroLib.ndt,iDt,rdt,iidt,jjdt);
+    if (true) {
+        for (i = head; i>0; i--) {
+            if (tCross - neuron.tin[i] > tol_tb) break;
+            if (neuron.tin[i] > tCross_old) {
+                dt = tCross - neuron.tin[i];
+                getNear(neuroLib.vRange,neuroLib.nv,vS[i],rv,iv,jv); 
+                iidt = 0; jjdt = 1; rdt = 0;
+            } else {
+                dt = tCross - tCross_old;
+                iDt = static_cast<size>(round((tCross_old - neuron.tin[i])/neuroLib.tstep));
+                getNear(neuroLib.vRange,neuroLib.nv,vCross_old,rv,iv,jv); 
+                getNear(neuroLib.idtRange,neuroLib.ndt,iDt,rdt,iidt,jjdt);
+            }
+            idt = static_cast<size>(round(dt/neuroLib.tstep));
+            ID = neuron.inID[i];
+            if (lb::debug2) {
+                cout << "it " << idt << endl;
+                cout << "v " << iv << ", " << jv << ", " << rv << endl;
+                cout << "idt " << iidt << ", " << jjdt << ", " << rdt << endl;
+            }
+            vbase = neuroLib.dendv[iv][iidt][ID][neuroLib.idtRange[iidt]+idt];
+            dv = vbase + rv * (neuroLib.dendv[jv][iidt][ID][neuroLib.idtRange[iidt]+idt] - vbase)
+                       + rdt * (neuroLib.dendv[iv][jjdt][ID][neuroLib.idtRange[jjdt]+idt] - vbase);
+            if (lb::debug2) {
+                cout << i << "th input " << ID << " dv = " << dv << endl;
+            }
+            dendv[ID] += dv;
         }
-        idt = static_cast<size>(round(dt/neuroLib.tstep));
-        ID = neuron.inID[i];
-        if (lb::debug2) {
-            cout << "it " << idt << endl;
-            cout << "v " << iv << ", " << jv << ", " << rv << endl;
-            cout << "idt " << iidt << ", " << jjdt << ", " << rdt << endl;
+        for (int i=0; i<neuron.nSyn; i++) {
+            if (abs(dendv[i] - 0) > pow(2,-52)) {
+                dendVclamp[i] = v0 + dendv[i] * rd;
+                if (lb::debug) {
+                    cout << "   dend " << i << " will be clamped at " << dendVclamp[i] << endl;
+                }
+            }
         }
-        vbase = neuroLib.dendv[iv][iidt][ID][neuroLib.idtRange[iidt]+idt];
-        dv = vbase + rv * (neuroLib.dendv[jv][iidt][ID][neuroLib.idtRange[iidt]+idt] - vbase)
-                   + rdt * (neuroLib.dendv[iv][jjdt][ID][neuroLib.idtRange[jjdt]+idt] - vbase);
-        if (lb::debug) {
-            cout << i << "th input " << ID << " dv = " << dv << endl;
-        }
-        dendv[ID] += dv;
-    }
-    for (int i=0; i<neuron.nSyn; i++) {
-        if (abs(dendv[i] - 0) > pow(2,-52)) {
-            dendVclamp[i] = v0 + dendv[i] * rd;
+    } else {
+        for (int i=0; i<neuron.nSyn; i++) {
+            dendVclamp[i] = neuron.vRest + (v0-neuron.vRest) * rd;
             if (lb::debug) {
                 cout << "   dend " << i << " will be clamped at " << dendVclamp[i] << endl;
             }

@@ -10,8 +10,8 @@ using std::vector;
 using std::cout;
 using std::endl;
 namespace jb {
-    const bool debug = true;
-    const bool debug2 = true;
+    const bool debug = false;
+    const bool debug2 = false;
     template<typename T>
     inline void getNear(T *range, size n, double target, double &ratio, size &istart, size &jnext) {
         size i;
@@ -235,29 +235,38 @@ inline double linear_interp_kV_old(double ******kV, IJR &v, IJR &ijdT, size dT, 
     }
 }
 
-inline void clampDend(nNL &neuroLib, int n, Input &input, double tCross, double v0, Cross &cross, size tail, size head, vector<double> &dendVclamp, double rd) {
+inline void clampDend(nNL &neuroLib, int n, Input &input, double tCross, double v, double v0, Cross &cross, size tail, size head, vector<double> &dendVclamp, double rd) {
     double dt, dv;
     size i, ID, idt;
-    struct IJR vinit = cross.vCross.back();
+    IJR vinit = cross.vCross.back();
     vector<double> dendv(n,0);
-    for (i = head; i>tail; i--) {
-        dt = tCross - input.dt[i];
-        idt = static_cast<size>(round(dt));
-        ID = input.ID[i];
-        if (jb::debug2) {
-            cout << "it " << idt << endl;
-            cout << "v " << input.Vijr[i].i  << ", " << input.Vijr[i].j << ", " << input.Vijr[i].r << endl;
-            cout << "idt " << input.dTijr[i].i << ", " <<  input.dTijr[i].j << ", " << input.dTijr[i].r << endl;
+    if (true) {
+        for (i = head; i>tail; i--) {
+            dt = tCross - input.dt[i];
+            idt = static_cast<size>(round(dt));
+            ID = input.ID[i];
+            if (jb::debug2) {
+                cout << "it " << idt << endl;
+                cout << "v " << input.Vijr[i].i  << ", " << input.Vijr[i].j << ", " << input.Vijr[i].r << endl;
+                cout << "idt " << input.dTijr[i].i << ", " <<  input.dTijr[i].j << ", " << input.dTijr[i].r << endl;
+            }
+            dv = linear_interp_PSP(neuroLib.dendv, input.Vijr[i], input.dTijr[i], ID, idt, neuroLib.idtRange);
+            if (jb::debug) {
+                cout << i << "th input " << ID << " dv = " << dv << endl;
+            }
+            dendv[ID] += dv;
         }
-        dv = linear_interp_PSP(neuroLib.dendv, input.Vijr[i], input.dTijr[i], ID, idt, neuroLib.idtRange);
-        if (jb::debug) {
-            cout << i << "th input " << ID << " dv = " << dv << endl;
+        for (int i=0; i<n; i++) {
+            if (abs(dendv[i] - 0) > pow(2,-52)) {
+                dendVclamp[i] = v + dendv[i] * rd;
+                if (jb::debug) {
+                    cout << "   dend " << i << " will be clamped at " << dendVclamp[i] << endl;
+                }
+            }
         }
-        dendv[ID] += dv;
-    }
-    for (int i=0; i<n; i++) {
-        if (abs(dendv[i] - 0) > pow(2,-52)) {
-            dendVclamp[i] = v0 + dendv[i] * rd;
+    } else {
+        for (int i=0; i<n; i++) {
+            dendVclamp[i] = v0 + (v - v0) * rd;
             if (jb::debug) {
                 cout << "   dend " << i << " will be clamped at " << dendVclamp[i] << endl;
             }
@@ -316,21 +325,36 @@ inline double find_v_at_t(Input &input, nNL &neuroLib, Cross &cross, size head, 
     return v;
 }
 
-inline double parabola(double t_left, double v_left, double t_right, double v_right, double t_mid, double v_mid, double vThres) {
+inline double parabola(double t_left, double v_left, double t_right, double v_right, double t_mid, double v_mid, double vThres, double vC) {
     double t1 = t_mid-t_left;
-    double t1_2 = t1*t1;
     double t2 = t_right-t_left;
-    double t2_2 = t2*t2; 
-    double denorm = t1_2*t2-t2_2*t1;
-    if (jb::debug) {
-        assert(denorm != 0.0);
+    double dt = t1-t2;
+    if (jb::debug2) {
+        assert(dt != 0.0);
     }
-    v_right = v_right-v_left;
-    v_mid = v_right-v_left;
-    vThres = vThres-v_left;
-    double a = (v_mid*t2-v_right*t1)/denorm;
-    double b = (v_right*t1_2-v_mid*t2_2)/denorm;
-    return (-b+sqrt(b*b+4*a*vThres))/(2*a) + t_left;
+    double a = ((v_mid-v_left)*t2-(v_right-v_left)*t1)/(t1*t2*dt);
+    double b = (v_mid-v_right - a*dt*(t1+t2))/dt;
+
+    double c = v_left-vThres;
+    double tc1 = (-b+sqrt(b*b-4*a*c))/(2*a) + t_left; 
+    double tc2 = (-b-sqrt(b*b-4*a*c))/(2*a) + t_left; 
+    double tsmall, tbig;
+    if (tc1 > tc2) {
+        tsmall = tc2;
+        tbig = tc1; 
+    } else {
+        tsmall = tc1;
+        tbig = tc2;
+    }
+    cout << "tsmall " << tsmall << endl;
+    cout << "tbig " << tbig << endl;
+    if (v_mid < vC) {
+        return tbig;
+        cout << v_mid << " tbig chosen " << endl;
+    } else {
+        return tsmall;
+        cout << v_mid << " tsmall chosen " << endl;
+    }
 }
 
 inline void getLR(double &v_left, double v1, double v2, double &v_right, double &t_left, double t_cross1, double t_cross2, double &t_right, double vTar) {

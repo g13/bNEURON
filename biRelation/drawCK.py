@@ -6,6 +6,10 @@ from matplotlib import pyplot, gridspec
 #np.seterr(all='raise')
 pyplot.style.use('thin_line')
 iv0 = 4
+def write_one(data_filename,data,mode='ab'):
+    with open(data_filename,mode) as data_file:
+        data.tofile(data_file)
+
 def getRs_v(rs,rsE,dtRange,ndt,tstep,nloc,run_nt,k):
     for idt in xrange(ndt):
         iidt = np.round(dtRange[idt]/tstep).astype('int')
@@ -98,19 +102,18 @@ def getArgMax(vRange,dtRange,nv,ndt,fdrname,suffix,rs,rsMax,typeEI,tstep,run_nt)
 v0 = -70
 idpi = 600
 run_t = 240
-suffix = '238659'
+suffix = '238660'
 theme='cK'
 tstep = 0.1
 nloc = 4
-vRange = np.arange(-74,-60)
-dtRange = np.array([0,4,8,12,20,30,70,130,210],dtype='float')
-#dtRange = np.array([0,4],dtype='float')
+vRange = np.arange(-74,4,-66)
+#dtRange = np.array([0,4,8,12,20,30,70,130,210],dtype='float')
+dtRange = np.array([0],dtype='float')
 nv = vRange.size
 run_nt = np.round(run_t/tstep + 1).astype('int')
-ndt = 2
-#ndt = dtRange.size
-ndtG = 2
-ndtD = 2 
+ndt = dtRange.size
+ndtG = min([2,ndt])
+ndtD = min([2,ndt]) 
 print nv, ndt
 kEE = np.empty((nv,ndt,nloc,nloc,run_nt))
 rsEE = np.empty((nv,ndt,nloc,nloc,run_nt))
@@ -128,8 +131,8 @@ kIE0 = np.empty((ndt,nloc,nloc,run_nt))
 rsIE0 = np.empty((ndt,nloc,nloc,run_nt))
 kII0 = np.empty((ndt,nloc,nloc,run_nt))
 rsII0 = np.empty((ndt,nloc,nloc,run_nt))
-figname = 'cK'
-fdrname = 'cK'
+figname = theme
+fdrname = theme
 pyplot.figure(figname,figsize = (8,4), dpi=idpi) # inches
 getRsK(vRange,dtRange,nv,ndt,fdrname,suffix,kEE,rsEE,'EE',tstep)
 getRsK(vRange,dtRange,nv,ndt,fdrname,suffix,kEI,rsEI,'EI',tstep)
@@ -140,6 +143,26 @@ getRsK0(dtRange,ndt,fdrname,suffix,kEI0,rsEI0,'EI',v0,tstep)
 getRsK0(dtRange,ndt,fdrname,suffix,kIE0,rsIE0,'IE',v0,tstep)
 getRsK0(dtRange,ndt,fdrname,suffix,kII0,rsII0,'II',v0,tstep)
     
+RsKfn = theme+'RsK.bin'
+write_one(RsKfn,kEE,'wb')
+write_one(RsKfn,rsEE,'wb')
+write_one(RsKfn,kEI,'ab')
+write_one(RsKfn,rsEI,'ab')
+write_one(RsKfn,kIE,'ab')
+write_one(RsKfn,rsIE,'ab')
+write_one(RsKfn,kII,'ab')
+write_one(RsKfn,rsII,'ab')
+
+RsKfn = theme+'RsK0.bin'
+write_one(RsKfn,kEE0,'wb')
+write_one(RsKfn,rsEE0,'wb')
+write_one(RsKfn,kEI0,'ab')
+write_one(RsKfn,rsEI0,'ab')
+write_one(RsKfn,kIE0,'ab')
+write_one(RsKfn,rsIE0,'ab')
+write_one(RsKfn,kII0,'ab')
+write_one(RsKfn,rsII0,'ab')
+
 gs = gridspec.GridSpec(10, 10)
 pyplot.subplot(gs[:4,:5])
 
@@ -169,36 +192,38 @@ pyplot.subplot(gs[6:,:5])
 rsMax=np.empty((nv,ndtG,nloc*nloc))
 getArgMax(vRange,dtRange,nv,ndtG,fdrname,suffix,rsEE,rsMax,'EE',tstep,run_nt)
 print "EE-----"
-for idt in xrange(ndtG):
-    print rsMax[0,idt,:].mean(-1)
-    print rsMax[0,idt,:].std(-1)
+if ndtG > 1:
+    for idt in xrange(ndtG):
+        print rsMax[0,idt,:].mean(-1)
+        print rsMax[0,idt,:].std(-1)
 rsMax = rsMax.reshape((nv,ndtG*nloc*nloc))
 lee,_,_ = pyplot.errorbar(vRange,rsMax.mean(-1),rsMax.std(-1),c='r',label='EE')
 
 rsMax=np.empty((nv,ndtG,nloc*nloc))
 getArgMax(vRange,dtRange,nv,ndtG,fdrname,suffix,rsEI,rsMax,'EI',tstep,run_nt)
 print "EI-----"
-for idt in xrange(ndtG):
-    print rsMax[0,idt,:].mean(-1)
-    print rsMax[0,idt,:].std(-1)
+if ndtG > 1:
+    for idt in xrange(ndtG):
+        print rsMax[0,idt,:].mean(-1)
+        print rsMax[0,idt,:].std(-1)
 rsMax = rsMax.reshape((nv,ndtG*nloc*nloc))
 lei,_,_ = pyplot.errorbar(vRange,rsMax.mean(-1),rsMax.std(-1),c='m',label='EI')
 
 rsMax=np.empty((nv,ndtG,nloc*nloc))
 getArgMax(vRange,dtRange,nv,ndtG,fdrname,suffix,rsIE,rsMax,'IE',tstep,run_nt)
 print "IE-----"
-for idt in xrange(ndtG):
-    print rsMax[0,idt,:].mean(-1)
-    print rsMax[0,idt,:].std(-1)
+#for idt in xrange(ndtG):
+#    print rsMax[0,idt,:].mean(-1)
+#    print rsMax[0,idt,:].std(-1)
 rsMax = rsMax.reshape((nv,ndtG*nloc*nloc))
 lie,_,_ = pyplot.errorbar(vRange,rsMax.mean(-1),rsMax.std(-1),c='c',label='IE')
 
 rsMax=np.empty((nv,ndtG,nloc*nloc))
 getArgMax(vRange,dtRange,nv,ndtG,fdrname,suffix,rsII,rsMax,'II',tstep,run_nt)
 print "II-----"
-for idt in xrange(ndtG):
-    print rsMax[0,idt,:].mean(-1)
-    print rsMax[0,idt,:].std(-1)
+#for idt in xrange(ndtG):
+#    print rsMax[0,idt,:].mean(-1)
+#    print rsMax[0,idt,:].std(-1)
 rsMax = rsMax.reshape((nv,ndtG*nloc*nloc))
 lii,_,_ = pyplot.errorbar(vRange,rsMax.mean(-1),rsMax.std(-1),c='b',label='II')
 pyplot.legend([lee,lei,lie,lii],['EE','EI','IE','II'])

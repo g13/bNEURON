@@ -337,5 +337,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
     end
     fclose(datafid);
     fclose(jNDfid);
-    fclose(tInfid);
+    if plotInput
+        fclose(tInfid);
+    end
 end
