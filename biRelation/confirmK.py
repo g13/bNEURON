@@ -41,8 +41,8 @@ def getRS(pred,b,rSS = False):
     else:
         return rs
         
-def getKfig(fign,t,k,rs,intercept,coef,b,plim,directory,savePlot,EItype):
-    pyplot.figure(fign,figsize = (8,4))
+def getKfig(fign,t,k,rs,intercept,coef,b,plim,directory,savePlot,EItype,fmt):
+    pyplot.figure(fign,figsize = (16,9))
     #gs = gridspec.GridSpec(3, 1, height_ratios=[0.5, 1.5, 1], hspace = 0.18)
     gs = gridspec.GridSpec(2, 1, height_ratios=[2.0, 1.0], hspace = 0.0)
     #ax = pyplot.subplot(gs[0])
@@ -124,16 +124,16 @@ def getKfig(fign,t,k,rs,intercept,coef,b,plim,directory,savePlot,EItype):
     #ax1_0.legend()
     #ax1_1.legend()
     if savePlot:
-        pyplot.savefig(directory+'/'+fign+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+        pyplot.savefig(directory+'/'+fign+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
         pyplot.close() 
     else:
         pyplot.show()
-def getWfig(fign,k,coef,b,directory,savePlot,EItype,it=-1):
-    pyplot.figure(fign,figsize = (8,4))
+def getWfig(fign,k,coef,b,directory,savePlot,EItype,it=-1,fmt='png'):
+    pyplot.figure(fign,figsize = (16,9))
     if it == -1:
         it = np.argmax(np.absolute(coef).max(0))
     pred = coef[:,it]*k[it]
-    pyplot.figure(wfigname,figsize=(8,4))
+    pyplot.figure(wfigname,figsize=(16,9))
     pyplot.plot(coef[:,it],b[:,it],'*k',ls='None',ms=8.5)
     rs = getRS(pred,b[:,it])
     coef = np.hstack((0,coef[:,it]))
@@ -142,7 +142,7 @@ def getWfig(fign,k,coef,b,directory,savePlot,EItype,it=-1):
     pyplot.plot(coef[sid],pred[sid])
     pyplot.xlabel(r'$v_'+EItype[0]+'v_'+EItype[1] + ' (mV^2)$')
     pyplot.title(r'$R^2 = ' + '%.2f'%rs + ', k = ' + '%.2f'%k[it] + '$')
-    pyplot.ylabel('v'+EItype+ r' $(mV^{-1})$')
+    pyplot.ylabel('v'+EItype+ r' $(mV^{-1})$'+' at ' +str(it))
 
     if np.absolute(pred0).max()> np.absolute(coef).max()*3:
         if np.absolute(coef.max()) > np.absolute(coef.min()):
@@ -159,14 +159,14 @@ def getWfig(fign,k,coef,b,directory,savePlot,EItype,it=-1):
     pyplot.ticklabel_format(axis='both',style='sci',scilimits=(-2,2))
 
     if savePlot:
-        pyplot.savefig(directory+'/'+fign+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+        pyplot.savefig(directory+'/'+fign+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
         pyplot.close() 
     else:
         pyplot.show()
         
 argv = sys.argv[1:]
 try:
-    opts, args = getopt.getopt(argv,'ps',['vid=','vmin=','dV=','dt=','seed='])
+    opts, args = getopt.getopt(argv,'ps',['vid=','vmin=','dV=','dt=','seed=','fmt=','so=','nf='])
 except getopt.GetoptError:
     print "err"
     sys.exit(2)
@@ -182,6 +182,16 @@ if '--dt' not in opt0:
     print "specify dt"
 if '--dV' not in opt0:
     print "specify dV"
+if '--fmt' not in opt0:
+    print "figure format default to png"
+    fmt = 'png'
+if '--so' not in opt0:
+    print "singleOnly default to False"
+    singleOnly = False
+if '--nf' not in opt0:
+    print "noFire default to True"
+    noFire = True
+
 for opt,arg in opts:
     if opt == '--vmin':
         vmin = float(arg)
@@ -193,24 +203,29 @@ for opt,arg in opts:
         seed = int(arg)
     elif opt == '--dV':
         dV = float(arg)
+    elif opt == '--fmt':
+        fmt = arg
+    elif opt == '--so':
+        singleOnly = bool(int(arg))
+        print singleOnly
+    elif opt == '--nf':
+        noFire = bool(int(arg))
+        print noFire
 
 v0 = vmin + dV*vid
+vrest = -70.0
 print "v0 == ",v0
 #v0 = -67
 #dt = 2
 #seed = int(time.mktime(datetime.now().timetuple())) 
 #print "seed = ", seed
-nloc = 2
 run_t = 240
-#run_t = 22
 tstep = 0.1
 trans = 110
 #trans = 2 
-pos0 = 0.5
-gList0 = np.array([4,8,16,32]) * 1e-4
+gList0 = np.array([4,8,16,32]) * 5e-4
 plim = 0.7
 #gList0 = np.array([1,3]) * 1e-4
-rI = 1e1
 testEE = True
 #testEE = False 
 testII = True
@@ -218,7 +233,6 @@ testIE = True
 #testIE = False 
 testEI = True
 #testEI = False 
-singleOnly = False
 directory0 = 'cK' + str(int(v0)) + '-' + str(0) + '-' + str(seed)
 singletE0Filename = directory0+'/singletE0.npy'
 singletI0Filename = directory0+'/singletI0.npy'
@@ -227,7 +241,7 @@ if not os.path.isfile(singletE0Filename):
         dt = 0
         testEE = True
         singleOnly = True
-        testII = False 
+        testII = True 
         testIE = False 
         testEI = False 
         print " need to get Esinglet of dt=0 first, please change dt and rerun after finish"
@@ -237,7 +251,7 @@ if not os.path.isfile(singletI0Filename):
         dt = 0
         testII = True
         singleOnly = True
-        testEE = False 
+        testEE = True 
         testIE = False 
         testEI = False 
         print " need to get Isinglet of dt=0 first, please change dt and rerun after finish"
@@ -253,137 +267,180 @@ copydir = os.path.join(dir0,directory)
 copy(filename,copydir)
 savePlot = True
 plotData = True
-rdpi = 300
+plotDataV = False
+plotDataK = True
+rdpi = 600
 run_nt = np.round(run_t/tstep + 1).astype('int')
 ntrans = np.round(trans/tstep).astype('int')
 print "run steps: ", run_nt, tstep, "ms per step"
 np.random.seed(seed)
-#locE = np.random.randint(52,134,nloc)
-#locI = np.random.randint(0,52,nloc)
-locE = np.array([79, 82, 83, 108, 124, 129],dtype='int')
-locI = np.array([14, 28, 40],dtype='int')
+#locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
+#locI = np.array([14, 28, 40],dtype='int')
+locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
+locI = np.array([14, 28, 30],dtype='int')
+nlocE = locE.size
+nlocI = locI.size
+posE = np.random.random_sample(nlocE)
+posI = np.random.random_sample(nlocI)
 ng = gList0.size
+rE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])*1.0
+rI = -7.0*np.array([1.0, 1.0, 1.0])
 idt = np.round(dt/tstep).astype('int')
 end_t = run_t-dt
 iend = run_nt-idt
-cell, vSL, sL = prepCell([gList0[0]], [locE[0]], [pos0], 1, -70)
+cell, vSL, sL = prepCell([gList0[0]], [locE[0]], [posE[0]], 1, vrest)
 RList = np.zeros((1,2))
 t = np.arange(run_nt)*tstep
-leakyV, _ = leaky(cell, v0, sL, RList, vSL, 1, trans, run_t + trans, tstep, [locE[0]], [pos0])
+leakyV, _ = leaky(cell, v0, sL, RList, vSL, 1, trans, run_t + trans, tstep, [locE[0]], [posE[0]])
 leakyV = leakyV[ntrans:ntrans+run_nt]
 leakyV.dump(directory+'/'+'leakyV.pickle')
 lfigname = 'leakyV'
 pyplot.figure()
 pyplot.plot(t[idt:],leakyV[:iend])
 if savePlot:
-    pyplot.savefig(directory+'/'+lfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+    pyplot.savefig(directory+'/'+lfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
     pyplot.close()
 if testEE:
     #Singlet
     print "singleE"
     if plotData:
         sfigname = 'Esinglets'
-        pyplot.figure(sfigname,figsize = (8,4))
+        pyplot.figure(sfigname,figsize = (16,9))
         ax1 = pyplot.subplot(1,2,1)
         ax2 = pyplot.subplot(1,2,2)
-    singletE = np.empty((nloc,ng,run_nt))
-    sfired = np.empty((nloc,ng))
-    for i in xrange(nloc):
+    singletE = np.empty((nlocE,ng,run_nt))
+    sfired = np.empty((nlocE,ng))
+    if idt == 0 and singleOnly:
+        print " check for double firing: "
+        spikeTime = np.array([[0],[0]])
+        for i in xrange(nlocE):
+            for j in xrange(i,nlocE):
+                print "i ", i, ", j", j
+                if j > i:
+                    sel = [0, 1]
+                    loc = np.array([locE[i], locE[j]])
+                    pos = np.array([posE[i], posE[j]])
+                    gList = np.array([rE[i], rE[j]]) * gList0[ng-1]
+                    RList = np.zeros((2,2))
+                    cell, vSL, sL = prepCell(gList, loc, pos, 2, vrest)
+                    vtmp, fireCheck = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '')
+                else:
+                    sel = [0]
+                    assert(i==j)
+                    gList = [float(rE[i])*float(gList0[ng-1])]
+                    loc = [locE[i]]
+                    cell, vSL, sL = prepCell(gList, loc, [posE[i]], 1, vrest)
+                    RList = np.zeros((1,2))
+                    RList[0,:] = getGH(0,2*gList[0])
+                    vtmp, fireCheck = bproceed(cell, v0, sL, gList, RList, vSL, np.array([[]]), 1, sel, trans, trans + end_t, 0, tstep, '')
+
+                print 'max v', np.max(vtmp)
+                print '######## ', gList, ' doubled at ', loc
+                vtmp = vtmp[ntrans:ntrans+iend]-leakyV[:iend]
+                ax1.plot(t[idt:],vtmp[idt:],'-k',lw=0.2)
+                if fireCheck and noFire:
+                    quit()
+
+    for i in xrange(nlocE):
         print "single ", i
         loc = np.repeat(locE[i],ng)
-        pos = np.repeat(pos0,ng)
-        cell, vSL, sL = prepCell(gList0, loc, pos, ng, -70)
+        pos = np.repeat(posE[i],ng)
+        gList = gList0*rE[i]
+        print "here ", gList
+        cell, vSL, sL = prepCell(gList, loc, pos, ng, vrest)
         spikeTime = np.array([[]])
         for ig in xrange(ng):
-            gList = gList0
             RList = np.zeros((ng,2))
             RList[ig,:] = getGH(dt,gList[ig])
-            print RList[ig,:]
+            print '#### g: ', gList[ig], ' at loc: ', loc[0]
             vtmp, sfired[i,ig] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, ng, [ig], trans, trans + end_t, 0, tstep, '')
-            if sfired[i,ig]:
+            if sfired[i,ig] and noFire:
                 quit()
             singletE[i,ig,idt:] = vtmp[ntrans:ntrans+iend] - leakyV[:iend]
             ax1.plot(t[idt:],singletE[i,ig,idt:],':r')
             ax2.plot(t[idt:],vtmp[ntrans:ntrans+iend],':r')
             ax2.plot(t[idt:],leakyV[:iend],':b')
-    if savePlot:
-        pyplot.savefig(directory+'/'+sfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+
+    if savePlot and plotData:
+        pyplot.savefig(directory+'/'+sfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
         pyplot.close()
     if idt == 0:
-        singletE.dump(directory0+'/singletE0.npy')
+        if not os.path.isfile(singletE0Filename):
+            singletE.dump(directory0+'/singletE0.npy')
         singletE.dump(directory+'/singletE.npy')
     else:
         singletE.dump(directory+'/singletE.npy')
     if not singleOnly:
         print "doubletEE"
         #Doublet
-        gList = np.hstack((np.array([np.repeat(gList0,ng)]).transpose(),np.tile(gList0,(1,ng)).transpose())).reshape(ng,ng,2)
-        print gList
         spikeTime = np.array([np.array([]),np.array([0.0])])  
         sel = [0, 1]
-        pos = np.repeat(pos0,2)
         singletE0 = np.load(singletE0Filename)
         singletE = np.load(directory+'/singletE.npy')
-        doubletEE = np.empty((nloc,nloc,ng*ng,run_nt))
-        doubletEE0 = np.empty((nloc,nloc,ng*ng,run_nt))
-        dfiredEE = np.empty((nloc,nloc,ng,ng))
-        kEE = np.empty((nloc,nloc,run_nt))
-        rsEE = np.empty((nloc,nloc,run_nt))
-        interceptEE = np.empty((nloc,nloc,run_nt))
-        kEE0 = np.empty((nloc,nloc,run_nt))
-        rsEE0 = np.empty((nloc,nloc,run_nt))
-        interceptEE0 = np.empty((nloc,nloc,run_nt))
-        for i in xrange(nloc):
-            for j in xrange(nloc):
+        doubletEE = np.empty((nlocE,nlocE,ng*ng,run_nt))
+        doubletEE0 = np.empty((nlocE,nlocE,ng*ng,run_nt))
+        dfiredEE = np.empty((nlocE,nlocE,ng,ng))
+        kEE = np.empty((nlocE,nlocE,run_nt))
+        rsEE = np.empty((nlocE,nlocE,run_nt))
+        interceptEE = np.empty((nlocE,nlocE,run_nt))
+        kEE0 = np.empty((nlocE,nlocE,run_nt))
+        rsEE0 = np.empty((nlocE,nlocE,run_nt))
+        interceptEE0 = np.empty((nlocE,nlocE,run_nt))
+        for i in xrange(nlocE):
+            igList = gList0*rE[i]
+            for j in xrange(nlocE):
+                jgList = gList0*rE[j]
                 loc = np.array([locE[i], locE[j]])
+                pos = np.array([posE[i], posE[j]])
                 for ig in xrange(ng):
                     v1 = singletE[i,ig,idt:]
-                    if plotData:
+                    if plotDataV:
                         bfigname = 'doublets-E'+str(i)+'-E'+str(j)+'-ig'+str(ig)
-                        bfig = pyplot.figure(bfigname,figsize = (8,4))
+                        bfig = pyplot.figure(bfigname,figsize = (16,9))
                         ax1 = bfig.add_subplot(111)         
                         ax1.plot(t[idt:],v1,'r',lw=3)
-                        if v0 == -70:
+                        if v0 == vrest:
                             bfign0 = 'doublets0-E'+str(i)+'-E'+str(j)+'-ig'+str(ig)
-                            bfig0 = pyplot.figure(bfign0,figsize = (8,4))
+                            bfig0 = pyplot.figure(bfign0,figsize = (16,9))
                             ax2 = bfig0.add_subplot(111)         
                             ax2.plot(t[idt:],singletE0[i,ig,idt:],'r',lw=3)
                     for jg in xrange(ng):
-                        print gList[ig,jg,:]
+                        gList = [igList[ig],jgList[jg]]
                         RList = np.zeros((2,2))
-                        RList[0,:] = getGH(dt,gList[ig,jg,0])
-                        print RList
-                        cell, vSL, sL = prepCell(gList[ig,jg,:], loc, pos, 2, -70)
-                        vtmp, dfiredEE[i,j,ig,jg] = bproceed(cell, v0, sL, gList[ig,jg,:], RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '')
-                        if dfiredEE[i,j,ig,jg]:
+                        RList[0,:] = getGH(dt,gList[0])
+                        cell, vSL, sL = prepCell(gList, loc, pos, 2, vrest)
+                        print '#### g: ', gList[0], ' at loc: ', loc[0]
+                        print '#### g: ', gList[1], ' at loc: ', loc[1]
+                        vtmp, dfiredEE[i,j,ig,jg] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '')
+                        if dfiredEE[i,j,ig,jg] and noFire:
                             quit()
                         vtmp = vtmp[ntrans:ntrans+iend] - leakyV[:iend]
                         doubletEE[i,j,ig*ng+jg,idt:] = vtmp
                         addv = v1 + singletE0[j,jg,:iend]
                         vs = vtmp - addv
-                        if plotData:
+                        if plotDataV:
                             ax1.plot(t[idt:],vtmp,'k',lw=2)
                             ax1.plot(t[idt:],singletE0[j,jg,:iend],'b',lw=1)
                             ax1.plot(t[idt:],addv,':g', lw =1)
-                        if v0 == -70:
+                        if v0 == vrest:
                             spikeTime0 = np.array([np.array([0.0]),np.array([dt])])  
                             RList = np.zeros((2,2))
-                            vtmp, _ = bproceed(cell, v0, sL, gList[ig,jg,:], RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '')
-                            vtmp = vtmp[ntrans+idt:ntrans+run_nt] + 70
+                            vtmp, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '')
+                            vtmp = vtmp[ntrans+idt:ntrans+run_nt] - vrest 
                             doubletEE0[i,j,ig*ng+jg,idt:] = vtmp
                             addv = singletE0[j,jg,:iend] + singletE0[i,ig,idt:]
                             vs = vtmp - addv
-                            if plotData:
+                            if plotDataV:
                                 ax2.plot(t[idt:],vtmp,'k',lw=2)
                                 ax2.plot(t[idt:],singletE0[j,jg,:iend],'b',lw=1)
                                 ax2.plot(t[idt:],addv,':g', lw =1)
                             
-                    if savePlot and plotData:
+                    if savePlot and plotDataV:
                         pyplot.figure(bfigname)
-                        pyplot.savefig(directory+'/'+bfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
-                        if v0 == -70:
+                        pyplot.savefig(directory+'/'+bfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
+                        if v0 == vrest:
                             pyplot.figure(bfign0)
-                            pyplot.savefig(directory+'/'+bfign0+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+                            pyplot.savefig(directory+'/'+bfign0+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
                         pyplot.close()
                 #k
                 v1 = np.repeat(singletE[i,:,idt:],ng,axis=0).reshape(ng*ng,iend)
@@ -409,15 +466,15 @@ if testEE:
                     pred1 = c[0]*coef[:,it]+c[1]
                     rsEE[i,j,idt+it] = getRS(pred0,b[:,it])
 
-                if plotData:
+                if plotDataK:
                     kfigname = 'k-E'+str(i)+'-E'+str(j)
                     wfigname = 'midK-E'+str(i)+'-E'+str(j)
-                    getKfig(kfigname,t[idt:],kEE[i,j,idt:],rsEE[i,j,idt:],interceptEE[i,j,idt:],coef,b,plim,directory,savePlot,'EE')
-                    getWfig(wfigname,kEE[i,j,idt:],coef,b,directory,savePlot,'EE')
+                    getKfig(kfigname,t[idt:],kEE[i,j,idt:],rsEE[i,j,idt:],interceptEE[i,j,idt:],coef,b,plim,directory,savePlot,'EE',fmt)
+                    getWfig(wfigname,kEE[i,j,idt:],coef,b,directory,savePlot,'EE',-1,fmt)
                     wfigname = 'worstK-E'+str(i)+'-E'+str(j)
                     it = np.argmin(rsEE[i,j,idt:])
-                    getWfig(wfigname,kEE[i,j,idt:],coef,b,directory,savePlot,'EE',it)
-                if v0 == -70:
+                    getWfig(wfigname,kEE[i,j,idt:],coef,b,directory,savePlot,'EE',it,fmt)
+                if v0 == vrest:
                     v1 = np.repeat(singletE0[i,:,idt:],ng,axis=0).reshape(ng*ng,iend)
                     v2 = np.vstack([singletE0[j,:,:iend],]*ng)
                     addv = v1+v2
@@ -441,16 +498,16 @@ if testEE:
                         pred1 = c[0]*coef[:,it]+c[1]
                         rsEE0[i,j,idt+it] = getRS(pred0,b[:,it])
 
-                    if plotData:
+                    if plotDataK:
                         kfign0 = 'k0-E'+str(i)+'-E'+str(j)
                         wfign0 = 'midK0-E'+str(i)+'-E'+str(j)
-                        getKfig(kfign0,t[idt:],kEE0[i,j,idt:],rsEE0[i,j,idt:],interceptEE0[i,j,idt:],coef,b,plim,directory,savePlot,'EE')
-                        getWfig(wfign0,kEE0[i,j,idt:],coef,b,directory,savePlot,'EE')
+                        getKfig(kfign0,t[idt:],kEE0[i,j,idt:],rsEE0[i,j,idt:],interceptEE0[i,j,idt:],coef,b,plim,directory,savePlot,'EE',fmt)
+                        getWfig(wfign0,kEE0[i,j,idt:],coef,b,directory,savePlot,'EE',-1,fmt)
                         wfign0 = 'worstK0-E'+str(i)+'-E'+str(j)
                         it = np.argmin(rsEE0[i,j,idt:])
-                        getWfig(wfign0,kEE0[i,j,idt:],coef,b,directory,savePlot,'EE',it)
+                        getWfig(wfign0,kEE0[i,j,idt:],coef,b,directory,savePlot,'EE',it,fmt)
 
-        if v0 == -70:
+        if v0 == vrest:
             doubletEE0.dump(directory+'/doubletEE0.npy')
             kEE0.dump(directory+'/kEE0.npy')
             rsEE0.dump(directory+'/rsEE0.npy') 
@@ -467,107 +524,105 @@ if testII:
     print "singleI"
     if plotData:
         sfigname = 'Isinglets'
-        pyplot.figure(sfigname,figsize = (8,4))
+        pyplot.figure(sfigname,figsize = (16,9))
         ax1 = pyplot.subplot(1,2,1)
         ax2 = pyplot.subplot(1,2,2)
-    singletI = np.empty((nloc,ng,run_nt))
-    sfired = np.empty((nloc,ng))
-    for i in xrange(nloc):
+    singletI = np.empty((nlocI,ng,run_nt))
+    sfired = np.empty((nlocI,ng))
+    for i in xrange(nlocI):
         print "single ", i
         loc = np.repeat(locI[i],ng)
-        pos = np.repeat(pos0,ng)
-        cell, vSL, sL = prepCell(-gList0*rI, loc, pos, ng, -70)
+        pos = np.repeat(posI[i],ng)
+        gList = gList0*rI[i]
+        cell, vSL, sL = prepCell(gList, loc, pos, ng, vrest)
         spikeTime = np.array([[]])
         for ig in xrange(ng):
-            gList = -gList0*rI
             RList = np.zeros((ng,2))
             RList[ig,:] = getGH(dt,gList[ig])
-            print RList[ig,:]
-            st = np.array([[]])
+            print '#### g: ', gList[ig], ' at loc: ', loc[0]
             vtmp, sfired[i,ig] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, ng, [ig], trans, trans + end_t, 0, tstep, '')
             singletI[i,ig,idt:] = vtmp[ntrans:ntrans+iend] - leakyV[:iend]
             ax1.plot(t[idt:],singletI[i,ig,idt:],':r')
             ax2.plot(t[idt:],vtmp[ntrans:ntrans+iend],':r')
             ax2.plot(t[idt:],leakyV[:iend],':b')
-    if savePlot:
-        pyplot.savefig(directory+'/'+sfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+    if savePlot and plotData:
+        pyplot.savefig(directory+'/'+sfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
         pyplot.close()
-    else:
-        pyplot.show()
     if idt == 0:
-        singletI.dump(directory0+'/singletI0.npy')
+        if not os.path.isfile(singletI0Filename):
+            singletI.dump(directory0+'/singletI0.npy')
         singletI.dump(directory+'/singletI.npy')
     else:
         singletI.dump(directory+'/singletI.npy')
-        
     if not singleOnly:
         print "doubletII"
         #Doublet
-        gList = np.hstack((np.array([np.repeat(-gList0,ng)]).transpose(),np.tile(-gList0,(1,ng)).transpose())).reshape(ng,ng,2)*rI
-        print gList
         spikeTime = np.array([np.array([]),np.array([0.0])])  
         sel = [0, 1]
-        pos = np.repeat(pos0,2)
         singletI0 = np.load(singletI0Filename)
         singletI = np.load(directory+'/singletI.npy')
-        doubletII = np.empty((nloc,nloc,ng*ng,run_nt))
-        doubletII0 = np.empty((nloc,nloc,ng*ng,run_nt))
-        dfiredII = np.empty((nloc,nloc,ng,ng))
-        kII = np.empty((nloc,nloc,run_nt))
-        rsII = np.empty((nloc,nloc,run_nt))
-        interceptII = np.empty((nloc,nloc,run_nt))
-        kII0 = np.empty((nloc,nloc,run_nt))
-        rsII0 = np.empty((nloc,nloc,run_nt))
-        interceptII0 = np.empty((nloc,nloc,run_nt))
-        for i in xrange(nloc):
-            for j in xrange(nloc):
+        doubletII = np.empty((nlocI,nlocI,ng*ng,run_nt))
+        doubletII0 = np.empty((nlocI,nlocI,ng*ng,run_nt))
+        dfiredII = np.empty((nlocI,nlocI,ng,ng))
+        kII = np.empty((nlocI,nlocI,run_nt))
+        rsII = np.empty((nlocI,nlocI,run_nt))
+        interceptII = np.empty((nlocI,nlocI,run_nt))
+        kII0 = np.empty((nlocI,nlocI,run_nt))
+        rsII0 = np.empty((nlocI,nlocI,run_nt))
+        interceptII0 = np.empty((nlocI,nlocI,run_nt))
+        for i in xrange(nlocI):
+            igList = gList0*rI[i]
+            for j in xrange(nlocI):
+                jgList = gList0*rI[j]
                 loc = np.array([locI[i], locI[j]])
+                pos = np.array([posI[i], posI[j]])
                 for ig in xrange(ng):
                     v1 = singletI[i,ig,idt:]
-                    if plotData:
+                    if plotDataV:
                         bfigname = 'doublets-I'+str(i)+'-I'+str(j)+'-ig'+str(ig)
-                        bfig = pyplot.figure(bfigname,figsize = (8,4))
+                        bfig = pyplot.figure(bfigname,figsize = (16,9))
                         ax1 = bfig.add_subplot(111)         
                         ax1.plot(t[idt:],v1,'r',lw =3)
-                        if v0 == -70:
+                        if v0 == vrest:
                             bfign0 = 'doublets0-I'+str(i)+'-I'+str(j)+'-ig'+str(ig)
-                            bfig0 = pyplot.figure(bfign0,figsize = (8,4))
+                            bfig0 = pyplot.figure(bfign0,figsize = (16,9))
                             ax2 = bfig0.add_subplot(111)         
                             ax2.plot(t[idt:],singletI0[i,ig,idt:],'r', lw=3)
                     for jg in xrange(ng):
-                        print gList[ig,jg,:]
+                        gList = [igList[ig],jgList[jg]]
                         RList = np.zeros((2,2))
-                        RList[0,:] = getGH(dt,gList[ig,jg,0])
-                        print RList
-                        cell, vSL, sL = prepCell(gList[ig,jg,:], loc, pos, 2, -70)
-                        vtmp, dfiredII[i,j,ig,jg] = bproceed(cell, v0, sL, gList[ig,jg,:], RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '')
+                        RList[0,:] = getGH(dt,gList[0])
+                        cell, vSL, sL = prepCell(gList, loc, pos, 2, vrest)
+                        print '#### g: ', gList[0], ' at loc: ', loc[0]
+                        print '#### g: ', gList[1], ' at loc: ', loc[1]
+                        vtmp, dfiredII[i,j,ig,jg] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '')
                         vtmp = vtmp[ntrans:ntrans+iend] - leakyV[:iend]
                         doubletII[i,j,ig*ng+jg,idt:] = vtmp
                         addv = v1 + singletI0[j,jg,:iend]
                         vs = vtmp - addv
-                        if plotData:
+                        if plotDataV:
                             ax1.plot(t[idt:],vtmp,'k',lw=2)
                             ax1.plot(t[idt:],singletI0[j,jg,:iend],'b',lw=1)
                             ax1.plot(t[idt:],addv,':g',lw=1)
-                        if v0 == -70:
+                        if v0 == vrest:
                             spikeTime0 = np.array([np.array([0.0]),np.array([dt])])  
                             RList = np.zeros((2,2))
-                            vtmp, _ = bproceed(cell, v0, sL, gList[ig,jg,:], RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '')
-                            vtmp = vtmp[ntrans+idt:ntrans+run_nt] + 70
+                            vtmp, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '')
+                            vtmp = vtmp[ntrans+idt:ntrans+run_nt] - vrest
                             doubletII0[i,j,ig*ng+jg,idt:] = vtmp
                             addv = singletI0[j,jg,:iend] + singletI0[i,ig,idt:]
                             vs = vtmp - addv
-                            if plotData:
+                            if plotDataV:
                                 ax2.plot(t[idt:],vtmp,'k',lw=2)
                                 ax2.plot(t[idt:],singletI0[j,jg,:iend],'b',lw=1)
                                 ax2.plot(t[idt:],addv,':g', lw =1)
 
-                    if savePlot and plotData:
+                    if savePlot and plotDataV:
                         pyplot.figure(bfigname)
-                        pyplot.savefig(directory+'/'+bfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
-                        if v0 == -70:
+                        pyplot.savefig(directory+'/'+bfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
+                        if v0 == vrest:
                             pyplot.figure(bfign0)
-                            pyplot.savefig(directory+'/'+bfign0+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+                            pyplot.savefig(directory+'/'+bfign0+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
                         pyplot.close()
                 #k
                 v1 = np.repeat(singletI[i,:,idt:],ng,axis=0).reshape(ng*ng,iend)
@@ -593,15 +648,15 @@ if testII:
                     pred1 = c[0]*coef[:,it]+c[1]
                     rsII[i,j,idt+it] = getRS(pred0,b[:,it])
 
-                if plotData:
+                if plotDataK:
                     kfigname = 'k-I'+str(i)+'-I'+str(j)
                     wfigname = 'midK-I'+str(i)+'-I'+str(j)
-                    getKfig(kfigname,t[idt:],kII[i,j,idt:],rsII[i,j,idt:],interceptII[i,j,idt:],coef,b,plim,directory,savePlot,'II')
-                    getWfig(wfigname,kII[i,j,idt:],coef,b,directory,savePlot,'II')
+                    getKfig(kfigname,t[idt:],kII[i,j,idt:],rsII[i,j,idt:],interceptII[i,j,idt:],coef,b,plim,directory,savePlot,'II',fmt)
+                    getWfig(wfigname,kII[i,j,idt:],coef,b,directory,savePlot,'II',-1,fmt)
                     wfigname = 'worstK-I'+str(i)+'-I'+str(j)
                     it = np.argmin(rsII[i,j,idt:])
-                    getWfig(wfigname,kII[i,j,idt:],coef,b,directory,savePlot,'II',it)
-                if v0 == -70:
+                    getWfig(wfigname,kII[i,j,idt:],coef,b,directory,savePlot,'II',it,fmt)
+                if v0 == vrest:
                     v1 = np.repeat(singletI0[i,:,idt:],ng,axis=0).reshape(ng*ng,iend)
                     v2 = np.vstack([singletI0[j,:,:iend],]*ng)
                     addv = v1+v2
@@ -625,16 +680,16 @@ if testII:
                         pred1 = c[0]*coef[:,it]+c[1]
                         rsII0[i,j,idt+it] = getRS(pred0,b[:,it])
 
-                    if plotData:
+                    if plotDataK:
                         kfign0 = 'k0-I'+str(i)+'-I'+str(j)
                         wfign0 = 'midK0-I'+str(i)+'-I'+str(j)
-                        getKfig(kfign0,t[idt:],kII0[i,j,idt:],rsII0[i,j,idt:],interceptII0[i,j,idt:],coef,b,plim,directory,savePlot,'II')
-                        getWfig(wfign0,kII0[i,j,idt:],coef,b,directory,savePlot,'II')
+                        getKfig(kfign0,t[idt:],kII0[i,j,idt:],rsII0[i,j,idt:],interceptII0[i,j,idt:],coef,b,plim,directory,savePlot,'II',fmt)
+                        getWfig(wfign0,kII0[i,j,idt:],coef,b,directory,savePlot,'II',-1,fmt)
                         wfign0 = 'worstK0-I'+str(i)+'-I'+str(j)
                         it = np.argmin(rsII0[i,j,idt:])
-                        getWfig(wfign0,kII0[i,j,idt:],coef,b,directory,savePlot,'II',it)
+                        getWfig(wfign0,kII0[i,j,idt:],coef,b,directory,savePlot,'II',it,fmt)
 
-        if v0 == -70:
+        if v0 == vrest:
             doubletII0.dump(directory+'/doubletII0.npy')
             kII0.dump(directory+'/kII0.npy')
             rsII0.dump(directory+'/rsII0.npy') 
@@ -648,72 +703,73 @@ if testII:
 if testIE and not singleOnly:
     print "doubletIE"
     #Doublet
-    gList = np.hstack((np.array([np.repeat(-gList0*rI,ng)]).transpose(),np.tile(gList0,(1,ng)).transpose())).reshape(ng,ng,2)
-    print gList
     spikeTime = np.array([np.array([]),np.array([0.0])])  
     sel = [0, 1]
-    pos = np.repeat(pos0,2)
     singletI0 = np.load(singletI0Filename)
     singletE0 = np.load(singletE0Filename)
     singletI = np.load(directory+'/singletI.npy')
-    doubletIE = np.empty((nloc,nloc,ng*ng,run_nt))
-    doubletIE0 = np.empty((nloc,nloc,ng*ng,run_nt))
-    dfiredIE = np.empty((nloc,nloc,ng,ng))
-    kIE = np.empty((nloc,nloc,run_nt))
-    rsIE = np.empty((nloc,nloc,run_nt))
-    interceptIE = np.empty((nloc,nloc,run_nt))
-    kIE0 = np.empty((nloc,nloc,run_nt))
-    rsIE0 = np.empty((nloc,nloc,run_nt))
-    interceptIE0 = np.empty((nloc,nloc,run_nt))
-    for i in xrange(nloc):
-        for j in xrange(nloc):
+    doubletIE = np.empty((nlocI,nlocE,ng*ng,run_nt))
+    doubletIE0 = np.empty((nlocI,nlocE,ng*ng,run_nt))
+    dfiredIE = np.empty((nlocI,nlocE,ng,ng))
+    kIE = np.empty((nlocI,nlocE,run_nt))
+    rsIE = np.empty((nlocI,nlocE,run_nt))
+    interceptIE = np.empty((nlocI,nlocE,run_nt))
+    kIE0 = np.empty((nlocI,nlocE,run_nt))
+    rsIE0 = np.empty((nlocI,nlocE,run_nt))
+    interceptIE0 = np.empty((nlocI,nlocE,run_nt))
+    for i in xrange(nlocI):
+        igList = gList0*rI[i]
+        for j in xrange(nlocE):
+            jgList = gList0*rE[i]
             loc = np.array([locI[i], locE[j]])
+            pos = np.array([posI[i], posE[j]])
             for ig in xrange(ng):
                 v1 = singletI[i,ig,idt:]
-                if plotData:
+                if plotDataV:
                     bfigname = 'doublets-I'+str(i)+'-E'+str(j)+'-ig'+str(ig)
-                    bfig = pyplot.figure(bfigname,figsize = (8,4))
+                    bfig = pyplot.figure(bfigname,figsize = (16,9))
                     ax1 = bfig.add_subplot(111)         
                     ax1.plot(t[idt:],v1,'b', lw =3)
-                    if v0 == -70:
+                    if v0 == vrest:
                         bfign0 = 'doublets0-I'+str(i)+'-E'+str(j)+'-ig'+str(ig)
-                        bfig0 = pyplot.figure(bfign0,figsize = (8,4))
+                        bfig0 = pyplot.figure(bfign0,figsize = (16,9))
                         ax2 = bfig0.add_subplot(111)         
                         ax2.plot(t[idt:],singletI0[i,ig,idt:],'b', lw=3)
                 for jg in xrange(ng):
-                    print gList[ig,jg,:]
+                    gList = [igList[ig],jgList[jg]]
                     RList = np.zeros((2,2))
-                    RList[0,:] = getGH(dt,gList[ig,jg,0])
-                    print RList
-                    cell, vSL, sL = prepCell(gList[ig,jg,:], loc, pos, 2, -70)
-                    vtmp, dfiredIE[i,j,ig,jg] = bproceed(cell, v0, sL, gList[ig,jg,:], RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '')
+                    RList[0,:] = getGH(dt,gList[0])
+                    cell, vSL, sL = prepCell(gList, loc, pos, 2, vrest)
+                    print '#### g: ', gList[0], ' at loc: ', loc[0]
+                    print '#### g: ', gList[1], ' at loc: ', loc[1]
+                    vtmp, dfiredIE[i,j,ig,jg] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '')
                     vtmp = vtmp[ntrans:ntrans+iend] - leakyV[:iend]
                     doubletIE[i,j,ig*ng+jg,idt:] = vtmp
                     addv = v1 + singletE0[j,jg,:iend]
                     vs = vtmp - addv
-                    if plotData:
+                    if plotDataV:
                         ax1.plot(t[idt:],vtmp,'k',lw=2)
                         ax1.plot(t[idt:],singletE0[j,jg,:iend],'r',lw=1)
                         ax1.plot(t[idt:],addv,':g', lw=1)
-                    if v0 == -70:
+                    if v0 == vrest:
                         spikeTime0 = np.array([np.array([0.0]),np.array([dt])])  
                         RList = np.zeros((2,2))
-                        vtmp, _ = bproceed(cell, v0, sL, gList[ig,jg,:], RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '')
-                        vtmp = vtmp[ntrans+idt:ntrans+run_nt] + 70
+                        vtmp, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '')
+                        vtmp = vtmp[ntrans+idt:ntrans+run_nt] - vrest
                         doubletIE0[i,j,ig*ng+jg,idt:] = vtmp
                         addv = singletI0[i,ig,idt:] + singletE0[j,jg,:iend] 
                         vs = vtmp - addv
-                        if plotData:
+                        if plotDataV:
                             ax2.plot(t[idt:],vtmp,'k',lw=2)
                             ax2.plot(t[idt:],singletE0[j,jg,:iend],'r',lw=1)
                             ax2.plot(t[idt:],addv,':g', lw =1)
 
-                if savePlot and plotData:
+                if savePlot and plotDataV:
                     pyplot.figure(bfigname)
-                    pyplot.savefig(directory+'/'+bfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
-                    if v0 == -70:
+                    pyplot.savefig(directory+'/'+bfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
+                    if v0 == vrest:
                         pyplot.figure(bfign0)
-                        pyplot.savefig(directory+'/'+bfign0+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+                        pyplot.savefig(directory+'/'+bfign0+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
                     pyplot.close()
             #k
             v1 = np.repeat(singletI[i,:,idt:],ng,axis=0).reshape(ng*ng,iend)
@@ -739,15 +795,15 @@ if testIE and not singleOnly:
                 pred1 = c[0]*coef[:,it]+c[1]
                 rsIE[i,j,idt+it] = getRS(pred0,b[:,it])
 
-            if plotData:
+            if plotDataK:
                 kfigname = 'k-I'+str(i)+'-E'+str(j)
                 wfigname = 'midK-I'+str(i)+'-E'+str(j)
-                getKfig(kfigname,t[idt:],kIE[i,j,idt:],rsIE[i,j,idt:],interceptIE[i,j,idt:],coef,b,plim,directory,savePlot,'IE')
-                getWfig(wfigname,kIE[i,j,idt:],coef,b,directory,savePlot,'IE')
+                getKfig(kfigname,t[idt:],kIE[i,j,idt:],rsIE[i,j,idt:],interceptIE[i,j,idt:],coef,b,plim,directory,savePlot,'IE',fmt)
+                getWfig(wfigname,kIE[i,j,idt:],coef,b,directory,savePlot,'IE',-1,fmt)
                 wfigname = 'worstK-I'+str(i)+'-E'+str(j)
                 it = np.argmin(rsIE[i,j,idt:])
-                getWfig(wfigname,kIE[i,j,idt:],coef,b,directory,savePlot,'IE',it)
-            if v0 == -70:
+                getWfig(wfigname,kIE[i,j,idt:],coef,b,directory,savePlot,'IE',it,fmt)
+            if v0 == vrest:
                 v1 = np.repeat(singletI0[i,:,idt:],ng,axis=0).reshape(ng*ng,iend)
                 v2 = np.vstack([singletE0[j,:,:iend],]*ng)
                 addv = v1+v2
@@ -771,16 +827,16 @@ if testIE and not singleOnly:
                     pred1 = c[0]*coef[:,it]+c[1]
                     rsIE0[i,j,idt+it] = getRS(pred0,b[:,it])
 
-                if plotData:
+                if plotDataK:
                     kfign0 = 'k0-I'+str(i)+'-E'+str(j)
                     wfign0 = 'midK0-I'+str(i)+'-E'+str(j)
-                    getKfig(kfign0,t[idt:],kIE0[i,j,idt:],rsIE0[i,j,idt:],interceptIE0[i,j,idt:],coef,b,plim,directory,savePlot,'IE')
-                    getWfig(wfign0,kIE0[i,j,idt:],coef,b,directory,savePlot,'IE')
+                    getKfig(kfign0,t[idt:],kIE0[i,j,idt:],rsIE0[i,j,idt:],interceptIE0[i,j,idt:],coef,b,plim,directory,savePlot,'IE',fmt)
+                    getWfig(wfign0,kIE0[i,j,idt:],coef,b,directory,savePlot,'IE',-1,fmt)
                     wfign0 = 'worstK0-I'+str(i)+'-E'+str(j)
                     it = np.argmin(rsIE0[i,j,idt:])
-                    getWfig(wfign0,kIE0[i,j,idt:],coef,b,directory,savePlot,'IE',it)
+                    getWfig(wfign0,kIE0[i,j,idt:],coef,b,directory,savePlot,'IE',it,fmt)
 
-    if v0 == -70:
+    if v0 == vrest:
         doubletIE0.dump(directory+'/doubletIE0.npy')
         kIE0.dump(directory+'/kIE0.npy')
         rsIE0.dump(directory+'/rsIE0.npy') 
@@ -795,74 +851,75 @@ if testIE and not singleOnly:
 if testEI and not singleOnly:
     print "doubletEI"
     #Doublet
-    gList = np.hstack((np.array([np.repeat(gList0,ng)]).transpose(),np.tile(-gList0*rI,(1,ng)).transpose())).reshape(ng,ng,2)
-    print gList
     spikeTime = np.array([np.array([]),np.array([0.0])])  
     sel = [0, 1]
-    pos = np.repeat(pos0,2)
     singletI0 = np.load(singletI0Filename)
     singletE0 = np.load(singletE0Filename)
     singletE = np.load(directory+'/singletE.npy')
-    doubletEI = np.empty((nloc,nloc,ng*ng,run_nt))
-    doubletEI0 = np.empty((nloc,nloc,ng*ng,run_nt))
-    dfiredEI = np.empty((nloc,nloc,ng,ng))
-    kEI = np.empty((nloc,nloc,run_nt))
-    rsEI = np.empty((nloc,nloc,run_nt))
-    interceptEI = np.empty((nloc,nloc,run_nt))
-    kEI0 = np.empty((nloc,nloc,run_nt))
-    rsEI0 = np.empty((nloc,nloc,run_nt))
-    interceptEI0 = np.empty((nloc,nloc,run_nt))
-    for i in xrange(nloc):
-        for j in xrange(nloc):
+    doubletEI = np.empty((nlocE,nlocI,ng*ng,run_nt))
+    doubletEI0 = np.empty((nlocE,nlocI,ng*ng,run_nt))
+    dfiredEI = np.empty((nlocE,nlocI,ng,ng))
+    kEI = np.empty((nlocE,nlocI,run_nt))
+    rsEI = np.empty((nlocE,nlocI,run_nt))
+    interceptEI = np.empty((nlocE,nlocI,run_nt))
+    kEI0 = np.empty((nlocE,nlocI,run_nt))
+    rsEI0 = np.empty((nlocE,nlocI,run_nt))
+    interceptEI0 = np.empty((nlocE,nlocI,run_nt))
+    for i in xrange(nlocE):
+        igList = gList0*rE[i]
+        for j in xrange(nlocI):
+            jgList = gList0*rI[j]
             loc = np.array([locE[i], locI[j]])
+            pos = np.array([posE[i], posI[j]])
             for ig in xrange(ng):
                 v1 = singletE[i,ig,idt:]
-                if plotData:
+                if plotDataV:
                     bfigname = 'doublets-E'+str(i)+'-I'+str(j)+'-ig'+str(ig)
-                    bfig = pyplot.figure(bfigname,figsize = (8,4))
+                    bfig = pyplot.figure(bfigname,figsize = (16,9))
                     ax1 = bfig.add_subplot(111)         
                     ax1.plot(t[idt:],v1,'r',lw=3)
-                    if v0 == -70:
+                    if v0 == vrest:
                         bfign0 = 'doublets-E'+str(i)+'-I'+str(j)+'-ig'+str(ig)
-                        bfig0 = pyplot.figure(bfign0,figsize = (8,4))
+                        bfig0 = pyplot.figure(bfign0,figsize = (16,9))
                         ax2 = bfig0.add_subplot(111)         
                         ax2.plot(t[idt:],singletE0[i,ig,idt:],'r',lw=3)
                 for jg in xrange(ng):
-                    print gList[ig,jg,:]
+                    gList = [igList[ig],jgList[jg]]
                     RList = np.zeros((2,2))
-                    RList[0,:] = getGH(dt,gList[ig,jg,0])
-                    print RList
-                    cell, vSL, sL = prepCell(gList[ig,jg,:], loc, pos, 2, -70)
-                    vtmp, dfiredEI[i,j,ig,jg] = bproceed(cell, v0, sL, gList[ig,jg,:], RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '')
+                    RList[0,:] = getGH(dt,gList[0])
+                    print '#### g: ', gList[0], ' at loc: ', loc[0]
+                    print '#### g: ', gList[1], ' at loc: ', loc[1]
+                    cell, vSL, sL = prepCell(gList, loc, pos, 2, vrest)
+                    vtmp, dfiredEI[i,j,ig,jg] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '')
                     vtmp = vtmp[ntrans:ntrans+iend] - leakyV[:iend]
                     doubletEI[i,j,ig*ng+jg,idt:] = vtmp
                     addv = v1 + singletI0[j,jg,:iend]
                     vs = vtmp - addv
-                    if plotData:
+                    if plotDataV:
                         ax1.plot(t[idt:],vtmp,'c',lw=2)
                         ax1.plot(t[idt:],singletI0[j,jg,:iend],'b',lw=1)
                         ax1.plot(t[idt:],addv,':g', lw=1)
                         ax1.plot(t[idt:],vs,':k', lw=0.5)
-                    if v0 == -70:
+                    if v0 == vrest:
                         spikeTime0 = np.array([np.array([0.0]),np.array([dt])])  
                         RList = np.zeros((2,2))
-                        vtmp, _ = bproceed(cell, v0, sL, gList[ig,jg,:], RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '')
-                        vtmp = vtmp[ntrans+idt:ntrans+run_nt] + 70
+                        vtmp, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '')
+                        vtmp = vtmp[ntrans+idt:ntrans+run_nt] - vrest
                         doubletEI0[i,j,ig*ng+jg,idt:] = vtmp
                         addv = singletE0[i,ig,idt:] + singletI0[j,jg,:iend] 
                         vs = vtmp - addv
-                        if plotData:
+                        if plotDataV:
                             ax2.plot(t[idt:],vtmp,'c',lw=2)
                             ax2.plot(t[idt:],singletI0[j,jg,:iend],'b',lw=1)
                             ax2.plot(t[idt:],addv,':g', lw =1)
                             ax2.plot(t[idt:],vs,':k', lw =0.5)
 
-                if savePlot and plotData:
+                if savePlot and plotDataV:
                     pyplot.figure(bfigname)
-                    pyplot.savefig(directory+'/'+bfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
-                    if v0 == -70:
+                    pyplot.savefig(directory+'/'+bfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
+                    if v0 == vrest:
                         pyplot.figure(bfign0)
-                        pyplot.savefig(directory+'/'+bfign0+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+                        pyplot.savefig(directory+'/'+bfign0+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
                     pyplot.close()
             #k
             v1 = np.repeat(singletE[i,:,idt:],ng,axis=0).reshape(ng*ng,iend)
@@ -888,15 +945,15 @@ if testEI and not singleOnly:
                 pred1 = c[0]*coef[:,it]+c[1]
                 rsEI[i,j,idt+it] = getRS(pred0,b[:,it])
 
-            if plotData:
+            if plotDataK:
                 kfigname = 'k-E'+str(i)+'-I'+str(j)
                 wfigname = 'midK-E'+str(i)+'-I'+str(j)
-                getKfig(kfigname,t[idt:],kEI[i,j,idt:],rsEI[i,j,idt:],interceptEI[i,j,idt:],coef,b,plim,directory,savePlot,'EI')
-                getWfig(wfigname,kEI[i,j,idt:],coef,b,directory,savePlot,'EI')
+                getKfig(kfigname,t[idt:],kEI[i,j,idt:],rsEI[i,j,idt:],interceptEI[i,j,idt:],coef,b,plim,directory,savePlot,'EI',fmt)
+                getWfig(wfigname,kEI[i,j,idt:],coef,b,directory,savePlot,'EI',-1,fmt)
                 wfigname = 'worstK-E'+str(i)+'-I'+str(j)
                 it = np.argmin(rsEI[i,j,idt:])
-                getWfig(wfigname,kEI[i,j,idt:],coef,b,directory,savePlot,'EI',it)
-            if v0 == -70:
+                getWfig(wfigname,kEI[i,j,idt:],coef,b,directory,savePlot,'EI',it,fmt)
+            if v0 == vrest:
                 v1 = np.repeat(singletE0[i,:,idt:],ng,axis=0).reshape(ng*ng,iend)
                 v2 = np.vstack([singletI0[j,:,:iend],]*ng)
                 addv = v1+v2
@@ -920,16 +977,16 @@ if testEI and not singleOnly:
                     pred1 = c[0]*coef[:,it]+c[1]
                     rsEI0[i,j,idt+it] = getRS(pred0,b[:,it])
 
-                if plotData:
+                if plotDataK:
                     kfign0 = 'k0-E'+str(i)+'-I'+str(j)
                     wfign0 = 'midK0-E'+str(i)+'-I'+str(j)
-                    getKfig(kfign0,t[idt:],kEI0[i,j,idt:],rsEI0[i,j,idt:],interceptEI0[i,j,idt:],coef,b,plim,directory,savePlot,'EI')
-                    getWfig(wfign0,kEI0[i,j,idt:],coef,b,directory,savePlot,'EI')
+                    getKfig(kfign0,t[idt:],kEI0[i,j,idt:],rsEI0[i,j,idt:],interceptEI0[i,j,idt:],coef,b,plim,directory,savePlot,'EI',fmt)
+                    getWfig(wfign0,kEI0[i,j,idt:],coef,b,directory,savePlot,'EI',-1,fmt)
                     wfign0 = 'worstK0-E'+str(i)+'-I'+str(j)
                     it = np.argmin(rsEI0[i,j,idt:])
-                    getWfig(wfign0,kEI0[i,j,idt:],coef,b,directory,savePlot,'EI',it)
+                    getWfig(wfign0,kEI0[i,j,idt:],coef,b,directory,savePlot,'EI',it,fmt)
 
-    if v0 == -70:
+    if v0 == vrest:
         doubletEI0.dump(directory+'/doubletEI0.npy')
         kEI0.dump(directory+'/kEI0.npy')
         rsEI0.dump(directory+'/rsEI0.npy') 
@@ -940,4 +997,3 @@ if testEI and not singleOnly:
     kEI.dump(directory+'/kEI.npy')
     rsEI.dump(directory+'/rsEI.npy') 
     interceptEI.dump(directory+'/interceptEI.npy')
-pyplot.show()

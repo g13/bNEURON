@@ -10,8 +10,8 @@ using std::vector;
 using std::cout;
 using std::endl;
 namespace jb {
-    const bool debug = false;
-    const bool debug2 = false;
+    const bool debug = true;
+    const bool debug2 = true;
     template<typename T>
     inline void getNear(T *range, size n, double target, double &ratio, size &istart, size &jnext) {
         size i;
@@ -246,13 +246,13 @@ inline void clampDend(nNL &neuroLib, int n, Input &input, double tCross, double 
             idt = static_cast<size>(round(dt));
             ID = input.ID[i];
             if (jb::debug2) {
-                cout << "it " << idt << endl;
-                cout << "v " << input.Vijr[i].i  << ", " << input.Vijr[i].j << ", " << input.Vijr[i].r << endl;
-                cout << "idt " << input.dTijr[i].i << ", " <<  input.dTijr[i].j << ", " << input.dTijr[i].r << endl;
+                cout << "       it " << idt << endl;
+                cout << "       v " << input.Vijr[i].i  << ", " << input.Vijr[i].j << ", " << input.Vijr[i].r << endl;
+                cout << "       idt " << input.dTijr[i].i << ", " <<  input.dTijr[i].j << ", " << input.dTijr[i].r << endl;
             }
             dv = linear_interp_PSP(neuroLib.dendv, input.Vijr[i], input.dTijr[i], ID, idt, neuroLib.idtRange);
             if (jb::debug) {
-                cout << i << "th input " << ID << " dv = " << dv << endl;
+                cout << "       " << i << "th input " << ID << " dv = " << dv << endl;
             }
             dendv[ID] += dv;
         }
@@ -346,14 +346,10 @@ inline double parabola(double t_left, double v_left, double t_right, double v_ri
         tsmall = tc1;
         tbig = tc2;
     }
-    cout << "tsmall " << tsmall << endl;
-    cout << "tbig " << tbig << endl;
     if (v_mid < vC) {
         return tbig;
-        cout << v_mid << " tbig chosen " << endl;
     } else {
         return tsmall;
-        cout << v_mid << " tsmall chosen " << endl;
     }
 }
 

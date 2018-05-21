@@ -45,7 +45,7 @@ cp gainCurve.cfg $dir/input.cfg
 cp $dir0/gainCurve $dir
 cp $dir0/plotGainCurve.m $dir
 cp $dir0/read_cfg.m $dir
-cp -R x86_64 $dir
+cp -r x86_64 $dir
 
 cp $dir0/levels.bin $dir
 cp $dir0/inputTable.bin $dir

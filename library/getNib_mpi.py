@@ -415,7 +415,9 @@ def getNib(argv):
     #locE = np.array([79, 82, 83, 108, 124, 129],dtype='int')
     locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
     locI = np.array([14, 28, 30],dtype='int')
-    vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
+    #locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
+    #locI = np.array([14, 28, 40],dtype='int')
+    #vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
     #===========================================================
     #vRange = np.array([-74,-70,-65,-61],dtype='double')
     #locE = np.array([72,79],dtype='int')
@@ -435,19 +437,26 @@ def getNib(argv):
     #locE[0] = locI[-1]
     #locI[-1] = swap
 
+    g0 = 32.0*5e-4
+    gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
+    gI = -g0*np.array([10.0, 10.0, 10.0])
+    #gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
+    #gI = -g0*np.array([6.0, 10.0, 8.0])
     #locE = np.array([32, 52, 66, 78, 98, 136],dtype='int')
     #locE = np.array([74],dtype='int')
     #gE = (1e-1 + np.random.random_sample(locE.size) * (1-1e-1)) * (0.10/2.0)
-    gE = (1e-1 + np.random.random_sample(locE.size) * (1-1e-1)) * (0.07/2.0)
+    posE = np.array([0.3,0.3,0.9,0.6,0.4,0.2])
+    posI = np.array([0.7,0.2,0.5])
+    #posE = np.random.random_sample(locE.size)
+    #gE = (1e-1 + np.random.random_sample(locE.size) * (1-1e-1)) * (0.07/2.0)
     #gE = np.array([2e-2])
-    posE = np.random.random_sample(locE.size)
     #posE = np.array([0.6])
     #posE = np.ones(locE.size)*0.5
     #locI = np.array([7, 28, 137],dtype='int')
     #locI = np.array([2, 14, 28],dtype='int')
     #locI = np.array([28],dtype='int')
-    gI = (1e-1 + np.random.random_sample(locI.size) * (1-1e-1)) * (-0.1/2.0)
-    posI = np.random.random_sample(locI.size)
+    #posI = np.random.random_sample(locI.size)
+    #gI = (1e-1 + np.random.random_sample(locI.size) * (1-1e-1)) * (-0.1/2.0)
     #posI = np.ones(locI.size)*0.5
 
     plotData = True 

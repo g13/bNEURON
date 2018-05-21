@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
         cout << " yale NEURON begin" << endl;
         cout << " point of no return unless spike " << inputArg.vThres << endl;
         vector<double> dendVclamp(neuroLib.nSyn,1000); // 1000 default no dend clamp
-        //nc = Py_proceed(cell, v0, RList, s1,  spikeTrain, neuroLib.nSyn, inputArg.trans0, inputArg.trans0 + run_t, plchldr_double, inputArg.tRef, inputArg.vThres, 1, simV, plchldr_size0, tsp_sim, 0, inputArg.tstep[ii], dendVclamp, -1, false, dendV, inputArg.pas);
+        nc = Py_proceed(cell, v0, RList, s1,  spikeTrain, neuroLib.nSyn, inputArg.trans0, inputArg.trans0 + run_t, plchldr_double, inputArg.tRef, inputArg.vThres, 1, simV, plchldr_size0, tsp_sim, 0, inputArg.tstep[ii], dendVclamp, -1, false, dendV, inputArg.pas);
         clock_gettime(clk_id,&tpE);
         
         cpu_t_sim = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
@@ -230,13 +230,14 @@ int main(int argc, char **argv) {
         cout << endl;
         cout << " bilinear0 begin: " << endl;
         clock_gettime(clk_id,&tpS);
-        //nc = bilinear0_nSyn(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, biV0, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi0, vCrossb, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape, inputArg.kVStyle, inputArg.dtSquare);
+        nc = bilinear0_nSyn(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, biV0, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi0, vCrossb, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape, inputArg.kVStyle, inputArg.dtSquare);
         clock_gettime(clk_id,&tpE);
         cpu_t_bilinear0 = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
         cout << "bilinear0 est. ended, took " << cpu_t_bilinear0 << "s" << endl;
         cout << "spikes: " << nc << endl;
         cout << endl;
 
+        if (true) {
         cpu_file.write((char*)&(cpu_t_sim),sizeof(double));
         cpu_file.write((char*)&(cpu_t_bilinear), sizeof(double));
         cpu_file.write((char*)&(cpu_t_linear), sizeof(double));
@@ -274,8 +275,8 @@ int main(int argc, char **argv) {
             cout << crossb.v.size() <<  "!= " << crossb.t.size() << endl;
             assert(crossb.v.size() == crossb.t.size());
         }
-        output[0] = &(crossb.v);
-        output[1] = &(crossb.t);
+        output[0] = &(crossb.t);
+        output[1] = &(crossb.v);
         nsection_write(jND_file, output, 2, crossb.iCross, tmpSize);
         tmpSize.clear();
 
@@ -294,8 +295,8 @@ int main(int argc, char **argv) {
             cout << crossl.v.size() <<  "!= " << crossl.t.size() << endl;
             assert(crossl.v.size() == crossl.t.size());
         }
-        output[0] = &(crossl.v);
-        output[1] = &(crossl.t);
+        output[0] = &(crossl.t);
+        output[1] = &(crossl.v);
         nsection_write(jND_file, output, 2, crossl.iCross, tmpSize);
         tmpSize.clear();
 
@@ -322,6 +323,7 @@ int main(int argc, char **argv) {
         output[0] = &tsp_bi0;
         rasterSize = tsp_bi0.size();
         size_data_write(raster_file, output, 1, rasterSize, 0);
+        }
 
         simV.clear();
         biV.clear();
@@ -353,7 +355,7 @@ int main(int argc, char **argv) {
     neuroLib.clearLib();
     NEURON_cleanup(cell);
     cout << " cell cleaned " << endl;
-    Py_Finalize();
+    //Py_Finalize();
     cout << "size: " <<  sizeof(size) << " bytes" << endl;
     cout << "size_b: "<< sizeof(size_b) << " bytes" << endl;
 }

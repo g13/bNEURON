@@ -12,10 +12,12 @@ module load python
 module load gcc
 module load boost
 module load matlab
+module load anaconda
 
 date
-
 echo $ext
+
+source activate py2
 
 ./gainCurve && matlab -nodisplay -nosplash -r "plotGainCurve('input.cfg','$ext',true,false);exit;"
 

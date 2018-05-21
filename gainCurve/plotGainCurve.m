@@ -294,24 +294,39 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
                 subplot(2,1,2)
             end
             hold on
+            lh = [];
+            lt = {};
             if ss(i) > 0
-                plot(ts{i},ones(1,ss(i)),'.k','MarkerSize',6,'LineStyle','none');
+                ltmp = plot(ts{i},ones(1,ss(i)),'.k','MarkerSize',6,'LineStyle','none');
+                lh = [lh, ltmp];
+                lt = [lt,'sims'];
             end
             if sb(i) > 0
-                plot(tb{i},ones(1,sb(i))+1,'.b','MarkerSize',6,'LineStyle','none');
+                ltmp = plot(tb{i},ones(1,sb(i))+1,'.b','MarkerSize',6,'LineStyle','none');
+                lh = [lh, ltmp];
+                lt = [lt,'bi'];
             end
             if sl(i) > 0
-                plot(tl{i},ones(1,sl(i))+2,'.r','MarkerSize',6,'LineStyle','none');
+                ltmp = plot(tl{i},ones(1,sl(i))+2,'.r','MarkerSize',6,'LineStyle','none');
+                lh = [lh, ltmp];
+                lt = [lt,'li'];
             end
             if sjb(i) > 0
-                plot(tjb{i},ones(1,sjb(i))+3,'ob','MarkerSize',3,'LineStyle','none');
+                ltmp = plot(tjb{i},ones(1,sjb(i))+3,'ob','MarkerSize',3,'LineStyle','none');
+                lh = [lh, ltmp];
+                lt = [lt,'jb'];
             end
             if sjl(i) > 0
-                plot(tjl{i},ones(1,sjl(i))+4,'or','MarkerSize',3,'LineStyle','none');
+                ltmp = plot(tjl{i},ones(1,sjl(i))+4,'or','MarkerSize',3,'LineStyle','none');
+                lh = [lh, ltmp];
+                lt = [lt,'jl'];
             end
             if sb0(i) > 0
-                plot(tb0{i},ones(1,sb0(i))+5,'og','MarkerSize',3,'LineStyle','none');
+                ltmp = plot(tb0{i},ones(1,sb0(i))+5,'og','MarkerSize',3,'LineStyle','none');
+                lh = [lh, ltmp];
+                lt = [lt,'b0'];
             end
+            legend(lh,lt);
             ylim([0,6]);
             xlim(xl);
 

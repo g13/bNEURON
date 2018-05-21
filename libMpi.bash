@@ -1,7 +1,7 @@
 #!/bin/bash
 n128=1
 dir0=library
-theme='val9activeT'
+theme='active_fast'
 dir=$dir0/$theme
 
 if [ -d "./$dir" ]; then
@@ -23,7 +23,7 @@ cp $dir0/getNib_mpi.py $dir
 cp $dir0/getNib_mpi.slurm $dir
 cp $dir0/getNib_mpi_0.slurm $dir
 cp base/neuroAlter.py $dir
-cp -R x86_64 $dir
+cp -r x86_64 $dir
 
 cd $dir
 python -m py_compile getNib_mpi.py

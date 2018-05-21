@@ -13,7 +13,7 @@ get_cell::get_cell(SynSet syn) {
     if (pModule != NULL) {
         cout << "neuroAlter loaded" << endl;
         pFunc = PyObject_GetAttrString(pModule,"prepCell");
-        if (pFunc && PyCallable_Check(pFunc)) {
+        if (pFunc != NULL && PyCallable_Check(pFunc)) {
             cout << " prepCell function access granted" << endl;
             npy_intp dim = syn.nSyn;
             long n = static_cast<long>(dim);
@@ -58,11 +58,10 @@ get_cell::get_cell(SynSet syn) {
                 Py_INCREF(Py_synList);
                 Py_DECREF(pValue);
             } else {
-                Py_DECREF(pFunc);
                 cout << "prepCell failed"<< endl;
             }
+            Py_DECREF(pFunc);
         }
-        Py_XDECREF(pFunc);
     } else {
         cout << " Houston we lost our module" << endl;
     }
@@ -70,9 +69,13 @@ get_cell::get_cell(SynSet syn) {
 
 //finialize
 void NEURON_cleanup(Cell &cell) {
+    cout << "module ref: " << cell.pModule << endl;
     Py_CLEAR(cell.pModule);
+    cout << "cell ref: " << cell.Py_Cell << endl;
     Py_CLEAR(cell.Py_Cell);
+    cout << "synList ref: " << cell.Py_synList << endl;
     Py_CLEAR(cell.Py_synList);
+    cout << "vecStimList ref: " << cell.Py_vecStimList << endl;
     Py_CLEAR(cell.Py_vecStimList);
 }
 
@@ -189,15 +192,23 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
                 }
             }
             pArgs = PyTuple_New(23);
+            cout << "before Py_Cell SetItem" << cell.Py_Cell << endl;
             Py_INCREF(cell.Py_Cell);
             PyTuple_SetItem(pArgs, 0,cell.Py_Cell);
+            cout << "after Py_Cell SetItem" << cell.Py_Cell << endl;
             PyTuple_SetItem(pArgs, 1,PyFloat_FromDouble(vinit));
+            cout << "before Py_synList SetItem" << cell.Py_synList << endl;
             Py_INCREF(cell.Py_synList);
             PyTuple_SetItem(pArgs, 2,cell.Py_synList);
+            cout << "after Py_synList SetItem" << cell.Py_synList << endl;
             PyTuple_SetItem(pArgs, 3,Py_RList);
+            cout << "before Py_vSL SetItem" << cell.Py_vecStimList << endl;
             Py_INCREF(cell.Py_vecStimList);
             PyTuple_SetItem(pArgs, 4,cell.Py_vecStimList);
+            cout << "after Py_vSL SetItem" << cell.Py_vecStimList << endl;
+            cout << "before spikeTrain SetItem" << Py_spikeTrainTuple << endl;
             PyTuple_SetItem(pArgs, 5,Py_spikeTrainTuple);
+            cout << "after spikeTrain SetItem" << Py_spikeTrainTuple << endl;
             PyTuple_SetItem(pArgs, 6,PyInt_FromLong(n));
             PyTuple_SetItem(pArgs, 7,PyFloat_FromDouble(trans));
             PyTuple_SetItem(pArgs, 8,PyFloat_FromDouble(tend));
@@ -207,10 +218,14 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
             PyTuple_SetItem(pArgs,12,PyInt_FromLong(oneGo));
             PyTuple_SetItem(pArgs,13,PyFloat_FromDouble(t0));
             PyTuple_SetItem(pArgs,14,PyFloat_FromDouble(tstep));
+            cout << "before Py_loc SetItem" << cell.Py_loc << endl;
             Py_INCREF(cell.Py_loc);
             PyTuple_SetItem(pArgs,15,cell.Py_loc);
+            cout << "after Py_loc SetItem" << cell.Py_loc << endl;
+            cout << "before Py_pos SetItem" << cell.Py_pos << endl;
             Py_INCREF(cell.Py_pos);
             PyTuple_SetItem(pArgs,16,cell.Py_pos);
+            cout << "after Py_pos SetItem" << cell.Py_pos << endl;
             PyTuple_SetItem(pArgs,17,Py_dendVclamp);
             PyTuple_SetItem(pArgs,18,Py_False);
             PyTuple_SetItem(pArgs,19,Py_True);
@@ -229,7 +244,9 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
                 cout << "       ..." << endl;
             }
             pValue = PyObject_CallObject(pFunc,pArgs);
-            Py_DECREF(pArgs);
+            cout << "before pArgs DECREF" << pArgs << endl;
+            Py_XDECREF(pArgs);
+            cout << "after pArgs DECREF" << pArgs << endl;
             if (yl::debug) {
                 cout << " and back to earth"; 
             }
@@ -287,20 +304,25 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
                 }
                 nt = nt - gone;
 
+                cout << "before pVale DECREF" << pValue << endl;
                 Py_DECREF(pValue);
+                cout << "before pVale DECREF" << pValue << endl;
             } else {
-                Py_DECREF(pFunc);
                 if (yl::debug) {
-                    char pause;
                     cout << " but, the universe has rejected us" << endl;
-                    std::cin >> pause;
                 }
             }
+            cout << "before pFunc DECREF" << pFunc << endl;
+            Py_DECREF(pFunc);
+            cout << "after pFunc DECREF" << pFunc << endl;
+        } else {
+            if (yl::debug) {
+                cout << " The module's function is defected" << endl; 
+            }
         }
-        Py_XDECREF(pFunc);
     } else {
         if (yl::debug) {
-            cout << " Houston we have a trouble!" << endl;
+            cout << " Houston we have lost the module!" << endl;
         }
     }
     //Py_Finalize();

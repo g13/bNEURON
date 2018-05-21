@@ -376,11 +376,11 @@ void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neu
             // update for input that come before cross and lingers after cross;
             if (jb::debug) {
                 cout << "cross update starting tail_b " << tail_b << endl;
-                cout << " # lingering old inputs: " << i_cross - tail_b << endl;
+                cout << "   # lingering old inputs: " << i_cross - tail_b << endl;
             }
             for (i=tail_b; i<i_cross; i++) {
                 if (jb::debug) {
-                    cout << "lingering " << i << " < " << neuron.tin.size() << endl;
+                    cout << "   lingering " << i << " < " << neuron.tin.size() << endl;
                 }
                 dt = tCross - input.t[i];
                 if (jb::debug) {
@@ -397,14 +397,11 @@ void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neu
                 } else {
                     input.tMax[i] = linear_interp_tMax(neuroLib.tMax, cross.vCross.back(), input.dTijr[i],input.ID[i]);
                 }
-                if (jb::debug) {
-                    cout << "   loop ended" << endl;
-                }
             }
         }
         // update for new input during the cross that lingers after cross
         if (jb::debug) {
-            cout << " # lingering new inputs: " << head-i_start+1 << endl;
+            cout << "   # lingering new inputs: " << head-i_start+1 << endl;
             cout << input.t.size() << " == " << input.Vijr.size() << endl;
             if (input.t.size() != i_start) {
                 cout << input.t.size() << " != " << i_start << endl;
@@ -419,7 +416,7 @@ void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neu
             dt = tCross - input.t[i];
             jb::getNear(neuroLib.idtRange, neuroLib.ndt, dt, r_, i_, j_);
             if (jb::debug) {
-                cout << " new input i = " << i << endl;
+                cout << "       new input i = " << i << endl;
                 assert(input.t.size() == i+1);
                 if (dt < -pow(2,-52)) {
                     cout << tCross << " - " << input.t[i] << " = " << dt << endl;

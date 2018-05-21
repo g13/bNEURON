@@ -80,8 +80,8 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, prin
         else:
             synList[i].R = RList[i]
     #oldProgress = 0
-    print  trans, "ms trans complete, used ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.5).v
-    print >>f,  trans, "ms trans complete, used ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.5).v
+    print  "    ", trans, "ms trans complete, used ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.5).v
+    print >>f,  "   ", trans, "ms trans complete, used ", steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.5).v
     if len(loc)>0:
         for i in xrange(n): 
             print " dend[", loc[i], "]" ,"(",pos[i],").v = ", cell.dend[loc[i]](pos[i]).v
@@ -93,13 +93,12 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, prin
                 h.fadvance()
                 if cell.soma(0.5).v > vThres+15 and cell.soma(0.5).v < vold and not firing:
                     tsp = h.t-trans
-                    print "nc1 = ", nc
-                    print "tsps size = ", tsps.size 
+                    print "nc = ", nc, "<", tsps.size 
                     tsps[nc] = tsp
                     firing = 1
                     nc = nc + 1
-                    print  tsp + trans, "fired expecting finish ", tsp + tref + trans
-                    print >>f,  tsp + trans, "fired expecting finish ", tsp + tref + trans
+                    print  tsp, "fired expecting finish ", tsp + tref
+                    print >>f,  tsp, "fired expecting finish ", tsp + tref
                 vold = cell.soma(0.5).v
                 if len(checkList) > 0 and len(loc) > 0:
                     for checkTime in checkList:
@@ -115,13 +114,11 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, prin
                 h.fadvance()
                 if cell.soma(0.5).v > vThres+15 and cell.soma(0.5).v < vold and not firing:
                     tsp = h.t-trans
-                    print "nc = ", nc
-                    print "tsps size = ", tsps.size 
                     tsps[nc] = tsp
                     firing = 1
                     nc = nc + 1
-                    print  tsp + trans, "fired expecting finish ", tsp + tref + trans
-                    print >>f,  tsp + trans, "fired expecting finish ", tsp + tref + trans
+                    print  tsp, "fired expecting finish ", tsp + tref
+                    print >>f,  tsp, "fired expecting finish ", tsp + tref
                 vold = cell.soma(0.5).v
                 if (cell.soma(0.5).v <= vThres+7.5):
                     firing = 0
@@ -130,12 +127,11 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, prin
         while (round(h.t/h.dt) < round(h.tstop/h.dt)):
             if cell.soma(0.5).v >= vThres:
                 tsp = h.t-trans
-                print "nc1 = ", nc
-                print "tsps size = ", tsps.size 
+                print "nc = ", nc, "<", tsps.size 
                 tsps[nc] = tsp
                 nc = nc + 1
-                print  tsp + trans, "fired expecting finish ", tsp + tref + trans
-                print >>f,  tsp + trans, "fired expecting finish ", tsp + tref + trans
+                print  tsp, "fired expecting finish ", tsp + tref
+                print >>f,  tsp, "fired expecting finish ", tsp + tref
 
             if len(checkList) > 0 and len(loc) > 0:
                 for checkTime in checkList:
@@ -157,8 +153,8 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, prin
     print "((", cell.soma(0.5).v > vBack, " or ", h.t < trans + tsp + tref, " or ", firing > 0, ") and ", round(h.t/h.dt) < round(h.tstop/h.dt), ")"
     print >> f, "((", cell.soma(0.5).v > vBack, " or ", h.t < trans + tsp + tref, " or ", firing > 0, ") and ", round(h.t/h.dt) < round(h.tstop/h.dt), ")"
 
-    print  "stopping with v ", cell.soma(0.5).v, " < ", vBack, " firing = ", firing, " or t ", h.t, " == ", h.tstop
-    print  >> f, "stopping with v ", cell.soma(0.5).v, " < ", vBack, " firing = ", firing, " or t ", h.t, " == ", h.tstop
+    print  "stopping with v ", cell.soma(0.5).v, " < ", vBack, " firing = ", firing, " or t ", h.t - trans, " == ", h.tstop - trans
+    print  >> f, "stopping with v ", cell.soma(0.5).v, " < ", vBack, " firing = ", firing, " or t ", h.t - trans, " == ", h.tstop - trans
     f.close()
     return nc, tsps[:nc]
 
@@ -296,11 +292,11 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
             vecStimList[i].play(h.Vector(spikeTrain[i] + trans))
             vecStimList[i].dt = h.dt
             if alphaR:
-                print "played ", i, " s: ", synList[i].g
-                print >>f, "played ", i, " s: ", synList[i].g
+                print " played ", i, " s: ", synList[i].g
+                print >>f, "    played ", i, " s: ", synList[i].g
             else:
-                print "played ", i, " s: ", synList[i].gmax
-                print >>f, "played ", i, " s: ", synList[i].gmax
+                print " played ", i, " s: ", synList[i].gmax
+                print >>f, "    played ", i, " s: ", synList[i].gmax
             if alphaR:
                 synList[i].deltat = h.dt
     print   "ready to run"
@@ -559,7 +555,6 @@ def bproceed0(cell, v0, synList, gList, RList, vecStimList, spikeTrain, n, sel, 
     print t0, ' with ', trans, ' trans ', ' to ', tend, ' v0 = ', v0
 
     print >>f, t0, ' with ', trans, ' trans ', ' to ', tend, ' v0 = ', v0
-    print gList
     h.dt = tstep
     v = h.Vector()
     if pos != -1.0:
@@ -652,6 +647,7 @@ def bproceed(cell, v0, synList, gList, RList, vecStimList, spikeTrain, n, sel, t
     print t0, ' with ', trans, ' trans ', ' to ', tend, ' v0 = ', v0
 
     print >>f, t0, ' with ', trans, ' trans ', ' to ', tend, ' v0 = ', v0
+    print 'gList:'
     print gList
     h.dt = tstep
     v = h.Vector()

@@ -1,7 +1,7 @@
 #!/bin/bash
 n128=1
 dir0='biRelation'
-theme='active'
+theme='activeTrunk'
 dir=$dir0'/'$theme
 if [ -d "./$dir" ]; then
     rm -r $dir/*
