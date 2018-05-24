@@ -1,6 +1,7 @@
 #ifndef INPUT_ARGS_CA1_H
 #define INPUT_ARGS_CA1
 #include "input_args.h"
+#include <bitset>
 
 struct input_args_CA1 : input_args {
     string libFile;
@@ -19,9 +20,12 @@ struct input_args_CA1 : input_args {
     int afterCrossBehavior;
     bool spikeShape;
     bool pas;
+    int i;
     bool dtSquare;
     unsigned int vInit;
+    std::bitset<6> mode;
     input_args_CA1();
+    void setbit();
     using input_args::read;
 };
 

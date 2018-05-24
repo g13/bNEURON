@@ -73,46 +73,108 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
     tb0 = cell(nTrial,1);
     cpuFn = datafile{3};
     cpuFid = fopen(cpuFn,'r');
-    cpuTime = fread(cpuFid,[6,nTrial],'double');
+    if p.one
+        cpuTime = fread(cpuFid,[nTrial,6],'double');
+        cpuTime = cpuTime';
+    else
+        cpuTime = fread(cpuFid,[6,nTrial],'double');
+    end
     figure;
-    for i = 1:nTrial
-        subplot(nTrial,2,(i-1)*2+1)
-        hold on
-        ss(i) = fread(RasterFid,1,sizeSize);
-        if ss(i) >0
-            ts{i} = fread(RasterFid,ss(i),'double');
+    if p.one
+        for i = 1:nTrial
+            subplot(nTrial,2,(i-1)*2+1)
+            hold on
+            ss(i) = fread(RasterFid,1,sizeSize);
+            if ss(i) >0
+                ts{i} = fread(RasterFid,ss(i),'double');
+            end
+            plot(ts{i},zeros(ss(i),1)+1,'.k','MarkerSize',10);
         end
-        plot(ts{i},zeros(ss(i),1)+1,'.k','MarkerSize',10);
+        for i = 1:nTrial
+            subplot(nTrial,2,(i-1)*2+1)
+            hold on
+            sb(i) = fread(RasterFid,1,sizeSize);
+            if sb(i) >0
+                tb{i} = fread(RasterFid,sb(i),'double');
+            end
+            plot(tb{i},zeros(sb(i),1)+2,'.b','MarkerSize',10);
+        end
+        for i = 1:nTrial
+            subplot(nTrial,2,(i-1)*2+1)
+            hold on
+            sl(i) = fread(RasterFid,1,sizeSize);
+            if sl(i) >0
+                tl{i} = fread(RasterFid,sl(i),'double');
+            end
+            plot(tl{i},zeros(sl(i),1)+3,'.r','MarkerSize',10);
+        end
+        for i = 1:nTrial
+            subplot(nTrial,2,(i-1)*2+1)
+            hold on
+            sjb(i) = fread(RasterFid,1,sizeSize);
+            if sjb(i) >0
+                tjb{i} = fread(RasterFid,sjb(i),'double');
+            end
+            plot(tjb{i},zeros(sjb(i),1)+4,'.c','MarkerSize',10);
+        end
+        for i = 1:nTrial
+            subplot(nTrial,2,(i-1)*2+1)
+            hold on
+            sjl(i) = fread(RasterFid,1,sizeSize);
+            if sjl(i) >0
+                tjl{i} = fread(RasterFid,sjl(i),'double');
+            end
+            plot(tjl{i},zeros(sjl(i),1)+5,'.m','MarkerSize',10);
+        end
+        for i = 1:nTrial
+            subplot(nTrial,2,(i-1)*2+1)
+            hold on
+            sb0(i) = fread(RasterFid,1,sizeSize);
+            if sb0(i) >0
+                tb0{i} = fread(RasterFid,sb0(i),'double');
+            end
+            plot(tb0{i},zeros(sb0(i),1)+6,'.g','MarkerSize',10);
+        end
+    else 
+        for i = 1:nTrial
+            subplot(nTrial,2,(i-1)*2+1)
+            hold on
+            ss(i) = fread(RasterFid,1,sizeSize);
+            if ss(i) >0
+                ts{i} = fread(RasterFid,ss(i),'double');
+            end
+            plot(ts{i},zeros(ss(i),1)+1,'.k','MarkerSize',10);
 
-        sb(i) = fread(RasterFid,1,sizeSize);
-        if sb(i) >0
-            tb{i} = fread(RasterFid,sb(i),'double');
-        end
-        plot(tb{i},zeros(sb(i),1)+2,'.b','MarkerSize',10);
+            sb(i) = fread(RasterFid,1,sizeSize);
+            if sb(i) >0
+                tb{i} = fread(RasterFid,sb(i),'double');
+            end
+            plot(tb{i},zeros(sb(i),1)+2,'.b','MarkerSize',10);
 
-        sl(i) = fread(RasterFid,1,sizeSize);
-        if sl(i) >0
-            tl{i} = fread(RasterFid,sl(i),'double');
-        end
-        plot(tl{i},zeros(sl(i),1)+3,'.r','MarkerSize',10);
+            sl(i) = fread(RasterFid,1,sizeSize);
+            if sl(i) >0
+                tl{i} = fread(RasterFid,sl(i),'double');
+            end
+            plot(tl{i},zeros(sl(i),1)+3,'.r','MarkerSize',10);
 
-        sjb(i) = fread(RasterFid,1,sizeSize);
-        if sjb(i) >0
-            tjb{i} = fread(RasterFid,sjb(i),'double');
-        end
-        plot(tjb{i},zeros(sjb(i),1)+4,'.c','MarkerSize',10);
+            sjb(i) = fread(RasterFid,1,sizeSize);
+            if sjb(i) >0
+                tjb{i} = fread(RasterFid,sjb(i),'double');
+            end
+            plot(tjb{i},zeros(sjb(i),1)+4,'.c','MarkerSize',10);
 
-        sjl(i) = fread(RasterFid,1,sizeSize);
-        if sjl(i) >0
-            tjl{i} = fread(RasterFid,sjl(i),'double');
-        end
-        plot(tjl{i},zeros(sjl(i),1)+5,'.m','MarkerSize',10);
+            sjl(i) = fread(RasterFid,1,sizeSize);
+            if sjl(i) >0
+                tjl{i} = fread(RasterFid,sjl(i),'double');
+            end
+            plot(tjl{i},zeros(sjl(i),1)+5,'.m','MarkerSize',10);
 
-        sb0(i) = fread(RasterFid,1,sizeSize);
-        if sb0(i) >0
-            tb0{i} = fread(RasterFid,sb0(i),'double');
+            sb0(i) = fread(RasterFid,1,sizeSize);
+            if sb0(i) >0
+                tb0{i} = fread(RasterFid,sb0(i),'double');
+            end
+            plot(tb0{i},zeros(sb0(i),1)+6,'.g','MarkerSize',10);
         end
-        plot(tb0{i},zeros(sb0(i),1)+6,'.g','MarkerSize',10);
     end
     fclose(RasterFid);
     subplot(2,2,2)
@@ -149,12 +211,8 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
         tInFn = datafile{5};
         jbt = cell(nTrial,1);
         jbv = cell(nTrial,1);
-        jbCrossT = cell(nTrial,1);
-        jbCrossV = cell(nTrial,1);
         jlt = cell(nTrial,1);
         jlv = cell(nTrial,1);
-        jlCrossT = cell(nTrial,1);
-        jlCrossV = cell(nTrial,1);
         dendV = cell(nTrial,n);
         simV = cell(nTrial,1);
         biV = cell(nTrial,1);
@@ -165,6 +223,87 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
             tInfid = fopen(tInFn,'r');
         end
         disp(tstep);
+        if p.one
+            if datafid
+                for i=1:nTrial
+                    simV{i} = fread(datafid, nDimSim(i), 'double');
+                end
+                for i=1:nTrial
+                    biV{i} = fread(datafid, nDim(i), 'double');
+                end
+                for i=1:nTrial
+                    liV{i} = fread(datafid, nDim(i), 'double');
+                end
+                for i=1:nTrial
+                    biV0{i} = fread(datafid, nDim(i), 'double');
+                end
+            end
+            if jNDfid
+                for i=1:nTrial
+                    jbSize = fread(jNDfid,1,sizeSize);
+                    jbt{i} = fread(jNDfid,jbSize,'double')*tstep;
+                    jbv{i} = fread(jNDfid,jbSize,'double');
+                    jbnCross = fread(jNDfid,1,'int')
+                    jbCrossT = cell(nTrial,jbnCross);
+                    jbCrossV = cell(nTrial,jbnCross);
+                    for j=1:jbnCross
+                        tmpSize = fread(jNDfid, 1, sizeSize)
+                        jbCrossT{i,j} = fread(jNDfid, tmpSize, 'double')*tstep;
+                        jbCrossV{i,j} = fread(jNDfid, tmpSize, 'double');
+                    end
+                end
+                for i=1:nTrial
+                    jlSize = fread(jNDfid,1,sizeSize);
+                    jlt{i} = fread(jNDfid,jlSize,'double')*tstep;
+                    jlv{i} = fread(jNDfid,jlSize,'double');
+                    jlnCross = fread(jNDfid,1,'int')
+                    jlCrossT = cell(nTrial,jlnCross);
+                    jlCrossV = cell(nTrial,jlnCross);
+                    for j=1:jlnCross
+                        tmpSize = fread(jNDfid, 1, sizeSize)
+                        jlCrossT{i,j} = fread(jNDfid, tmpSize, 'double')*tstep;
+                        jlCrossV{i,j} = fread(jNDfid, tmpSize, 'double');
+                    end
+                end
+            end
+        else
+            for i=1:nTrial
+                if datafid
+                    simV{i} = fread(datafid, nDimSim(i), 'double');
+                    biV{i} = fread(datafid, nDim(i), 'double');
+                    liV{i} = fread(datafid, nDim(i), 'double');
+                    biV0{i} = fread(datafid, nDim(i), 'double');
+                    for j=1:n
+                        dendV{i,j} = fread(datafid, nDimSim(i), 'double');
+                    end
+                end
+                if jNDfid
+                    jbSize = fread(jNDfid,1,sizeSize);
+                    jbt{i} = fread(jNDfid,jbSize,'double')*tstep;
+                    jbv{i} = fread(jNDfid,jbSize,'double');
+                    jbnCross = fread(jNDfid,1,'int')
+                    jbCrossT = cell(nTrial,jbnCross);
+                    jbCrossV = cell(nTrial,jbnCross);
+                    for j=1:jbnCross
+                        tmpSize = fread(jNDfid, 1, sizeSize)
+                        jbCrossT{i,j} = fread(jNDfid, tmpSize, 'double')*tstep;
+                        jbCrossV{i,j} = fread(jNDfid, tmpSize, 'double');
+                    end
+
+                    jlSize = fread(jNDfid,1,sizeSize);
+                    jlt{i} = fread(jNDfid,jlSize,'double')*tstep;
+                    jlv{i} = fread(jNDfid,jlSize,'double');
+                    jlnCross = fread(jNDfid,1,'int')
+                    jlCrossT = cell(nTrial,jlnCross);
+                    jlCrossV = cell(nTrial,jlnCross);
+                    for j=1:jlnCross
+                        tmpSize = fread(jNDfid, 1, sizeSize)
+                        jlCrossT{i,j} = fread(jNDfid, tmpSize, 'double')*tstep;
+                        jlCrossV{i,j} = fread(jNDfid, tmpSize, 'double');
+                    end
+                end
+            end
+        end
         for i=1:nTrial
             run_nt = round(runTime(i)/tstep) + 1;
             disp(['this is ', num2str(i), 'th trial']);
@@ -177,15 +316,6 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
             figure;
             subplot(2,1,1)
             hold on
-            if datafid
-                simV{i} = fread(datafid, nDimSim(i), 'double');
-                biV{i} = fread(datafid, nDim(i), 'double');
-                liV{i} = fread(datafid, nDim(i), 'double');
-                biV0{i} = fread(datafid, nDim(i), 'double');
-                for j=1:n
-                    dendV{i,j} = fread(datafid, nDimSim(i), 'double');
-                end
-            end
             hs = plot(t0,simV{i},'k');
             hb = plot(t,biV{i},'b');
             hl = plot(t,liV{i},'r');
@@ -198,33 +328,13 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
             yl = [minV,maxV];
             ylim(yl);
             if jNDfid
-                jbSize = fread(jNDfid,1,sizeSize);
-                jbt{i} = fread(jNDfid,jbSize,'double')*tstep;
-                jbv{i} = fread(jNDfid,jbSize,'double');
                 hjb = plot(jbt{i},jbv{i},'.b','MarkerSize',3);
-                jbnCross = fread(jNDfid,1,'int')
-                jbCrossT{i} = [];
                 for j=1:jbnCross
-                    tmpSize = fread(jNDfid, 1, sizeSize)
-                    tmpCrossT = fread(jNDfid, tmpSize, 'double')*tstep;
-                    tmpCrossV = fread(jNDfid, tmpSize, 'double');
-                    jbCrossT{i} = [jbCrossT{i}; tmpCrossT];
-                    jbCrossV{i} = [jbCrossV{i}; tmpCrossV];
-                    plot(tmpCrossT, tmpCrossV,':b');
+                    plot(jbCrossT{i,j}, jbCrossT{i,j},':b');
                 end
-                jlSize = fread(jNDfid,1,sizeSize);
-                jlt{i} = fread(jNDfid,jlSize,'double')*tstep;
-                jlv{i} = fread(jNDfid,jlSize,'double');
                 hjl = plot(jlt{i},jlv{i},'.r','MarkerSize',3);
-                jlnCross = fread(jNDfid,1,'int')
-                jlCrossT{i} = [];
                 for j=1:jlnCross
-                    tmpSize = fread(jNDfid, 1, sizeSize)
-                    tmpCrossT = fread(jNDfid, tmpSize, 'double')*tstep;
-                    tmpCrossV = fread(jNDfid, tmpSize, 'double');
-                    jlCrossT{i} = [jlCrossT{i}; tmpCrossT];
-                    jlCrossV{i} = [jlCrossV{i}; tmpCrossV];
-                    plot(tmpCrossT, tmpCrossV,':r');
+                    plot(jlCrossT{i,j}, jlCrossT{i,j},':r');
                 end
                 legend([hs,hb,hl,hb0,hjb,hjl],{'sim','bi','li','bi0','jb','jl'});
             else
@@ -351,7 +461,9 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
         end
     end
     fclose(datafid);
-    fclose(jNDfid);
+    if jNDfid
+        fclose(jNDfid);
+    end
     if plotInput
         fclose(tInfid);
     end

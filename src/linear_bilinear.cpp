@@ -1,7 +1,6 @@
 #include "linear_bilinear.h"
 
 unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool dtSquare){
-    bool debug;
     double vTarget, dtTarget;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
     size nin = neuron.tin.size(), nv = neuroLib.nv, ndt = neuroLib.ndt;
@@ -38,11 +37,13 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
     bool crossed;
     size ncross = 0;
     unsigned int spikeCount = 0;
+
     vector<size> s0(neuroLib.nSyn,0);
     vector<size> s1(neuroLib.nSyn,0);
+
     double tCross_old = 0;
     vector<double> vS(neuron.tin.size(),neuron.vRest);
-    
+
     double vinit = v[0];
     double vCross_old = vinit;
     v.assign(run_nt, neuron.vRest);
@@ -91,7 +92,7 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
                 if (i_b == i && i != 0) cout << "first input after cross " << v[vs] << endl;
             }
             for (k=i; k>i_b; k--) {
-                j = k-1; // prevent negative for unsigned int iteration number. 
+                j = k-1; // prevent negative for unsigned int iteration number
                 dtTarget = neuron.tin[i]-neuron.tin[j];
                 if (dtTarget > tb) {
                     break;
@@ -102,6 +103,7 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
                 } else {
                     tl = static_cast<size>(round(nt1 - dtTarget));
                 }
+
                 if (lb::debug2) {
                     cout << j << "th " << neuron.ei[neuron.inID[j]] << ", " << i <<"th " << neuron.ei[neuron.inID[i]] <<  endl;
                     cout << " b " << k << " v " << v[vs] << endl;
@@ -157,7 +159,7 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
                     assert(ith>=ith_old);
                     if (lb::debug) {
                         cout << "backed at " << vs*tstep << ", end ith " << ith << " t= " << neuron.tin[ith] << endl;
-                        cout << "v[ve] " << v[vs]  << " vBack " << vBack << endl;
+                        cout << "v[ve] " << v[vs] << " vCross " << vCross << " vBack " << vBack << endl;
                     }
                     tCross_old = vs*tstep;
                     vCross_old = v[vs];
@@ -180,14 +182,14 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
                         cout << " time runs out while crossing " << "\n";
                         break;
                     }
-                    if (spikeShape) { 
+                    if (spikeShape) {
                         interpVinit(v,vs,neuroLib.vLeak,neuroLib.vRange,nv,v[vs],tl);
                     } else {
                         for (j=1; j<tl;j++) {
                             v[vs+j] = neuron.vRest;
                         }
                     }
-                    
+
                     if (afterCrossBehavior>0) {
                         vTarget = v[vs];
                         for (ii=ith+1; ii>0; ii--) {
@@ -197,6 +199,7 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
                             if (l2 < dtTarget) {
                                 break;
                             }
+
                             if (run_t < neuron.tin[i] + t1) {
                                 tl = run_nt - vs;
                             } else {
@@ -280,7 +283,7 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
 
 unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape){
     double vTarget, dtTarget;
-    size tl, vs, ve, vc, i, j, k, ith_old, ith;
+    size tl, vs, ve, vc, i, j, k, ith, ith_old;
     size nin = neuron.tin.size(), nv = neuroLib.nv, ndt = neuroLib.ndt;
     double tstep = neuroLib.tstep;
     size itref = static_cast<size>(round(neuron.tRef/tstep));
@@ -290,10 +293,18 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
     size l0 = nt0 - 1;
     double t0 = l0 * tstep;
 
-    // length of PSP and kV from interp of dt
+    // length of PSP from interp of dt
     size nt1 = neuroLib.idtRange[ndt-2] + (nt0 - neuroLib.idtRange[ndt-1]);
     size l1 = nt1 - 1;
     double t1 = l1 * tstep;
+
+    // input time difference
+    size nt2 = neuroLib.idtRange[ndt-1]+1;
+    size l2 = nt2 - 1;
+    double t2 = l2 * tstep;
+    cout << "nt0 " << nt0 << endl;
+    cout << "nt1 " << nt1 << endl;
+    cout << "nt2 " << nt2 << endl;
 
     size run_lt = static_cast<size>(run_t/tstep);
     size run_nt = run_lt + 1;
@@ -304,9 +315,13 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
 
     vector<size> s0(neuroLib.nSyn,0);
     vector<size> s1(neuroLib.nSyn,0);
-    
+
+    double tCross_old = 0;
+    vector<double> vS(neuron.tin.size(),neuron.vRest);
+
     double vinit = v[0];
-    v.assign(run_nt,neuron.vRest);
+    double vCross_old = vinit;
+    v.assign(run_nt, neuron.vRest);
     if (l0 > run_lt) {
         tl = run_nt;
     } else {
@@ -316,24 +331,32 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
     if (neuron.tin.size() > 0) {
         vs = static_cast<size>(neuron.tin[0]/tstep);
         for (i=0; i<neuron.tin.size(); i++) {
+            if (lb::debug2) {
+                cout << "i front " << i << endl;
+                cout << "t " << vs*tstep << endl;
+            }
             // linear
             if (neuron.tin[i] > run_t) {
                 break;
             }
             vTarget = v[vs];
+            vS[i] = vTarget;
 
             if (vs+l0 > run_lt) {
-                tl = run_nt-vs;
+                tl = run_nt - vs;
             } else {
                 tl = nt0;
             }
 
             interpPSP0(v, vs, neuroLib.sPSP, neuroLib.vRange, neuroLib.nv, vTarget, tl, neuron.inID[i]);
-            
+            if (lb::debug2) {
+                cout << " linear ok" << endl;
+            }
+
             if (i<neuron.tin.size()-1) {
                 ve = static_cast<size>(neuron.tin[i+1]/tstep);
-                if (ve > vs + l1) {
-                    vc = vs + nt1;
+                if (ve > vs + l2) {
+                    vc = vs + nt2;
                 } else {
                     vc = ve + 1;
                 }
@@ -341,7 +364,6 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
                 vc = run_nt;
             }
             
-            //deal consecutive nearThreshold until 
             crossed = false;
             ith = i;
             for (k=vs;k<vc;k++) {
@@ -356,6 +378,7 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
                     }
                     if (spikeShape) {
                         vs = k;
+                        clampDendRaw(neuroLib, neuron, t1, vs*tstep, vCross, dendVclamp, ith, rd, tCross_old, vCross_old, vS);
                         spiked = neuroAlterB(neuron, neuroLib, v, ith, vs, run_nt, tstep, tsp, v[vs], vBack, cell, spikeTrain, s0, s1, dendVclamp);
                     } else {
                         spiked = 1;
@@ -378,9 +401,11 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
                     ith--;
                     assert(ith>=ith_old);
                     if (lb::debug) {
-                        cout << "backed at " << vs*tstep << ", end ith " << ith <<  " t= " << neuron.tin[ith] << endl;
+                        cout << "backed at " << vs*tstep << ", end ith " << ith << " t= " << neuron.tin[ith] << endl;
                         cout << "v[ve] " << v[vs]  << " vCross " << vCross << " vBack " << vBack << endl;
                     }
+                    tCross_old = vs*tstep;
+                    vCross_old = v[vs];
                     if (v[vs] > vBack) {
                         if (vs < run_lt) {
                             cout << " NEURON simulation has some problem" << endl;
@@ -410,15 +435,15 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
 
                     if (afterCrossBehavior>0) {
                         vTarget = v[vs];
-                        for (i=ith+1;i>0; i--) {
+                        for (i=ith+1; i>0; i--) {
                             j = i-1;
                             size it = round(neuron.tin[j]/tstep);
                             dtTarget = vs - it;
-                            if (l1 <= dtTarget) {
+                            if (l2 < dtTarget) {
                                 break;
                             }
 
-                            if (neuron.tin[j] + t1 > run_t) {
+                            if (run_t < neuron.tin[j] + t1) {
                                 tl = run_nt - vs;
                             } else {
                                 tl = static_cast<size>(round(nt1 - dtTarget));
@@ -427,8 +452,8 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
                         }
                         if (ith<neuron.tin.size()-1) {
                             ve = static_cast<size>(neuron.tin[ith+1]/tstep);
-                            if (ve > vs + l1) {
-                                vc = vs + nt1;
+                            if (ve > vs + l2) {
+                                vc = vs + nt2;
                             } else {
                                 vc = ve + 1;
                             }
@@ -451,7 +476,9 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
                             }
                         }
                     } else {
-                        cout << " no readjust input, only leakage" << endl;
+                        if (lb::debug) {
+                            cout << " no readjust input, only leakage" << endl;
+                        }
                         if (ith<neuron.tin.size()-1) {
                             ve = static_cast<size>(neuron.tin[ith+1]/tstep);
                         }
@@ -460,7 +487,9 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
                 }
                 if (crossed) {
                     i = ith;
-                    cout << " last input during cross " << i << endl;
+                    if (lb::debug) {
+                        cout << " last input during cross " << i << endl;
+                    }
                     break;
                 }
             }
@@ -494,23 +523,31 @@ unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vect
     double t2 = l2 * tstep;
 
     // ignore some time difference
-    double tb = t1 - ignore_t;
+    double tb = t2 - ignore_t;
     size lb = static_cast<size>(tb/tstep);
     size nb = lb + 1;
+    cout << "nt0 " << nt0 << endl;
+    cout << "nt1 " << nt1 << endl;
+    cout << "nt2 " << nt2 << endl;
+    cout << "nb " << nb << endl;
 
     size run_lt = static_cast<size>(run_t/tstep);
     size run_nt = run_lt + 1;
 
-    bool crossed; 
+    bool crossed;
     size ncross = 0;
-    
-    size it, jt;
+
     unsigned int spikeCount = 0;
+
     vector<size> s0(neuroLib.nSyn,0);
     vector<size> s1(neuroLib.nSyn,0);
-    
+
+    double tCross_old = 0;
+    vector<double> vS(neuron.tin.size(),neuron.vRest);
+
     double vinit = v[0];
-    v.assign(run_nt,neuron.vRest);
+    double vCross_old = vinit;
+    v.assign(run_nt, neuron.vRest);
     if (l0 > run_lt) {
         tl = run_nt;
     } else {
@@ -536,13 +573,16 @@ unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vect
             if (neuron.tin[i] > run_t) {
                 break;
             }
+            vTarget = v[vs];
+            vS[i] = vTarget;
 
             if (vs+l0 > run_lt) {
-                tl = run_nt-vs;
+                tl = run_nt - vs;
             } else {
                 tl = nt0;
             }
-            interpPSP_nV(v, vs, neuroLib.sPSP, neuroLib.idtRange, ndt, neuron.inID[i], 0, tl, iv0, kVStyle);
+
+            interpPSP_nV(v, vs, neuroLib.sPSP, neuroLib.idtRange, ndt, neuron.inID[i], 0, tl, iv0);
             if (lb::debug2) {
                 cout << " linear ok" << endl;
             }
@@ -558,7 +598,7 @@ unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vect
                 vc = run_nt;
             }
             if (lb::debug2) {
-                if (i_b == i && i != 0) cout << "first v after cross " << v[vs] << endl;
+                if (i_b == i && i != 0) cout << "first input after cross " << v[vs] << endl;
             }
             for (k=i; k>i_b; k--) {
                 j = k-1; // prevent negative for unsigned int iteration number
@@ -574,11 +614,13 @@ unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vect
                 }
 
                 if (lb::debug2) {
-                    cout << j << "th " << neuron.ei[neuron.inID[i]] << ", " << i <<"th " << neuron.ei[neuron.inID[j]] <<  endl;
+                    cout << j << "th " << neuron.ei[neuron.inID[j]] << ", " << i <<"th " << neuron.ei[neuron.inID[i]] <<  endl;
                     cout << " b " << k << " v " << v[vs] << endl;
                     cout << " tl " << tl << " vs + tl " << vs + tl << endl;
+                    cout << " dtTar  " << dtTarget << endl;
+                    cout << " run_nt  " << run_nt << endl;
                 }
-                interpkV0(v, vs, neuroLib.kV0, neuroLib.idtRange, ndt, dtTarget, dtTarget, tl, neuron.inID[j], neuron.inID[i]);
+                interpkV0(v, vs, neuroLib.kV0, neuroLib.idtRange, ndt, dtTarget, tl, neuron.inID[j], neuron.inID[i]);
                 if (lb::debug2) {
                     cout << " biv0 " << v[vs] << endl;
                 }
@@ -602,6 +644,7 @@ unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vect
                     }
                     if (spikeShape) {
                         vs = k;
+                        clampDendRaw(neuroLib, neuron, t1, vs*tstep, vCross, dendVclamp, ith, rd, tCross_old, vCross_old, vS);
                         spiked = neuroAlterB(neuron, neuroLib, v, ith, vs, run_nt, tstep, tsp, v[vs], vBack, cell, spikeTrain, s0, s1, dendVclamp);
                     } else {
                         spiked = 1;
@@ -625,8 +668,10 @@ unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vect
                     assert(ith>=ith_old);
                     if (lb::debug) {
                         cout << "backed at " << vs*tstep << ", end ith " << ith << " t= " << neuron.tin[ith] << endl;
-                        cout << "v[ve] " << v[vs]  << " vBack " << vBack << endl;
+                        cout << "v[ve] " << v[vs] << " vCross " << vCross << " vBack " << vBack << endl;
                     }
+                    tCross_old = vs*tstep;
+                    vCross_old = v[vs];
                     if (v[vs] > vBack) {
                         if (vs < run_lt) {
                             cout << " NEURON simulation has some problem" << endl;
@@ -634,7 +679,7 @@ unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vect
                         }
                     }
                     if (spiked){
-                        spikeCount = spikeCount + 1;
+                        spikeCount = spikeCount + spiked;
                         neuron.tsp.push_back(tsp.back());
                     } 
                     if (vs + l0 <= run_lt) {
@@ -653,44 +698,40 @@ unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vect
                             v[vs+j] = neuron.vRest;
                         }
                     }
+
                     if (afterCrossBehavior>0) {
                         vTarget = v[vs];
                         for (ii=ith+1; ii>0; ii--) {
                             size i = ii-1;
-                            it = round(neuron.tin[i]/tstep);
+                            size it = round(neuron.tin[i]/tstep);
                             dtTarget = vs - it;
-                            if (l2 <= dtTarget) {
+                            if (l2 < dtTarget) {
                                 break;
                             }
-                            if (neuron.tin[i] + t1 > run_t) {
-                                //cout << neuron.tin[i] << " + " << t1 << " > " << run_t << endl;
+
+                            if (run_t < neuron.tin[i] + t1) {
                                 tl = run_nt - vs;
                             } else {
                                 tl = static_cast<size>(round(nt1 - dtTarget));
-                                //cout << neuron.tin[i] << " + " << t1 << " < " << run_t << endl;
                             }
-                            interpPSP_nV(v, vs, neuroLib.sPSP, neuroLib.idtRange, ndt, neuron.inID[i], dtTarget, tl, iv0, kVStyle);
+                            interpPSP_nV(v, vs, neuroLib.sPSP, neuroLib.idtRange, ndt, neuron.inID[i], dtTarget, tl, iv0);
                             if (afterCrossBehavior==2) {
                                 i_b = 0;
                                 for (k=i; k>0; k--) {
                                     j = k-1; // prevent negative for unsigned int iteration number. 
-                                    jt = neuron.tin[j]/tstep;
+                                    size jt = neuron.tin[j]/tstep;
                                     dtTarget = it - jt;
                                     double dtTarget1 = vs - jt;
-                                    if (dtTarget > lb) {
+                                    if (dtTarget > lb || dtTarget1 > l2) {
                                         break;
                                     } 
                                     if (neuron.tin[j] + t1 > run_t) {
                                         tl = run_nt - vs;
-                                    } else { 
+                                    } else {
                                         tl = static_cast<size>(round(nt1 - dtTarget1));
                                     }
                                     //cout << "vs + tl " << vs << " + " << tl << " < " << run_nt << endl;
-                                    if (kVStyle) {
-                                        interpkV(v, vs, neuroLib.kV, neuroLib.vRange, neuroLib.idtRange, neuroLib.nv, ndt, neuron.vRest, dtTarget, dtTarget1, tl, neuron.inID[j], neuron.inID[i], dtSquare);
-                                    } else {
-                                        interpkV0(v, vs, neuroLib.kV0, neuroLib.idtRange, ndt, dtTarget, dtTarget1, tl, neuron.inID[j], neuron.inID[i]);
-                                    }
+                                    interpkV(v, vs, neuroLib.kV, neuroLib.vRange, neuroLib.idtRange, neuroLib.nv, ndt, neuron.vRest, dtTarget, dtTarget1, tl, neuron.inID[j], neuron.inID[i], dtSquare);
                                 }
                             }
                         }
@@ -708,7 +749,7 @@ unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vect
                             vc = run_nt;
                         }
                         // initial value in case vs == vc
-                        k = vc-1; 
+                        k = vc-1;
                         if (lb::debug) {
                             cout << " vc " << vc << endl;
                             cout << "v k at vc-1: " << v[k] << endl;
@@ -735,7 +776,9 @@ unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vect
                 }
                 if (crossed) {
                     i = ith;
-                    cout << " last input during cross " << i << endl;
+                    if (lb::debug) {
+                        cout << " last input during cross " << i << endl;
+                    }
                     break;
                 }
             }

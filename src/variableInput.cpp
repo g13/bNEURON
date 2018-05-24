@@ -237,7 +237,6 @@ int main(int argc, char **argv) {
         cout << "spikes: " << nc << endl;
         cout << endl;
 
-        if (true) {
         cpu_file.write((char*)&(cpu_t_sim),sizeof(double));
         cpu_file.write((char*)&(cpu_t_bilinear), sizeof(double));
         cpu_file.write((char*)&(cpu_t_linear), sizeof(double));
@@ -323,7 +322,6 @@ int main(int argc, char **argv) {
         output[0] = &tsp_bi0;
         rasterSize = tsp_bi0.size();
         size_data_write(raster_file, output, 1, rasterSize, 0);
-        }
 
         simV.clear();
         biV.clear();

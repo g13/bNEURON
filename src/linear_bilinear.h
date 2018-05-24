@@ -180,24 +180,17 @@ inline void interpkV(vector<double> &v, size vs, double ******kV, double *vRange
     }
 }
 
-inline void interpPSP_nV(vector<double> &v, size vs, double ****PSP, size *idtRange, size ndt, size iSyn, double dtTar, size tl, size iv0, bool kVStyle) {
+inline void interpPSP_nV(vector<double> &v, size vs, double ****PSP, size *idtRange, size ndt, size iSyn, double dtTar, size tl, size iv0) {
     size k;
     if (dtTar!=0) {
-        if (kVStyle) {
-            size idt, jdt;
-            double rdt;
-            double base;
-            getNear(idtRange,ndt,dtTar,rdt, idt, jdt);
-            size jjdt = idtRange[jdt];
-            for (k=1;k<tl;k++) {
-                base = PSP[iv0][idt][iSyn][idtRange[idt]+k];
-                v[vs+k] += base + rdt*(PSP[iv0][jdt][iSyn][jjdt+k]-base);
-            }
-        } else {
-            size idtTar = static_cast<size>(round(dtTar));
-            for (k=1;k<tl;k++) {
-                 v[vs+k] += PSP[iv0][0][iSyn][idtTar + k];
-            }
+        size idt, jdt;
+        double rdt;
+        double base;
+        getNear(idtRange,ndt,dtTar,rdt, idt, jdt);
+        size jjdt = idtRange[jdt];
+        for (k=1;k<tl;k++) {
+            base = PSP[iv0][idt][iSyn][idtRange[idt]+k];
+            v[vs+k] += base + rdt*(PSP[iv0][jdt][iSyn][jjdt+k]-base);
         }
     } else {
         for (k=1;k<tl;k++) {
@@ -206,21 +199,20 @@ inline void interpPSP_nV(vector<double> &v, size vs, double ****PSP, size *idtRa
     }
 }
 
-inline void interpkV0(vector<double> &v, size vs, double ****kV0, size *idtRange, size ndt, double dtTar0, double dtTar1, size tl, size iSyn, size jSyn) {
+inline void interpkV0(vector<double> &v, size vs, double ****kV0, size *idtRange, size ndt, double dtTar, size tl, size iSyn, size jSyn) {
     size idt,jdt;
     size k;
     double rdt;
     double base;
-    getNear(idtRange,ndt,dtTar0,rdt,idt,jdt);
-    size idt0 = static_cast<size>(dtTar1-dtTar0);
+    getNear(idtRange,ndt,dtTar,rdt,idt,jdt);
     for (k=1;k<tl;k++) {
-        base = kV0[idt][iSyn][jSyn][idtRange[idt]+idt0+k];
-        v[vs+k] += base + rdt * (kV0[jdt][iSyn][jSyn][idtRange[jdt]+idt0+k]-base);
+        base = kV0[idt][iSyn][jSyn][idtRange[idt]+k];
+        v[vs+k] += base + rdt * (kV0[jdt][iSyn][jSyn][idtRange[jdt]+k]-base);
         if (lb::debug2 && k==1) {
             cout << "first value " << base << endl;
         }
-        if (lb::debug2 && k==50) {
-            cout << "5ms value " << base << endl;
+        if (lb::debug2 && k==tl-1) {
+            cout << "ending value at " << tl+idtRange[jdt]-1 << ": " << base << endl;
         }
     }
 }

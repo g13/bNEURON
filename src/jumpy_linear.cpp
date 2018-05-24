@@ -302,7 +302,7 @@ unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector
     jnd.t.push_back(0);
     jnd.v.push_back(cross.v[0]);
     if (jl::debug) {
-        cout << "set v: " << jnd.v.back() << endl;
+        cout << "set v initial: " << jnd.v.back() << endl;
     }
     for (i=0;i<neuron.tin.size();i++) {
         input.t.push_back(neuron.tin[i]/tstep);
@@ -342,7 +342,7 @@ unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector
             if (jl::debug) {
                 cout << " vCross = " << jnd.v.back();
                 cout << " tCross = " << jnd.t.back() << endl;
-                cout << " input " << i_prior_cross << "(" << i << "), t " << input.t[i_prior_cross]*tstep << endl;
+                cout << " input " << i_prior_cross << ", t" << input.t[i_prior_cross]*tstep << endl;
                 if (input.t.size() != i_prior_cross+1) {
                     cout << "before alter " << input.t.size() << " != " << i_prior_cross+1 << endl;
                     assert(input.t.size() == i_prior_cross+1);
@@ -350,6 +350,7 @@ unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector
             }
             nc_old = nc;
             if (spikeShape) {
+                clampDend(neuroLib, neuron.nSyn, input, t_cross, vC, neuron.vRest, cross, tail_l, i_prior_cross, dendVclamp, rd);
                 i = neuroAlter(neuron, neuroLib, cross, i_prior_cross, jnd, end_t, round(t_cross), tBack, vBack, tstep, tsp, vB, nc, cell, spikeTrain, s0, s1, dendVclamp);
                 spiked = nc > nc_old;
             } else {
@@ -390,6 +391,10 @@ unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector
                 }
             }
             //if (vBack >= vC) {
+            //    if (tBack*tstep < end_t) {
+            //        cout << " it must crossing at t end, since vBack > vC" << endl;
+            //        assert(tBack*tstep >= end_t);
+            //    }
             //    break;
             //}
             if (tBack*tstep >= end_t) {
