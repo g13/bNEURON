@@ -14,14 +14,17 @@ struct input_args_CA1 : input_args {
     double ignoreT;
     double tRef;
     double trans;
+    double dtrans;
     double trans0;
     double rBiLinear;
     int kVStyle;
     int afterCrossBehavior;
     bool spikeShape;
     bool pas;
+    bool sliceDebugPlot;
     int i;
     bool dtSquare;
+    bool getDendV;
     unsigned int vInit;
     std::bitset<6> mode;
     input_args_CA1();

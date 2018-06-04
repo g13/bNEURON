@@ -1,7 +1,7 @@
 #!/bin/bash
 n128=1
 dir0=library
-theme='active_fast'
+theme='activeT'
 dir=$dir0/$theme
 
 if [ -d "./$dir" ]; then

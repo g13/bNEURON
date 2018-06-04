@@ -27,6 +27,7 @@ def getGH(dt,f,g=0,h=0):
     g = g*etd + c*h 
     h = h*etr
     return np.array([g, h])
+
 def write_one(data_filename,data,mode='ab'):
     with open(data_filename,mode) as data_file:
         data.tofile(data_file)
@@ -295,9 +296,9 @@ def getJ0(i,j,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,
     relit = run_nt - idtRange[idt]
     relt = run_t-dt
     if idt == 0 and i == j:
-        gList0 = gList
+        gList0 = gList.copy()
         gList0[i] = 2*gList[i];
-        v, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + run_t , 0, tstep, '')
+        v, _ = bproceed(cell, v0, sL, gList0, RList, vSL, spikes, n, sel, trans, trans + run_t , 0, tstep, '')
     else:
         v, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + run_t , 0, tstep, '')
     v = v[ntrans+idtRange[idt]:ntrans+run_nt]
@@ -388,24 +389,25 @@ def getNib(argv):
     run_t = 340.0
     trans = 110.0
     #==================
-    run_t = 100.0
-    trans = 10.0
+    #run_t = 100.0
+    #trans = 10.0
     rdpi = 300
     
     #dtRange = np.array([0,70,140],dtype='float')
     #dtRange = np.array([0,2,4,6,8,10,12,15,20,25,30,50,70,140,210],dtype='float')
-    #dtRange = np.array([0,4,8,15,20,25,30,50,70,140,210],dtype='float')
+    dtRange = np.array([0,4,8,15,20,25,30,50,70,140,210],dtype='float')
     #===========================================================
     #dtRangeE = np.array([6,8,10,12,15,17,19,21,23,26,30],dtype='float')
     #dtRangeI = np.array([0,0.5,1,1.5,2,4,40,50,60,70,80,90,110,125,150,175],dtype='float')
     #dtRange = np.sort(np.hstack([dtRangeE,dtRangeI]))
     #===========================================================
-    dtRange = np.array([0,30,60],dtype='float')
+    #dtRange = np.array([0,30,60],dtype='float')
 
     #dtRange = np.array([0,12,24,60],dtype='float')
     #dtRange = np.array([0,8,20,130],dtype='float')
     #dtRange = np.array([0,2,4,8,12,16,20,30,40,70,100,130,210],dtype='float')
     assert(dtRange[0] == 0)
+    assert(dtRange[-1] < run_t)
     np.random.seed(seed)
     #locE = np.array([36, 53, 74, 79, 83, 90, 97, 101, 117, 125, 132, 174],dtype='int')
    # locE = np.array([36, 74, 83, 97, 117, 132],dtype='int')
@@ -417,14 +419,14 @@ def getNib(argv):
     locI = np.array([14, 28, 30],dtype='int')
     #locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
     #locI = np.array([14, 28, 40],dtype='int')
-    #vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
+    vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
     #===========================================================
     #vRange = np.array([-74,-70,-65,-61],dtype='double')
     #locE = np.array([72,79],dtype='int')
     #locI = np.array([14,40],dtype='int')
 
     #vRange = np.arange(-74,-59)
-    vRange = np.array([-74,-70,-63],dtype='double')
+    #vRange = np.array([-74,-70,-63],dtype='double')
     #locE = np.array([60, 72, 78, 84, 98],dtype='int')
     #locE = np.array([60, 72],dtype='int')
     #locE = np.array([52, 60, 72, 78, 84, 98],dtype='int')
@@ -534,15 +536,19 @@ def getNib(argv):
     if not vrestOnly:
         theme = theme+'-V'+str(vid)
 
-    cell, vecStimList, synList = prepCell(gList, loc, pos, n, vrest)
+    cell, vecStimList, synList, _ = prepCell(gList, loc, pos, n, vrest)
     #leakyV, _, _, _ = proceed(cell, v0, synList, RList, vecStimList, np.empty((n,0)), n, trans, run_t + trans, 0, 0, 0, 1, 0, tstep)
     leakyV, leakyDendV = leaky(cell, v0, synList, RList, vecStimList, n, trans, run_t + trans, tstep, loc, pos)
     leakyV = leakyV[ntrans:ntrans+run_nt]
     leakyDendV = leakyDendV[:,ntrans:ntrans+run_nt]
     print leakyV.size
-    #if plotData:
-    #    pyplot.figure('leak', figsize = (8,4))
-    #    pyplot.plot(t,leakyV)
+    if plotData:
+        lfigname = 'leakyV-v'+str(vid)
+        pyplot.figure(lfigname, figsize = (8,4))
+        pyplot.plot(t,leakyV)
+        if savePlot:
+            pyplot.savefig(directory+'/'+lfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+            pyplot.close(lfigname)
     #    pyplot.show()
     v1 = np.zeros((ndt,n,run_nt))
     sfire = np.zeros((ndt,n),dtype='int')

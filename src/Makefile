@@ -27,6 +27,15 @@ nNeuroSt.o: nNeuroSt.cpp nNeuroSt.h heap.h
 nNeuroLib.o: nNeuroLib.cpp nNeuroLib.h matFunc.h
 	$(CC) $(CXXFLAG) -c $< -o $@
 
+jumpy_linear.o: jumpy_linear.cpp jumpy_linear.h jumpy_bilinear.h nNeuroLib.h nNeuroSt.h
+	$(CC) $(CXXFLAG) -c $< -o $@
+
+jumpy_bilinear.o: jumpy_bilinear.cpp jumpy_bilinear.h nNeuroLib.h nNeuroSt.h
+	$(CC) $(CXXFLAG) -c $< -o $@
+
+linear_bilinear.o: linear_bilinear.cpp linear_bilinear.h nNeuroLib.h nNeuroSt.h
+	$(CC) $(CXXFLAG) -c $< -o $@
+
 %.o: %.cpp %.h
 	$(CC) $(CXXFLAG) -c $< -o $@
 

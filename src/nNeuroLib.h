@@ -11,12 +11,13 @@ using std::endl;
 using std::memcpy;
 
 struct nNeuroLib {
-    size ndt,nt,nv,nSyn;
+    size ndt,nt,nv,nSyn,nvAS,nvASt;
 
     double ****sPSP,    *sPSP_ptr, 
            ******kV,     *kV_ptr,
            ****kV0,     *kV0_ptr,
            *vRange, *dtRange, tstep,
+           *vASrange,   **vAS, *vAS_ptr,
            **vLeak, *vLeak_ptr;
     size ***tMax, *tMax_ptr;
     double ***dendVleak, *dendVleak_ptr;
@@ -27,6 +28,7 @@ struct nNeuroLib {
     double ****dendv, *dendv_ptr;
     double *pos;
     double *gList;
+    double *dist;
     bool *ei;
     int nE, nI;
     //double vReset, vThres;

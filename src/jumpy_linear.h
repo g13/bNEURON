@@ -18,9 +18,12 @@ namespace jl {
         double dt;
         dt = t - tCross;
         if (dt < tol_tl) {
-            v = add_vinit_contribution(neuroLib.vLeak, cross.vCross.back(), dt);
+            if (cross.spiked.back()) {
+                v = add_vAS_contribution(neuroLib.vAS, cross.vCross.back(), dt, cross.v0.back(), cross.vRest);
+            } else {
+                v = add_vinit_contribution(neuroLib.vLeak, cross.vCross.back(), dt);
+            }
         }
-        // else v = neuron.vReset (presetted)
     
         if (dt < tol_tb) {
             move_corr_window_i(input.t, tail_l, t, tol_tb);
@@ -175,6 +178,6 @@ namespace jl {
     void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tCross, double vCross, size i_prior, size &tail, size head, size corrSize, int afterCrossBehavior);
 }
 
-unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape);
+unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape, int itrial, bool sliceDebugPlot);
 
 #endif

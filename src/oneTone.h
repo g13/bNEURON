@@ -12,9 +12,9 @@ using std::cout;
 using std::endl;
 using std::vector;
 using std::string;
+using std::to_string;
 using std::ofstream;
 using std::ifstream;
-using std::to_string;
 using std::ios;
 
 template<typename T>

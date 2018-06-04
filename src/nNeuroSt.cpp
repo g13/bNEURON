@@ -38,8 +38,9 @@ void jumpyNeuronData::initialize(size rSize) {
     v.reserve(2*rSize);
 }
 
-CrossData::CrossData(size nt, double vinit) {
+CrossData::CrossData(size nt, double vinit, double vRest0) {
     nCross = 0;
+    spiked.reserve(nt/2);
     iCross.reserve(nt/2);
     tCross.reserve(nt/2);
     vCross.reserve(nt/2);
@@ -49,8 +50,9 @@ CrossData::CrossData(size nt, double vinit) {
     iCross.push_back(1);
     v.push_back(vinit);
     t.push_back(0);
+    vRest = vRest0;
 }
-void CrossData::initialize(size nt, double vinit) {
+void CrossData::initialize(size nt, double vinit, double vRest0) {
     nCross = 0;
     iCross.clear();
     iCross.reserve(nt/2);
@@ -60,12 +62,17 @@ void CrossData::initialize(size nt, double vinit) {
     tCross.push_back(0);
     vCross.clear();
     vCross.reserve(nt/2);
+    spiked.clear();
+    spiked.reserve(nt/2);
+    v0.clear();
+    v0.reserve(nt/2);
     v.clear();
     v.reserve(nt);
     v.push_back(vinit);
     t.clear();
     t.reserve(nt);
     t.push_back(0);
+    vRest = vRest0;
 }
 
 BilinearRelationships::BilinearRelationships(size corrSize) {
@@ -133,6 +140,7 @@ void Inputs::assert_size() {
     assert(bir.size() == Size);
 }   
 void Inputs::print_this(int i) {
+    cout << "i: " << i << endl;
     cout << "t: " << t[i] << endl;
     cout << "dt: " << dt[i] << endl;
     cout << "idt: " << idt[i] << endl;
@@ -141,11 +149,12 @@ void Inputs::print_this(int i) {
     cout << "dT index: " << dTijr[i].i << ", " << dTijr[i].j << ", " << dTijr[i].r << endl;
 }
 
-nNeuroSt::nNeuroSt(unsigned int seed, int nSyn0, bool *ei0, double trans0, double tRef0, double vTol0) {
+nNeuroSt::nNeuroSt(unsigned int seed, int nSyn0, bool *ei0, double trans0, double tRef0, double vTol0, double dtrans0) {
     status = true;
     nOut = 0;
     nSyn = nSyn0;
     trans = trans0;
+    dtrans = dtrans0;
     tRef = tRef0;
     vTol = vTol0;
     ei.assign(ei0,ei0+nSyn);

@@ -1,9 +1,8 @@
-function meshK(k,tRange,tstep,dt,dti,ndt,v,nv,nloc1,nloc2,normTar,label)
+function meshK(k,tRange,tstep,dt,dti,ndt,v,nv,nloc1,nloc2,normTar,label,save,directory)
     if nargin < 11
         normTar = true;
     end
     figure;
-
     %% v averaged
     subplot(2,2,1)
     hold on
@@ -72,5 +71,8 @@ function meshK(k,tRange,tstep,dt,dti,ndt,v,nv,nloc1,nloc2,normTar,label)
         title(['norm. k',label,'<t>']);
     else
         title(['k',label,'<t>']);
+    end
+    if save
+        saveas(gcf,[directory,'-meshK',label,'.fig'],'fig');
     end
 end

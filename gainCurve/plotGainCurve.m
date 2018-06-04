@@ -1,13 +1,16 @@
-function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
+function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, sizeSize)
     textFontSize = 6;
-    if nargin < 5
+    if nargin < 6
         sizeSize = 'int64';
-        if nargin < 4
-            plotInput = true;
-            if nargin < 3
-                plotSubthreshold = true;
-                if nargin < 2
-                    ext = '';
+        if nargin < 5
+            plotDendV = false;
+            if nargin < 4
+                plotInput = true;
+                if nargin < 3
+                    plotSubthreshold = true;
+                    if nargin < 2
+                        ext = '';
+                    end
                 end
             end
         end
@@ -32,7 +35,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
     filter = [1,5];
     fdr = fdr(filter,:);
     fnstr = strjoin(fdr(1,:))
-    load(p.libFile,'tstep','n','gList','dtRange','sPSP');
+    load(p.libFile,'tstep','n','gList','dtRange','sPSP','loc');
     ldur = size(sPSP,1) - p.ignoreT;
 
     nE = 0;
@@ -176,6 +179,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
             plot(tb0{i},zeros(sb0(i),1)+6,'.g','MarkerSize',10);
         end
     end
+    save(['../', RasterFn(1:length(RasterFn)-4),'.mat'], 'ts', 'tb', 'tl', 'tjb', 'tjl', 'tb0');
     fclose(RasterFid);
     subplot(2,2,2)
     hold on
@@ -227,6 +231,11 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
             if datafid
                 for i=1:nTrial
                     simV{i} = fread(datafid, nDimSim(i), 'double');
+                    if p.getDendV
+                        for j=1:n
+                            dendV{i,j} = fread(datafid, nDimSim(i), 'double');
+                        end
+                    end
                 end
                 for i=1:nTrial
                     biV{i} = fread(datafid, nDim(i), 'double');
@@ -273,8 +282,10 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
                     biV{i} = fread(datafid, nDim(i), 'double');
                     liV{i} = fread(datafid, nDim(i), 'double');
                     biV0{i} = fread(datafid, nDim(i), 'double');
-                    for j=1:n
-                        dendV{i,j} = fread(datafid, nDimSim(i), 'double');
+                    if p.getDendV
+                        for j=1:n
+                            dendV{i,j} = fread(datafid, nDimSim(i), 'double');
+                        end
                     end
                 end
                 if jNDfid
@@ -317,9 +328,24 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
             subplot(2,1,1)
             hold on
             hs = plot(t0,simV{i},'k');
+            handles = [hs];
+            labels = {'sim'};
+            if plotDendV && p.getDendV
+                dline = [];
+                sat = 0.8;
+                val = 0.8;
+                for j=1:n
+                    hue = (double(j)-1.0)/(double(n)-1.0)*(2.0/3.0);
+                    size(t0)
+                    size(dendV{i,j})
+                    dline(j) = plot(t0,dendV{i,j},'--','Color',hsv2rgb([hue,sat,val]));
+                end
+            end
             hb = plot(t,biV{i},'b');
             hl = plot(t,liV{i},'r');
             hb0 = plot(t,biV0{i},'g');
+            handles = [handles, hb, hl, hb0];
+            labels = [labels, 'bi','li','bi0'];
             minV0 = min([min(simV{i}),min(biV{i}),min(liV{i}),min(biV0{i})]);
             maxV0 = min([-50,max([max(simV{i}),max(biV{i}),max(liV{i}),max(biV0{i})])]);
             vStretch = maxV0-minV0;
@@ -330,16 +356,20 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
             if jNDfid
                 hjb = plot(jbt{i},jbv{i},'.b','MarkerSize',3);
                 for j=1:jbnCross
-                    plot(jbCrossT{i,j}, jbCrossT{i,j},':b');
+                    plot(jbCrossT{i,j}, jbCrossV{i,j},':b');
                 end
                 hjl = plot(jlt{i},jlv{i},'.r','MarkerSize',3);
                 for j=1:jlnCross
-                    plot(jlCrossT{i,j}, jlCrossT{i,j},':r');
+                    plot(jlCrossT{i,j}, jlCrossV{i,j},':r');
                 end
-                legend([hs,hb,hl,hb0,hjb,hjl],{'sim','bi','li','bi0','jb','jl'});
-            else
-                legend([hs,hb,hl,hb0,hjb,hjl],{'sim','bi','li','bi0'});
+                handles = [handles, hjb, hjl];
+                labels = [labels, 'jb','jl'];
             end
+            if plotDendV && p.getDendV
+                handles = [handles, dline];
+                labels = [labels, strcat('dend[',cellstr(num2str(loc))',']')];
+            end
+            legend(handles,labels);
             if plotInput
                 ntmp = fread(tInfid,[1,1],sizeSize);
                 tin = fread(tInfid,[ntmp,1],'double');
@@ -459,6 +489,46 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, sizeSize)
                 saveas(gcf,[p.theme,'-trial',num2str(i),'.',ext],format);
             end
         end
+    end
+    figure;
+    for i=1:nTrial
+        L0 = length(simV{i});
+        l0 = 2^nextpow2(L0);
+        fSim = fft(simV{i},l0);
+        psdSim = (abs(fSim)/l0).^2;
+        autoSim = ifft(psdSim);
+
+        L = length(biV{i});
+        l = 2^nextpow2(L0);
+        fBi = fft(biV{i},l);
+        psdBi = (abs(fBi)/l).^2;
+        autoBi = ifft(psdBi);
+
+        fLi = fft(liV{i},l);
+        psdLi = (abs(fLi)/l).^2;
+        autoLi = ifft(psdLi);
+
+        fBi0 = fft(biV0{i},l);
+        psdBi0 = (abs(fBi0)/l).^2;
+        autoBi0 = ifft(psdBi0);
+        subplot(ceil(nTrial/2),2,i)
+        hold on
+        tau0 = linspace(-l0/2*tstep,l0/2*tstep,l0);
+        tau = linspace(-l/2*tstep,l/2*tstep,l);
+        autoSim = [autoSim(l0/2+1:l0);autoSim(1:l0/2)];
+        autoBi = [autoBi(l/2+1:l);autoBi(1:l/2)];
+        autoLi = [autoLi(l/2+1:l);autoLi(1:l/2)];
+        autoBi0 = [autoBi0(l/2+1:l);autoBi0(1:l/2)];
+        plot(tau0, autoSim,'k');
+        plot(tau, autoBi,'b');
+        plot(tau, autoLi,'r');
+        plot(tau, autoBi0,'g');
+        xlabel('\tau');
+        ylabel('autocorr');
+        title(['Trial ',num2str(i)]);
+    end
+    if ~isempty(ext)
+        saveas(gcf,[p.theme,'-autoCorr.',ext],format);
     end
     fclose(datafid);
     if jNDfid

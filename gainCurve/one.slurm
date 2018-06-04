@@ -3,9 +3,10 @@
 #SBATCH --ntasks=1
 ##SBATCH --mem=60G
 #SBATCH --cpus-per-task=15
-#SBATCH --time=4:00:00
-#SBATCH -o gC_%A.out
-#SBATCH --job-name=gC
+#SBATCH --time=8:00:00
+#SBATCH -o one_%A.out
+#SBATCH --job-name=one
+#SBATCH --mail-type=END,FAIL
 
 module purge
 module load python
@@ -14,8 +15,10 @@ module load boost
 module load matlab
 module load anaconda
 
+set -e
 date
 echo $ext
+echo $getDendV
 
 source activate py2
 
@@ -24,7 +27,7 @@ do
     ./one -d $method
 done
 
-matlab -nodisplay -nosplash -r "plotGainCurve('input.cfg','$ext',true,false);exit;"
+matlab -nodisplay -nosplash -r "plotGainCurve('input.cfg','$ext',true,false,$getDendV);exit;"
 
 date
 hostname

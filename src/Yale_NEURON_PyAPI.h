@@ -6,11 +6,14 @@
 #include <iostream>
 #include <numpy/arrayobject.h>
 #include <cmath>
+#include <cstring>
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 using std::vector;
 using std::cout;
 using std::endl;
+using std::string;
+using std::to_string;
 
 namespace yl {
     const bool debug = true;
@@ -80,6 +83,7 @@ struct get_cell{
     PyObject *pModule;
     PyObject *Py_loc;
     PyObject *Py_pos;
+    vector<double> dist;
     get_cell(SynSet syn);
 };
 typedef struct get_cell Cell;
@@ -87,10 +91,10 @@ typedef struct get_cell Cell;
 //finialize
 void NEURON_cleanup(Cell &cell); 
 
-unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, long insert, bool getDendV, vector<vector<double>> &dendV, bool pas); 
+unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, long insert, bool getDendV=false, vector<vector<double>> &dendV = dummy_dendV, bool pas = false, string fign="");
 
-size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jND &jnd, double end_t, double it, double &tBack, double &vBack, double tstep, std::vector<double> &tsp, double vStop, unsigned int &nc, Cell &cell, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp);
+size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jND &jnd, double end_t, double it, double &tBack, double &vBack, double tstep, std::vector<double> &tsp, double vStop, unsigned int &nc, Cell &cell, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp, string fign);
 
-size neuroAlterB(nNS &neuron, nNL &neuroLib, vector<double> &v, size &ith, size &vs, size run_nt, double tstep, vector<double> &tsp, double vinit, double vBack, Cell &cell, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp);
+size neuroAlterB(nNS &neuron, nNL &neuroLib, vector<double> &v, size &ith, size &vs, size run_nt, double tstep, vector<double> &tsp, double vinit, double vBack, Cell &cell, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp, string fign);
 
 #endif

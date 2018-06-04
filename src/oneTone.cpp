@@ -20,6 +20,9 @@ int main(int argc, char **argv) {
     if (inputArg.dtVarLevels) {
         cout << "different dt can only affect Yale NEURON simulation" << endl;
     }
+    if (inputArg.sliceDebugPlot) {
+        cout << "check slice debug plots" << endl;
+    }
     nNL neuroLib(inputArg.libFile.c_str());
     if (neuroLib.nSyn >= inputArg.nInput) {
         neuroLib.nSyn = inputArg.nInput;
@@ -27,7 +30,7 @@ int main(int argc, char **argv) {
         cout << " nInput > nSyn, exit" << endl;
         return 0;
     }
-    nNS neuron(inputArg.seed,neuroLib.nSyn,neuroLib.ei,inputArg.trans,inputArg.tRef,inputArg.vTol);
+    nNS neuron(inputArg.seed,neuroLib.nSyn,neuroLib.ei,inputArg.trans,inputArg.tRef,inputArg.vTol,inputArg.dtrans);
     inputArg.reformat_input_table(neuroLib.tstep);
     if (inputArg.i < 0) {
         cout << "none method chosen" << endl;
@@ -65,7 +68,6 @@ int main(int argc, char **argv) {
 	    jND_file.open("jND-" + prefix + ".bin", ios::out|ios::binary|ios::app);
 	    cpu_file.open("cpuTime-" + prefix + ".bin", ios::out|ios::binary|ios::app);
     }
-
     double tstep = neuroLib.tstep;
     cout << "using tstep: " << tstep << " ms" << endl;
     Py_Initialize();
@@ -73,23 +75,30 @@ int main(int argc, char **argv) {
     PyRun_SimpleString("import sys");
     PyRun_SimpleString("sys.path.append(\".\")");
 
-    SynSet syn = {
-        neuroLib.loc, 
-        neuroLib.pos, 
-        neuroLib.gList, 
-        neuroLib.nSyn, 
-        inputArg.vRest
-    }; 
-    cout << " NEURON" << endl;
-    Cell cell(syn);
-
-    cout << "initialized " << endl;
     if (inputArg.inputLevel.size() > 1) {
         cout << " data file format -> inputLevels first, methods second" << endl;
     } else {
         cout << " data file format -> methods first, inputLevels second" << endl;
     }
     for (int ii=0; ii<inputArg.inputLevel.size(); ii++) {
+
+        SynSet syn = {
+            neuroLib.loc, 
+            neuroLib.pos, 
+            neuroLib.gList, 
+            neuroLib.nSyn, 
+            inputArg.vRest
+        }; 
+        cout << " NEURON" << endl;
+        Cell cell(syn);
+        if (ii == 0) {
+            for (int i=0; i<neuroLib.nSyn; i++) {
+                neuroLib.dist[i] = cell.dist[i];
+                cout << " dist[" << i << "]" << neuroLib.dist[i] << endl;
+            }
+        }
+        cout << "initialized " << endl;
+
         vector<double> t0(neuroLib.nSyn,0);
         double run_t = inputArg.runTime[ii];
         cout << "generating inputs" << endl;
@@ -171,7 +180,7 @@ int main(int argc, char **argv) {
         if (inputArg.mode[0]) {  
             cout << " yale NEURON begin" << endl;
             cout << " point of no return unless spike " << inputArg.vThres << endl;
-            nc = Py_proceed(cell, v0, RList, s1,  spikeTrain, neuroLib.nSyn, inputArg.trans0, inputArg.trans0 + run_t, plchldr_double, inputArg.tRef, inputArg.vThres, 1, simV, plchldr_size0, tsp_sim, 0, inputArg.tstep[ii], dendVclamp, -1, false, dendV, inputArg.pas);
+            nc = Py_proceed(cell, v0, RList, s1,  spikeTrain, neuroLib.nSyn, inputArg.trans0, inputArg.trans0 + run_t, plchldr_double, inputArg.tRef, inputArg.vThres, 1, simV, plchldr_size0, tsp_sim, 0, inputArg.tstep[ii], dendVclamp, -1, inputArg.getDendV, dendV, inputArg.pas);
         } else {
             cout << " yale NEURON simulation skipped " << endl;
             nc = 0;
@@ -186,7 +195,7 @@ int main(int argc, char **argv) {
 
         if (inputArg.mode[1]) {  
             cout << " bilinear begin" << endl;
-            nc = bilinear_nSyn(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, biV, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi, vCrossb, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape, inputArg.dtSquare);
+            nc = bilinear_nSyn(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, biV, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi, vCrossb, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape, inputArg.dtSquare,ii,inputArg.sliceDebugPlot);
         } else {
             cout << " bilinear skipped" << endl;
             nc = 0;
@@ -200,7 +209,7 @@ int main(int argc, char **argv) {
         clock_gettime(clk_id,&tpS);
         if (inputArg.mode[2]) {
             cout << " linear begin: " << endl;
-            nc = linear_nSyn(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, liV, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_li, vCrossl, vBackl, inputArg.afterCrossBehavior, inputArg.spikeShape);
+            nc = linear_nSyn(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, liV, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_li, vCrossl, vBackl, inputArg.afterCrossBehavior, inputArg.spikeShape,ii,inputArg.sliceDebugPlot);
         } else {
             cout << " linear skipped" << endl;
             nc = 0;
@@ -220,15 +229,15 @@ int main(int argc, char **argv) {
         size corrSize = static_cast<size>((totalRate)*neuroLib.tol_tb);
         jND jndb(rSize);
         Input inputb(rSize);
-        Cross crossb(nt,v0);
+        Cross crossb(nt,v0,neuron.vRest);
         if (ii>0) {
             jndb.initialize(rSize);
             inputb.initialize(rSize);
-            crossb.initialize(nt,v0);
+            crossb.initialize(nt,v0,neuron.vRest);
         }
         if (inputArg.mode[3]) {  
             cout << " jBilinear begin" << endl;
-            nc = nsyn_jBilinear(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, neuron, neuroLib, inputb, jndb, crossb, run_t, inputArg.ignoreT, corrSize, tsp_jbi, vCrossb, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape, inputArg.dtSquare);
+            nc = nsyn_jBilinear(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, neuron, neuroLib, inputb, jndb, crossb, run_t, inputArg.ignoreT, corrSize, tsp_jbi, vCrossb, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape, inputArg.dtSquare,ii,inputArg.sliceDebugPlot);
         } else {
             cout << " jBilinear skipped" << endl;
             nc = 0;
@@ -244,15 +253,15 @@ int main(int argc, char **argv) {
         corrSize = static_cast<size>((totalRate)*neuroLib.nt);
         jND jndl(rSize);
         Input inputl(rSize);
-        Cross crossl(nt,v0);
+        Cross crossl(nt,v0,neuron.vRest);
         if (ii>0) {
             jndl.initialize(rSize);
             inputl.initialize(rSize);
-            crossl.initialize(nt,v0);
+            crossl.initialize(nt,v0,neuron.vRest);
         }
         if (inputArg.mode[4]) {
             cout << " jLinear begin" << endl;
-            nc = nsyn_jLinear(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, neuron, neuroLib, inputl, jndl, crossl, run_t,inputArg.ignoreT, corrSize, tsp_jli, vCrossl, vBackl, inputArg.afterCrossBehavior, inputArg.spikeShape);
+            nc = nsyn_jLinear(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, neuron, neuroLib, inputl, jndl, crossl, run_t,inputArg.ignoreT, corrSize, tsp_jli, vCrossl, vBackl, inputArg.afterCrossBehavior, inputArg.spikeShape,ii,inputArg.sliceDebugPlot);
         } else {
             cout << " jLinear skipped" << endl;
             nc = 0;
@@ -266,7 +275,7 @@ int main(int argc, char **argv) {
         clock_gettime(clk_id,&tpS);
         if (inputArg.mode[5]) {
             cout << " bilinear0 begin: " << endl;
-            nc = bilinear0_nSyn(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, biV0, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi0, vCrossb, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape, inputArg.kVStyle, inputArg.dtSquare);
+            nc = bilinear0_nSyn(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, biV0, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi0, vCrossb, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape, inputArg.kVStyle, inputArg.dtSquare,ii,inputArg.sliceDebugPlot);
         } else {
             cout << " bilinear0 skipped" << endl;
             nc = 0;
@@ -285,6 +294,11 @@ int main(int argc, char **argv) {
             cpu_file.write((char*)&(cpu_t_sim),sizeof(double));
 
             data_file.write((char*)simV.data(), nt0*sizeof(double));
+            if (inputArg.getDendV) {
+                for (int i=0; i<neuroLib.nSyn; i++) {
+                    data_file.write((char*)dendV[i].data(), nt0*sizeof(double));
+                }
+            }
 
             output[0] = &tsp_sim;
             size rasterSize = tsp_sim.size();
@@ -400,6 +414,8 @@ int main(int argc, char **argv) {
         neuron.clear();
         spikeTrain.clear();
         cout << "level " << ii << " finalized" << endl;
+        NEURON_cleanup(cell);
+        cout << " cell cleaned " << endl;
     }
     if (data_file.is_open())        data_file.close();
     if (jND_file.is_open())         jND_file.close();
@@ -407,8 +423,6 @@ int main(int argc, char **argv) {
     if (tIncome_file.is_open())     tIncome_file.close();
     if (cpu_file.is_open())         cpu_file.close();
     neuroLib.clearLib();
-    NEURON_cleanup(cell);
-    cout << " cell cleaned " << endl;
     //Py_Finalize();
     cout << "size: " <<  sizeof(size) << " bytes" << endl;
     cout << "size_b: "<< sizeof(size_b) << " bytes" << endl;

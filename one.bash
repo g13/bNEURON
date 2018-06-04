@@ -1,6 +1,7 @@
 #!/bin/bash
 n128=1
 dir0='gainCurve'
+getDendV=true
 
 fdr=$1
 newInput=$2
@@ -53,4 +54,5 @@ cp $dir0/inputTable.bin $dir
 
 cd $dir
 export ext
+export getDendV
 sbatch --export=ALL one.slurm

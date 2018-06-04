@@ -86,7 +86,11 @@ bool jl::update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nN
     }
     // initialize to 
     if (dt < tol_tl) {
-        v = add_vinit_contribution(neuroLib.vLeak, cross.vCross.back(), dt);
+        if (cross.spiked.back()) {
+            v = add_vAS_contribution(neuroLib.vAS, cross.vCross.back(), dt, cross.v0.back(), cross.vRest);
+        } else {
+            v = add_vinit_contribution(neuroLib.vLeak, cross.vCross.back(), dt);
+        }
     } else {
         v = neuron.vRest;
     }
@@ -276,7 +280,7 @@ void jl::update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS 
     }
 }
 
-unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape) {
+unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape, int itrial, bool sliceDebugPlot) {
     size i, j, i_prior_cross;
     double tstep = neuroLib.tstep;
     unsigned int nc_old, nc = 0;
@@ -287,10 +291,11 @@ unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector
     double tol_tb = neuroLib.idtRange[ndt-2] + neuroLib.nt - neuroLib.idtRange[ndt-1] - round(ignore_t/tstep);
     cout << "linear corr length " << tol_tl << endl;
     cout << "after cross linear corr length " << tol_tb << endl;
+    assert(tol_tb > 0);
     cout << "total inputs " << neuron.tin.size() << endl;
     size tail_l = 0;
     size old_tail_l;
-    bool crossed, spiked;
+    bool crossed;
     double tref = neuron.tRef/tstep;
     vector<size> s0(neuroLib.nSyn,0);
     vector<size> s1(neuroLib.nSyn,0);
@@ -299,6 +304,8 @@ unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector
     size ii;
     jb::getNear(neuroLib.vRange, neuroLib.nv, cross.v[0], r_, i_, j_);
     cross.vCross.push_back(IJR(i_,j_,r_));
+    cross.v0.push_back(cross.v[0]);
+    cross.spiked.push_back(false);
     jnd.t.push_back(0);
     jnd.v.push_back(cross.v[0]);
     if (jl::debug) {
@@ -350,9 +357,15 @@ unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector
             }
             nc_old = nc;
             if (spikeShape) {
-                clampDend(neuroLib, neuron.nSyn, input, t_cross, vC, neuron.vRest, cross, tail_l, i_prior_cross, dendVclamp, rd);
-                i = neuroAlter(neuron, neuroLib, cross, i_prior_cross, jnd, end_t, round(t_cross), tBack, vBack, tstep, tsp, vB, nc, cell, spikeTrain, s0, s1, dendVclamp);
-                spiked = nc > nc_old;
+                clampDend(neuroLib, neuron, input, t_cross, vC, neuron.vRest, cross, tail_l, i_prior_cross, dendVclamp, rd);
+                string fign;
+                if (sliceDebugPlot) {
+                    fign = "jl-" + to_string(itrial) + "-" + to_string(cross.nCross);
+                } else {
+                    fign = "";
+                }
+                i = neuroAlter(neuron, neuroLib, cross, i_prior_cross, jnd, end_t, round(t_cross), tBack, vBack, tstep, tsp, vB, nc, cell, spikeTrain, s0, s1, dendVclamp,fign);
+                cross.spiked.push_back(nc > nc_old);
             } else {
                 tBack = t_cross+tref;
                 vBack = neuron.vRest;
@@ -367,7 +380,7 @@ unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector
                 }
                 tsp.push_back(t_cross*tstep);
                 nc++;
-                spiked = true;
+                cross.spiked.push_back(true);
                 i = i_prior_cross;
                 int exponent;
                 frexp(tBack*tstep, &exponent);
@@ -408,6 +421,7 @@ unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector
             jb::getNear(neuroLib.vRange,neuroLib.nv,
                             vBack, r_, i_, j_);
             cross.vCross.push_back(IJR(i_,j_,r_));
+            cross.v0.push_back(vBack);
             cross.nCross++;
             cross.iCross.push_back(cross.v.size());
             cross.tCross.push_back(tBack);
