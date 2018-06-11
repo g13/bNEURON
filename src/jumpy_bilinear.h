@@ -315,10 +315,27 @@ inline double find_v_at_t(Input &input, nNL &neuroLib, Cross &cross, size head, 
     double dt;
     dt = t - tCross;
     if (dt < tol_tl) {
-        if (cross.spiked.back()) {
-            v = add_vAS_contribution(neuroLib.vAS, cross.vCross.back(), dt, cross.v0.back(), cross.vRest);
-        } else {
+        if (cross.nCross == 0) {
             v = add_vinit_contribution(neuroLib.vLeak, cross.vCross.back(), dt);
+            if (jb::debug) {
+                cout << " vinit = " << v << endl;
+            }
+        } else {
+            if (cross.spiked.back()) {
+                if (dt < neuroLib.nvASt) {
+                    v = add_vAS_contribution(neuroLib.vAS, cross.vAScross.back(), dt, cross.v0.back(), cross.vRest);
+                    if (jb::debug) {
+                        cout << " vAS = " << v << endl;
+                    }
+                }
+            } else {
+                if (dt < neuroLib.nvNSt) {
+                    v = add_vinit_contribution(neuroLib.vNS, cross.vNScross.back(), dt);
+                    if (jb::debug) {
+                        cout << " vNS = " << v << endl;
+                    }
+                }
+            }
         }
     }
 

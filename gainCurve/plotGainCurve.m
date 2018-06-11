@@ -74,13 +74,15 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
     tjl = cell(nTrial,1);
     sb0 = zeros(nTrial,1);
     tb0 = cell(nTrial,1);
+    sl0 = zeros(nTrial,1);
+    tl0 = cell(nTrial,1);
     cpuFn = datafile{3};
     cpuFid = fopen(cpuFn,'r');
     if p.one
-        cpuTime = fread(cpuFid,[nTrial,6],'double');
+        cpuTime = fread(cpuFid,[nTrial,7],'double');
         cpuTime = cpuTime';
     else
-        cpuTime = fread(cpuFid,[6,nTrial],'double');
+        cpuTime = fread(cpuFid,[7,nTrial],'double');
     end
     figure;
     if p.one
@@ -118,7 +120,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
             if sjb(i) >0
                 tjb{i} = fread(RasterFid,sjb(i),'double');
             end
-            plot(tjb{i},zeros(sjb(i),1)+4,'.c','MarkerSize',10);
+            plot(tjb{i},zeros(sjb(i),1)+4,'ob','MarkerSize',3);
         end
         for i = 1:nTrial
             subplot(nTrial,2,(i-1)*2+1)
@@ -127,7 +129,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
             if sjl(i) >0
                 tjl{i} = fread(RasterFid,sjl(i),'double');
             end
-            plot(tjl{i},zeros(sjl(i),1)+5,'.m','MarkerSize',10);
+            plot(tjl{i},zeros(sjl(i),1)+5,'or','MarkerSize',3);
         end
         for i = 1:nTrial
             subplot(nTrial,2,(i-1)*2+1)
@@ -136,7 +138,16 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
             if sb0(i) >0
                 tb0{i} = fread(RasterFid,sb0(i),'double');
             end
-            plot(tb0{i},zeros(sb0(i),1)+6,'.g','MarkerSize',10);
+            plot(tb0{i},zeros(sb0(i),1)+6,'*b','MarkerSize',3);
+        end
+        for i = 1:nTrial
+            subplot(nTrial,2,(i-1)*2+1)
+            hold on
+            sl0(i) = fread(RasterFid,1,sizeSize);
+            if sl0(i) >0
+                tl0{i} = fread(RasterFid,sl0(i),'double');
+            end
+            plot(tl0{i},zeros(sl0(i),1)+7,'*r','MarkerSize',3);
         end
     else 
         for i = 1:nTrial
@@ -164,22 +175,28 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
             if sjb(i) >0
                 tjb{i} = fread(RasterFid,sjb(i),'double');
             end
-            plot(tjb{i},zeros(sjb(i),1)+4,'.c','MarkerSize',10);
+            plot(tjb{i},zeros(sjb(i),1)+4,'ob','MarkerSize',3);
 
             sjl(i) = fread(RasterFid,1,sizeSize);
             if sjl(i) >0
                 tjl{i} = fread(RasterFid,sjl(i),'double');
             end
-            plot(tjl{i},zeros(sjl(i),1)+5,'.m','MarkerSize',10);
+            plot(tjl{i},zeros(sjl(i),1)+5,'or','MarkerSize',3);
 
             sb0(i) = fread(RasterFid,1,sizeSize);
             if sb0(i) >0
                 tb0{i} = fread(RasterFid,sb0(i),'double');
             end
-            plot(tb0{i},zeros(sb0(i),1)+6,'.g','MarkerSize',10);
+            plot(tb0{i},zeros(sb0(i),1)+6,'*b','MarkerSize',10);
+
+            sl0(i) = fread(RasterFid,1,sizeSize);
+            if sl0(i) >0
+                tl0{i} = fread(RasterFid,sl0(i),'double');
+            end
+            plot(tl0{i},zeros(sl0(i),1)+7,'*r','MarkerSize',10);
         end
     end
-    save(['../', RasterFn(1:length(RasterFn)-4),'.mat'], 'ts', 'tb', 'tl', 'tjb', 'tjl', 'tb0');
+    save(['../', RasterFn(1:length(RasterFn)-4),'.mat'], 'ts', 'tb', 'tl', 'tjb', 'tjl', 'tb0','tl0');
     fclose(RasterFid);
     subplot(2,2,2)
     hold on
@@ -189,6 +206,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
     plot(inputLevel,sjb./runTime*1000,'-oc');
     plot(inputLevel,sjl./runTime*1000,'-om');
     plot(inputLevel,sb0./runTime*1000,'-*g');
+    plot(inputLevel,sl0./runTime*1000,'-*y');
     xlim([0,inputLevel(nTrial)*1.1]);
     xlabel('input rate Hz');
     ylabel('firing rate Hz');
@@ -201,8 +219,9 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
     plot(inputLevel,cpuTime(4,:),'-oc');
     plot(inputLevel,cpuTime(5,:),'-om');
     plot(inputLevel,cpuTime(6,:),'-*g');
+    plot(inputLevel,cpuTime(7,:),'-*y');
     xlim([0,inputLevel(nTrial)*1.1]);
-    legend({'sim','bilinear','linear','jb','jl','bilinear0'});
+    legend({'sim','bilinear','linear','jb','jl','bilinear0','linear0'});
     xlabel('input rate Hz');
     ylabel('cpuTime s');
 
@@ -221,6 +240,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
         simV = cell(nTrial,1);
         biV = cell(nTrial,1);
         biV0 = cell(nTrial,1);
+        liV0 = cell(nTrial,1);
         datafid = fopen(dataFn,'r');
         jNDfid = fopen(jNDFn,'r');
         if plotInput
@@ -245,6 +265,9 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
                 end
                 for i=1:nTrial
                     biV0{i} = fread(datafid, nDim(i), 'double');
+                end
+                for i=1:nTrial
+                    liV0{i} = fread(datafid, nDim(i), 'double');
                 end
             end
             if jNDfid
@@ -282,6 +305,7 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
                     biV{i} = fread(datafid, nDim(i), 'double');
                     liV{i} = fread(datafid, nDim(i), 'double');
                     biV0{i} = fread(datafid, nDim(i), 'double');
+                    liV0{i} = fread(datafid, nDim(i), 'double');
                     if p.getDendV
                         for j=1:n
                             dendV{i,j} = fread(datafid, nDimSim(i), 'double');
@@ -344,10 +368,11 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
             hb = plot(t,biV{i},'b');
             hl = plot(t,liV{i},'r');
             hb0 = plot(t,biV0{i},'g');
-            handles = [handles, hb, hl, hb0];
-            labels = [labels, 'bi','li','bi0'];
-            minV0 = min([min(simV{i}),min(biV{i}),min(liV{i}),min(biV0{i})]);
-            maxV0 = min([-50,max([max(simV{i}),max(biV{i}),max(liV{i}),max(biV0{i})])]);
+            hl0 = plot(t,liV0{i},'y');
+            handles = [handles, hb, hl, hb0, hl0];
+            labels = [labels, 'bi','li','bi0','hl0'];
+            minV0 = min([min(simV{i}),min(biV{i}),min(liV{i}),min(biV0{i}),min(liV0{i})]);
+            maxV0 = min([-50,max([max(simV{i}),max(biV{i}),max(liV{i}),max(biV0{i}),max(liV0{i})])]);
             vStretch = maxV0-minV0;
             minV = minV0-vStretch*0.1;
             maxV = maxV0+vStretch*0.1;
@@ -462,12 +487,17 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
                 lt = [lt,'jl'];
             end
             if sb0(i) > 0
-                ltmp = plot(tb0{i},ones(1,sb0(i))+5,'og','MarkerSize',3,'LineStyle','none');
+                ltmp = plot(tb0{i},ones(1,sb0(i))+5,'*b','MarkerSize',3,'LineStyle','none');
                 lh = [lh, ltmp];
                 lt = [lt,'b0'];
             end
+            if sl0(i) > 0
+                ltmp = plot(tl0{i},ones(1,sl0(i))+6,'*r','MarkerSize',3,'LineStyle','none');
+                lh = [lh, ltmp];
+                lt = [lt,'l0'];
+            end
             legend(lh,lt);
-            ylim([0,6]);
+            ylim([0,8]);
             xlim(xl);
 
             if dt(i) == tstep
@@ -476,12 +506,15 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
                 berr = biV{i} - simV{i};
                 lerr = liV{i} - simV{i};
                 b0err = biV0{i} - simV{i};
+                l0err = liV0{i} - simV{i};
                 hberr = plot(t0, berr, 'b');
                 hlerr = plot(t0, lerr,'r');
                 hb0err = plot(t0, b0err, 'g');
+                hl0err = plot(t0, l0err, 'y');
                 errorbar(t0(end)+1, mean(abs(berr)), std(berr),'*b');
                 errorbar(t0(end)+2, mean(abs(lerr)), std(lerr),'*r');
                 errorbar(t0(end)+3, mean(abs(b0err)), std(b0err),'*g');
+                errorbar(t0(end)+4, mean(abs(l0err)), std(l0err),'*y');
                 xlim(xl);
             end
 
@@ -511,6 +544,11 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
         fBi0 = fft(biV0{i},l);
         psdBi0 = (abs(fBi0)/l).^2;
         autoBi0 = ifft(psdBi0);
+
+        fLi0 = fft(liV0{i},l);
+        psdLi0 = (abs(fLi0)/l).^2;
+        autoLi0 = ifft(psdLi0);
+
         subplot(ceil(nTrial/2),2,i)
         hold on
         tau0 = linspace(-l0/2*tstep,l0/2*tstep,l0);
@@ -519,10 +557,12 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
         autoBi = [autoBi(l/2+1:l);autoBi(1:l/2)];
         autoLi = [autoLi(l/2+1:l);autoLi(1:l/2)];
         autoBi0 = [autoBi0(l/2+1:l);autoBi0(1:l/2)];
+        autoLi0 = [autoLi0(l/2+1:l);autoLi0(1:l/2)];
         plot(tau0, autoSim,'k');
         plot(tau, autoBi,'b');
         plot(tau, autoLi,'r');
-        plot(tau, autoBi0,'g');
+        plot(tau, autoBi0,'c');
+        plot(tau, autoLi0,'m');
         xlabel('\tau');
         ylabel('autocorr');
         title(['Trial ',num2str(i)]);

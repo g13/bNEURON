@@ -6,14 +6,14 @@ int main(int argc, char **argv) {
     //bool win = true;
     //feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
     ofstream data_file, tIncome_file, raster_file, jND_file, cpu_file;
-    double cpu_t_sim, cpu_t_bilinear, cpu_t_linear, cpu_t_bilinear0;
+    double cpu_t_sim, cpu_t_bilinear, cpu_t_linear, cpu_t_bilinear0, cpu_t_linear0;
     double cpu_t_jbilinear, cpu_t_jlinear;
     clockid_t clk_id = CLOCK_PROCESS_CPUTIME_ID;
     struct timespec tpS, tpE;
     vector<double> simV;
     vector<double> biV, biV0;
-    vector<double> liV;
-    vector<double> tsp_sim, tsp_bi, tsp_jbi, tsp_li, tsp_jli, tsp_bi0;
+    vector<double> liV, liV0;
+    vector<double> tsp_sim, tsp_bi, tsp_jbi, tsp_li, tsp_jli, tsp_bi0, tsp_li0;
 
     InputArgsCA1 inputArg = input_args_CA1();
     inputArg.read(argc,argv);
@@ -157,6 +157,8 @@ int main(int argc, char **argv) {
         biV0.push_back(v0);
         liV.reserve(nt);
         liV.push_back(v0);
+        liV0.reserve(nt);
+        liV0.push_back(v0);
         neuron.vReset = inputArg.vRest;
         neuron.vRest = inputArg.vRest;
         double vCrossl = inputArg.vRest + (inputArg.vThres - inputArg.vRest)*inputArg.rLinear;
@@ -209,7 +211,7 @@ int main(int argc, char **argv) {
         clock_gettime(clk_id,&tpS);
         if (inputArg.mode[2]) {
             cout << " linear begin: " << endl;
-            nc = linear_nSyn(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, liV, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_li, vCrossl, vBackl, inputArg.afterCrossBehavior, inputArg.spikeShape,ii,inputArg.sliceDebugPlot);
+            nc = linear_nSyn(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, liV, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_li, vCrossl, vBackl, inputArg.afterCrossBehavior, inputArg.spikeShape,ii,inputArg.sliceDebugPlot,false);
         } else {
             cout << " linear skipped" << endl;
             nc = 0;
@@ -286,6 +288,20 @@ int main(int argc, char **argv) {
         cout << "spikes: " << nc << endl;
         cout << endl;
 
+        clock_gettime(clk_id,&tpS);
+        if (inputArg.mode[6]) {
+            cout << " linear0 begin: " << endl;
+            nc = linear_nSyn(cell, spikeTrain, dendVclamp, inputArg.dendClampRatio, liV0, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_li0, vCrossl, vBackl, inputArg.afterCrossBehavior, inputArg.spikeShape,ii,inputArg.sliceDebugPlot, true);
+        } else {
+            cout << " linear0 skipped" << endl;
+            nc = 0;
+        }
+        clock_gettime(clk_id,&tpE);
+        cpu_t_linear0 = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
+        cout << "linear est. ended, took " << cpu_t_linear0 << "s" << endl;
+        cout << "spikes: " << nc << endl;
+        cout << endl;
+        //=============== data ouput
         if (inputArg.mode[0]) {
             neuron.writeAndUpdateIn(neuron.tin.size(), tIncome_file);
         }
@@ -409,6 +425,19 @@ int main(int argc, char **argv) {
 
             biV0.clear();
             tsp_bi0.clear();
+        }
+
+        if (inputArg.mode[6]) {
+            cpu_file.write((char*)&(cpu_t_linear0), sizeof(double));
+
+            data_file.write((char*)liV0.data(), nt*sizeof(double));
+
+            output[0] = &tsp_li0;
+            size rasterSize = tsp_li0.size();
+            size_data_write(raster_file, output, 1, rasterSize, 0);
+
+            liV0.clear();
+            tsp_li0.clear(); 
         }
 
         neuron.clear();

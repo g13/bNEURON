@@ -64,113 +64,6 @@ def getNear(seq, target):
                     break;
     return istart, jnext, ratio
 
-def get0J(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,s,savePlot,plotData,directory,rdpi):
-    print "j = ", j
-    bfire = np.empty(ndt)
-    kv = np.zeros((ndt,run_nt))
-    if i == j:
-        spikes = np.array([[]])
-        sel = [i]
-    else:
-        spikes = np.array([np.array([]),np.array([])])
-        sel = [i, j]
-    if plotData:
-        dtfigname = 'kv-v'+str(vid)+'-i'+str(i)+'-j'+str(j)+'-dt'+str(idt)
-        dtfig = pyplot.figure(dtfigname,figsize = (8,4))
-    for jdt in xrange(idt,ndt):
-        print " jdt = ", jdt
-        dtt = dtRange[jdt]
-        RList = np.zeros((n,2))
-        if i == j:
-            if idt == 0:
-                RList[i,:] = getGH(dt,2*gList[i])
-            else:
-                rl0 = getGH(dt,gList[i])
-                RList[i,:] = getGH(dtt-dt,gList[i],rl0[0],rl0[1])
-        else:
-            RList[i,:] = getGH(dtt,gList[i])
-            RList[j,:] = getGH(dtt-dt,gList[j])
-        #if jdt == ndt-1:
-        relit = run_nt - idtRange[jdt]
-        relt = run_t-dtt
-        v,fired = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + relt , 0, tstep, '')
-        v = v[ntrans:ntrans+relit]
-        #else:
-        #    relit = tol_nt - idtRange[jdt]
-        #    relt = tol_t-dtt
-        #    v,fired = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + relt, 0, tstep, '')
-        #    v = v[ntrans:ntrans+relit]
-        bfire[jdt] = fired
-        assert(dtt>=dt)
-        print relit, ' == ', v.size
-        assert(v.size == relit)
-        v = v - leakyV[:relit]
-        print "max V = ", np.amax(np.absolute(v))
-        it = np.argmax(np.absolute(v))
-        print "max it = ", it
-        dtij = idtRange[jdt] - idtRange[idt]
-        idtij = np.argwhere(idtRange - dtij == 0)
-        assert(idtij.size==1 or idtij.size==0)
-        if idtij.size == 1:
-            print idtij, " I skipped a singlet simulation"
-            v2 = v1[idtij[0,0],j,dtij:dtij+relit]
-        else:
-            idtij = np.argwhere(iextraRange - dtij == 0)
-            print idtij, " I skipped a extralet simulation"
-            assert(idtij.size==1)
-            v2 = extralet[idtij[0,0],j,dtij:dtij+relit]
-
-        assert(v2.size == relit)
-        addv = v1[jdt,i,idtRange[jdt]:idtRange[jdt]+relit] + v2
-        kvtmp = v-addv
-        kv[jdt,idtRange[jdt]:idtRange[jdt]+relit] = kvtmp
-        print "max kv = ", np.amax(np.absolute(kvtmp))
-        if plotData:
-            pyplot.figure(dtfigname)
-            t = np.arange(run_nt)*tstep
-            tSel = np.arange(idtRange[jdt],idtRange[jdt]+relit)
-            ax1 = dtfig.add_subplot(111)         
-            ax1.plot(t[tSel],v,'c',lw=0.6)
-            ax1.plot(t[tSel],v1[jdt,i,tSel],'r',lw=0.4)
-            ax1.plot(t[tSel],v2,'b',lw=0.2)
-            ax1.plot(t[tSel],addv,':g',lw=0.2)
-            ax1.plot(t[tSel],kvtmp,':k')
-            if idt == jdt:
-                v10 = v1[jdt,i,tSel]
-                pyplot.title('k = '+str(kvtmp[it]/(v10[it]+v2[it])))
-    if savePlot and plotData:
-        pyplot.figure(dtfigname)
-        pyplot.savefig(directory+'/'+dtfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
-        pyplot.close(dtfigname)
-    s.send(np.array([kv,bfire,j]))
-    print 'j',j, '\'s out'
-
-def get0I(i,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,s,savePlot,plotData,directory,rdpi):
-    print " i = ", i
-    jobs = []
-    recv = []
-    kv = np.zeros((n,ndt,run_nt))
-    bfire = np.empty((n,ndt))
-    for j in xrange(n):
-        r, send = mp.Pipe(False)
-        p = mp.Process(target = getJ, args = (i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,send,savePlot,plotData,directory,rdpi))
-        jobs.append(p)
-        recv.append(r)
-        p.start()
-    print 'gathering i ', i
-    result = np.array([x.recv() for x in recv])
-    for p in jobs:
-        p.join()
-    print 'joined i ', i
-    ind = [result[j][2] for j in xrange(n)]
-    argi = np.argsort(ind)
-    for j in xrange(n):
-        jj = argi[j]
-        kv[j,:,:] = result[jj][0]
-        bfire[j,:] = result[jj][1]
-    s.send(np.array([kv,bfire,i]))
-    print 'i',i,'\'s out'
-        
 def getJ(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,s,savePlot,plotData,directory,rdpi):
     print "j = ", j
     bfire = np.empty(ndt)
@@ -190,7 +83,7 @@ def getJ(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vS
         RList = np.zeros((n,2))
         if i == j:
             if idt == 0:
-                RList[i,:] = getGH(dt,2*gList[i])
+                RList[i,:] = getGH(dtt-dt,2*gList[i])
             else:
                 rl0 = getGH(dt,gList[i])
                 RList[i,:] = getGH(dtt-dt,gList[i],rl0[0],rl0[1])
@@ -387,7 +280,7 @@ def getNib(argv):
     tstep = 1.0/10.0
     #==================
     run_t = 340.0
-    trans = 110.0
+    trans = 180.0
     #==================
     #run_t = 100.0
     #trans = 10.0
@@ -415,10 +308,10 @@ def getNib(argv):
     #locE = np.random.randint(75,134,6)
     #===========================================================
     #locE = np.array([79, 82, 83, 108, 124, 129],dtype='int')
-    locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
-    locI = np.array([14, 28, 30],dtype='int')
-    #locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
-    #locI = np.array([14, 28, 40],dtype='int')
+    #locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
+    #locI = np.array([14, 28, 30],dtype='int')
+    locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
+    locI = np.array([14, 28, 40],dtype='int')
     vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
     #===========================================================
     #vRange = np.array([-74,-70,-65,-61],dtype='double')
@@ -440,10 +333,10 @@ def getNib(argv):
     #locI[-1] = swap
 
     g0 = 32.0*5e-4
-    gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
-    gI = -g0*np.array([10.0, 10.0, 10.0])
-    #gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
-    #gI = -g0*np.array([6.0, 10.0, 8.0])
+    #gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
+    #gI = -g0*np.array([10.0, 10.0, 10.0])
+    gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
+    gI = -g0*np.array([6.0, 10.0, 8.0])
     #locE = np.array([32, 52, 66, 78, 98, 136],dtype='int')
     #locE = np.array([74],dtype='int')
     #gE = (1e-1 + np.random.random_sample(locE.size) * (1-1e-1)) * (0.10/2.0)
@@ -592,6 +485,7 @@ def getNib(argv):
                 pyplot.figure(sfigname,figsize = (8,4))
                 for idt in xrange(ndt):
                     pyplot.plot(t[idtRange[idt]:],v1[idt,i,idtRange[idt]:],'r')
+                    pyplot.plot(t[idtRange[idt]:],dendDv[idt,i,idtRange[idt]:],':r')
                 if savePlot:
                     pyplot.savefig(directory+'/'+sfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
                     pyplot.close(sfigname)

@@ -105,7 +105,7 @@ inline void clampDendRaw(nNL &neuroLib, nNS &neuron, double tol_tb, double tCros
                 cout << i << "th input " << ID << " dv = " << dv << endl;
             }
             dendv[ID] += dv;
-            if (dt*neuroLib.tstep < neuron.dtrans && ID < neuroLib.nE) {
+            if (dt < neuron.dtrans && ID < neuroLib.nE) {
                 ntrans[ID] += 1;
             }
         }
@@ -247,7 +247,7 @@ inline void interpVAS(vector<double> &v, size vs,  double **vAS, double *vRange,
 
 unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool dtSquare, int itrial, bool sliceDebugPlot);
 
-unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, int itrial, bool sliceDebugPlot);
+unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, int itrial, bool sliceDebugPlot, bool linear0);
 
 unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool kVStyle, bool dtSquare, int itrial, bool sliceDebugPlot);
 

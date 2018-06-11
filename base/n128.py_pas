@@ -12,6 +12,57 @@ class RealisticNeuron(object):
             print "init_V = ", v0
             self.current_balance(v0)
     #
+    def cp_init(self,cell0):
+        self.soma.push()
+        if h.ismembrane("na3") or h.ismembrane("nax"):
+            self.soma.ena = cell0.soma.ena 
+        if h.ismembrane("kap") or h.ismembrane("kad") or h.ismembrane("kdr"):
+            self.soma.ek = cell0.soma.ek 
+        if h.ismembrane("hd"):
+            self.soma.ehd_hd = cell0.soma.ehd_hd
+        h.pop_section()
+        for i in xrange(len(self.dend)):
+            self.dend[i].push()
+            if h.ismembrane("na3") or h.ismembrane("nax"):
+                self.dend[i].ena = cell0.dend[i].ena
+            if h.ismembrane("kap") or h.ismembrane("kad") or h.ismembrane("kdr"):
+                self.dend[i].ek = cell0.dend[i].ek
+            if h.ismembrane("hd"):
+                self.dend[i].ehd_hd = cell0.dend[i].ehd_hd
+            h.pop_section()
+        self.copy_volt(cell0)
+        h.finitialize()
+        h.fcurrent()
+        self.soma.push()
+        for seg in self.soma:
+                self.soma(seg.x).e_pas = cell0.soma(seg.x).e_pas
+        h.pop_section()
+        for i in xrange(len(self.dend)):
+            self.dend[i].push()
+            for seg in self.dend[i]:
+                self.dend[i](seg.x).e_pas = cell0.dend[i](seg.x).e_pas
+            h.fcurrent()
+            h.pop_section()
+        if h.cvode.active:
+            h.cvode.re_init()
+        else:
+            h.fcurrent()
+        h.frecord_init()
+    #
+    def copy_volt(self,cell0):
+        print "copy voltage from cell:"
+        for seg in self.soma:
+            self.soma(seg.x).v = cell0.soma(seg.x).v
+        print "soma at", self.soma.v
+        avgDend = 0.0
+        nDendSeg = 0.0
+        for i in xrange(len(self.dend)):
+            for seg in self.dend[i]:
+                self.dend[i](seg.x).v = cell0.dend[i](seg.x).v
+                avgDend = avgDend + self.dend[i](seg.x).v
+            nDendSeg = nDendSeg + self.dend[i].nseg
+        print "dend average at", avgDend/nDendSeg
+    #
     def __init__(self,v0):
         self.create_sections()
         self.build_topology()

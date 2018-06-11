@@ -78,6 +78,7 @@ typedef struct syn_set SynSet;
 
 struct get_cell{
     PyObject *Py_Cell;
+    PyObject *Py_Cell0;
     PyObject *Py_synList;
     PyObject *Py_vecStimList;
     PyObject *pModule;
@@ -85,6 +86,7 @@ struct get_cell{
     PyObject *Py_pos;
     vector<double> dist;
     get_cell(SynSet syn);
+    copy_cell(
 };
 typedef struct get_cell Cell;
 

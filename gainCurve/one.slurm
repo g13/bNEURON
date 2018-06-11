@@ -22,7 +22,7 @@ echo $getDendV
 
 source activate py2
 
-for method in {0..5}
+for method in {0..6}
 do
     ./one -d $method
 done

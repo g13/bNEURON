@@ -193,12 +193,12 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
                             interpVAS(v,vs,neuroLib.vAS,neuroLib.vASrange,neuroLib.nvAS,v[vs],neuron.vRest,tl);
                             cout << "vas ended with " << v[vs+tl-1] << " at " << vs+tl-1 << endl;
                         } else {
-                            if (vs + l0 <= run_lt) {
-                                tl = nt0;
+                            if (vs + neuroLib.nvNSt <= run_lt) {
+                                tl = neuroLib.nvNSt;
                             } else {
                                 tl = run_nt-vs;
                             }
-                            interpVinit(v,vs,neuroLib.vLeak,neuroLib.vRange,nv,v[vs],tl);
+                            interpVinit(v,vs,neuroLib.vNS,neuroLib.vNSrange,neuroLib.nvNS,v[vs],tl);
                         }
                     } else {
                         if (vs + l0 <= run_lt) {
@@ -302,7 +302,7 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vecto
     return spikeCount;
 }
 
-unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, int itrial, bool sliceDebugPlot){
+unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, int itrial, bool sliceDebugPlot, bool linear0){
     double vTarget, dtTarget;
     size tl, vs, ve, vc, i, j, k, ith, ith_old;
     size nin = neuron.tin.size(), nv = neuroLib.nv, ndt = neuroLib.ndt;
@@ -366,7 +366,11 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
             if (neuron.tin[i] > run_t) {
                 break;
             }
-            vTarget = v[vs];
+            if (linear0) {
+                vTarget = neuron.vRest;
+            } else {
+                vTarget = v[vs];
+            }
             vS[i] = vTarget;
 
             if (vs+l0 > run_lt) {
@@ -408,7 +412,11 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
                         clampDendRaw(neuroLib, neuron, t1, vs*tstep, v[k], dendVclamp, ith, rd, tCross_old, vCross_old, vS);
                         string fign;
                         if (sliceDebugPlot) {
-                            fign = "li-" + to_string(itrial) + "-" + to_string(ncross);
+                            if (linear0) {
+                                fign = "li0-" + to_string(itrial) + "-" + to_string(ncross);
+                            } else {
+                                fign = "li-" + to_string(itrial) + "-" + to_string(ncross);
+                            }
                         } else {
                             fign = "";
                         }
@@ -463,12 +471,12 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
                             interpVAS(v,vs,neuroLib.vAS,neuroLib.vASrange,neuroLib.nvAS,v[vs],neuron.vRest,tl);
                             cout << "vas ended with " << v[vs+tl-1] << " at " << vs+tl-1 << endl;
                         } else {
-                            if (vs + l0 <= run_lt) {
-                                tl = nt0;
+                            if (vs + neuroLib.nvNSt <= run_lt) {
+                                tl = neuroLib.nvNSt;
                             } else {
                                 tl = run_nt-vs;
                             }
-                            interpVinit(v,vs,neuroLib.vLeak,neuroLib.vRange,nv,v[vs],tl);
+                            interpVinit(v,vs,neuroLib.vNS,neuroLib.vNSrange,neuroLib.nvNS,v[vs],tl);
                         }
                     } else {
                         if (vs + l0 <= run_lt) {
@@ -482,7 +490,11 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vector<
                     }
 
                     if (afterCrossBehavior>0) {
-                        vTarget = v[vs];
+                        if (linear0) {
+                            vTarget = neuron.vRest;
+                        } else {
+                            vTarget = v[vs];
+                        }
                         for (i=ith+1; i>0; i--) {
                             j = i-1;
                             size it = round(neuron.tin[j]/tstep);
@@ -750,12 +762,12 @@ unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, vect
                             interpVAS(v,vs,neuroLib.vAS,neuroLib.vASrange,neuroLib.nvAS,v[vs],neuron.vRest,tl);
                             cout << "vas ended with " << v[vs+tl-1] << " at " << vs+tl-1 << endl;
                         } else {
-                            if (vs + l0 <= run_lt) {
-                                tl = nt0;
+                            if (vs + neuroLib.nvNSt <= run_lt) {
+                                tl = neuroLib.nvNSt;
                             } else {
                                 tl = run_nt-vs;
                             }
-                            interpVinit(v,vs,neuroLib.vLeak,neuroLib.vRange,nv,v[vs],tl);
+                            interpVinit(v,vs,neuroLib.vNS,neuroLib.vNSrange,neuroLib.nvNS,v[vs],tl);
                         }
                     } else {
                         if (vs + l0 <= run_lt) {

@@ -40,7 +40,7 @@ struct CrossData {
     double vRest;
     std::vector<double> v0;
     std::vector<size> iCross; // next Cross index
-    std::vector<IJR> vCross;
+    std::vector<IJR> vCross,vNScross,vAScross;
     std::vector<double> tCross; // t of crossing back
     std::vector<double> t,v,gE,gI,m,n,h,hE,hI;
     CrossData(size nt, double vinit, double vRest0);

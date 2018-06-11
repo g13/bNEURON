@@ -44,6 +44,8 @@ CrossData::CrossData(size nt, double vinit, double vRest0) {
     iCross.reserve(nt/2);
     tCross.reserve(nt/2);
     vCross.reserve(nt/2);
+    vAScross.reserve(nt/2);
+    vNScross.reserve(nt/2);
     tCross.push_back(0);
     v.reserve(nt);
     t.reserve(nt);
@@ -62,6 +64,10 @@ void CrossData::initialize(size nt, double vinit, double vRest0) {
     tCross.push_back(0);
     vCross.clear();
     vCross.reserve(nt/2);
+    vAScross.clear();
+    vAScross.reserve(nt/2);
+    vNScross.clear();
+    vNScross.reserve(nt/2);
     spiked.clear();
     spiked.reserve(nt/2);
     v0.clear();

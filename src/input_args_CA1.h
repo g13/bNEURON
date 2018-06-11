@@ -26,7 +26,7 @@ struct input_args_CA1 : input_args {
     bool dtSquare;
     bool getDendV;
     unsigned int vInit;
-    std::bitset<6> mode;
+    std::bitset<7> mode;
     input_args_CA1();
     void setbit();
     using input_args::read;
