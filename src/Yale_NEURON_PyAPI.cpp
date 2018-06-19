@@ -48,6 +48,7 @@ get_cell::get_cell(SynSet syn) {
                 cout << " pos ready" << endl;
             }
             pArgs = PyTuple_New(5);
+            Py_INCREF(Py_gList);
             PyTuple_SetItem(pArgs,0,Py_gList);
             Py_INCREF(Py_loc);
             PyTuple_SetItem(pArgs,1,Py_loc);
@@ -84,19 +85,18 @@ get_cell::get_cell(SynSet syn) {
 }
 
 //finialize
-void NEURON_cleanup(Cell &cell) {
-    cout << "module ref: " << cell.pModule << endl;
-    Py_CLEAR(cell.pModule);
-    cout << "cell ref: " << cell.Py_Cell << endl;
-    Py_CLEAR(cell.Py_Cell);
-    cout << "synList ref: " << cell.Py_synList << endl;
-    Py_CLEAR(cell.Py_synList);
-    cout << "vecStimList ref: " << cell.Py_vecStimList << endl;
-    Py_CLEAR(cell.Py_vecStimList);
+void get_cell::NEURON_cleanup() {
+    cout << "module ref: " << pModule << endl;
+    Py_CLEAR(pModule);
+    cout << "cell ref: " << Py_Cell << endl;
+    Py_CLEAR(Py_Cell);
+    cout << "synList ref: " << Py_synList << endl;
+    Py_CLEAR(Py_synList);
+    cout << "vecStimList ref: " << Py_vecStimList << endl;
+    Py_CLEAR(Py_vecStimList);
 }
 
-unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, long insert, bool getDendV, vector<vector<double>> &dendV, bool pas, string fign) {
-
+unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, long insert, bool getDendV, vector<vector<double>> &dendV, bool pas, string fign, bool copy, bool cpi) {
     PyObject **pRList = new PyObject*[n];
     PyObject *pFunc;
     PyObject *pArgs, *pValue, *Py_dendVclamp;
@@ -106,7 +106,7 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
     long fired;
     double *v_p, *tsp_p;
     npy_intp dim;
-    int countdown = 10;
+    int countdown = 11;
 
     if (cell.pModule != NULL) {
         if (yl::debug) {
@@ -207,24 +207,16 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
                     cout << "-----------> vCap wrapper failed" << endl;
                 }
             }
-            pArgs = PyTuple_New(24);
-            cout << "before Py_Cell SetItem" << cell.Py_Cell << endl;
+            pArgs = PyTuple_New(26);
             Py_INCREF(cell.Py_Cell);
             PyTuple_SetItem(pArgs, 0,cell.Py_Cell);
-            cout << "after Py_Cell SetItem" << cell.Py_Cell << endl;
             PyTuple_SetItem(pArgs, 1,PyFloat_FromDouble(vinit));
-            cout << "before Py_synList SetItem" << cell.Py_synList << endl;
             Py_INCREF(cell.Py_synList);
             PyTuple_SetItem(pArgs, 2,cell.Py_synList);
-            cout << "after Py_synList SetItem" << cell.Py_synList << endl;
             PyTuple_SetItem(pArgs, 3,Py_RList);
-            cout << "before Py_vSL SetItem" << cell.Py_vecStimList << endl;
             Py_INCREF(cell.Py_vecStimList);
             PyTuple_SetItem(pArgs, 4,cell.Py_vecStimList);
-            cout << "after Py_vSL SetItem" << cell.Py_vecStimList << endl;
-            cout << "before spikeTrain SetItem" << Py_spikeTrainTuple << endl;
             PyTuple_SetItem(pArgs, 5,Py_spikeTrainTuple);
-            cout << "after spikeTrain SetItem" << Py_spikeTrainTuple << endl;
             PyTuple_SetItem(pArgs, 6,PyInt_FromLong(n));
             PyTuple_SetItem(pArgs, 7,PyFloat_FromDouble(trans));
             PyTuple_SetItem(pArgs, 8,PyFloat_FromDouble(tend));
@@ -234,14 +226,10 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
             PyTuple_SetItem(pArgs,12,PyInt_FromLong(oneGo));
             PyTuple_SetItem(pArgs,13,PyFloat_FromDouble(t0));
             PyTuple_SetItem(pArgs,14,PyFloat_FromDouble(tstep));
-            cout << "before Py_loc SetItem" << cell.Py_loc << endl;
             Py_INCREF(cell.Py_loc);
             PyTuple_SetItem(pArgs,15,cell.Py_loc);
-            cout << "after Py_loc SetItem" << cell.Py_loc << endl;
-            cout << "before Py_pos SetItem" << cell.Py_pos << endl;
             Py_INCREF(cell.Py_pos);
             PyTuple_SetItem(pArgs,16,cell.Py_pos);
-            cout << "after Py_pos SetItem" << cell.Py_pos << endl;
             PyTuple_SetItem(pArgs,17,Py_dendVclamp);
             PyTuple_SetItem(pArgs,18,Py_True);
             if (getDendV) {
@@ -267,11 +255,21 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
                 }
             }
             PyTuple_SetItem(pArgs,23,PyString_FromString(fign.c_str()));
+            if (copy) {
+                PyTuple_SetItem(pArgs,24,Py_True);
+            } else {
+                PyTuple_SetItem(pArgs,24,Py_False);
+            }
+            if (cpi) {
+                PyTuple_SetItem(pArgs,25,Py_True);
+            } else {
+                PyTuple_SetItem(pArgs,25,Py_False);
+            }
             if (yl::debug) {
                 cout << "       ..." << endl;
             }
             pValue = PyObject_CallObject(pFunc,pArgs);
-            cout << "before pArgs DECREF" << pArgs << endl;
+            //cout << "before pArgs DECREF" << pArgs << endl;
             //Py_XDECREF(pArgs);
             //cout << "after pArgs DECREF" << pArgs << endl;
             cout << "skipping pArgs DECREF" << pArgs << endl;
@@ -332,17 +330,17 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
                 }
                 nt = nt - gone;
 
-                cout << "before pVale DECREF" << pValue << endl;
+                //cout << "before pVale DECREF" << pValue << endl;
                 Py_DECREF(pValue);
-                cout << "before pVale DECREF" << pValue << endl;
+                //cout << "after pVale DECREF" << pValue << endl;
             } else {
                 if (yl::debug) {
                     cout << " but, the universe has rejected us" << endl;
                 }
             }
-            cout << "before pFunc DECREF" << pFunc << endl;
+            //cout << "before pFunc DECREF" << pFunc << endl;
             Py_DECREF(pFunc);
-            cout << "after pFunc DECREF" << pFunc << endl;
+            //cout << "after pFunc DECREF" << pFunc << endl;
         } else {
             if (yl::debug) {
                 cout << " The module's function is defected" << endl; 
@@ -371,7 +369,7 @@ size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jN
     double vinit = jnd.v.back();
     double vThres = neuron.vThres;
     double tref = neuron.tRef;
-    double trans = neuron.trans;
+    double trans = neuron.dtrans;
     vector<vector<double>> RList(neuron.nSyn,vector<double>(2,0));
     long nin = neuron.inID.size();
     
@@ -429,7 +427,7 @@ size neuroAlterB(nNS &neuron, nNL &neuroLib, vector<double> &v, size &ith, size 
     double t = vs*tstep;
     double vThres = neuron.vThres;
     double tref = neuron.tRef;
-    double trans = neuron.trans;
+    double trans = neuron.dtrans;
     size lCross;
     vector<vector<double>> RList(neuron.nSyn,vector<double>(2,0));
     long nin = neuron.inID.size();

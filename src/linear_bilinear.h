@@ -101,22 +101,34 @@ inline void clampDendRaw(nNL &neuroLib, nNS &neuron, double tol_tb, double tCros
             vbase = neuroLib.dendv[iv][iidt][ID][neuroLib.idtRange[iidt]+idt];
             dv = vbase + rv * (neuroLib.dendv[jv][iidt][ID][neuroLib.idtRange[iidt]+idt] - vbase)
                        + rdt * (neuroLib.dendv[iv][jjdt][ID][neuroLib.idtRange[jjdt]+idt] - vbase);
-            if (lb::debug2) {
-                cout << i << "th input " << ID << " dv = " << dv << endl;
+            if (lb::debug) {
+                cout << i << "th input " << ID << " dv = " << dv << " at " << tCross-dt << endl;
             }
             dendv[ID] += dv;
-            if (dt < neuron.dtrans && ID < neuroLib.nE) {
-                ntrans[ID] += 1;
+            //if (dt < neuron.dtau && ID < neuroLib.nE) {
+            //    ntrans[ID] += 1;
+            //}
+        }
+        double maxDv = 0.0;
+        int maxDvi = -1;
+        for (int i=0; i<neuron.nSyn; i++) {
+            if (abs(dendv[i] - 0) > pow(2,-52)) {
+                dendVclamp[i] = -(v0 + dendv[i] * pow(-rd,ntrans[i]));
+                if (abs(dendv[i]) > maxDv) {
+                    maxDv = abs(dendv[i]);
+                    maxDvi = i;
+                } 
             }
+        }
+        if (maxDvi != -1) {
+            dendVclamp[maxDvi] = -dendVclamp[maxDvi];
+            cout << "   maximal dend " << maxDvi << " will be hard clamped at " << dendVclamp[maxDvi] << ", with rd = " << maxDv << "x" << -rd << "^" << ntrans[maxDvi] << endl;
         }
         for (int i=0; i<neuron.nSyn; i++) {
             if (abs(dendv[i] - 0) > pow(2,-52)) {
-                dendVclamp[i] = v0 + dendv[i] * pow(-rd,ntrans[i]);
-                if (lb::debug) {
-                    cout << "   dend " << i << " will be clamped at " << dendVclamp[i] << ", with rd = " << dendv[i] << "x" << -rd << "^" << ntrans[i] << endl;
+                if (i!=maxDvi) {
+                    cout << "   dend " << i << " will be soft clamped at " << -dendVclamp[i] << ", with rd = " << dendv[i] << "x" << -rd << "^" << ntrans[i] << endl;
                 }
-            } else {
-                dendVclamp[i] = v0;
             }
         }
     } else {

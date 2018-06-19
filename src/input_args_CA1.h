@@ -15,6 +15,7 @@ struct input_args_CA1 : input_args {
     double tRef;
     double trans;
     double dtrans;
+    double dtau;
     double trans0;
     double rBiLinear;
     int kVStyle;

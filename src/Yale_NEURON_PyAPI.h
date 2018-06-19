@@ -78,7 +78,6 @@ typedef struct syn_set SynSet;
 
 struct get_cell{
     PyObject *Py_Cell;
-    PyObject *Py_Cell0;
     PyObject *Py_synList;
     PyObject *Py_vecStimList;
     PyObject *pModule;
@@ -86,14 +85,13 @@ struct get_cell{
     PyObject *Py_pos;
     vector<double> dist;
     get_cell(SynSet syn);
-    copy_cell(
+    void NEURON_cleanup();
 };
 typedef struct get_cell Cell;
 
 //finialize
-void NEURON_cleanup(Cell &cell); 
 
-unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, long insert, bool getDendV=false, vector<vector<double>> &dendV = dummy_dendV, bool pas = false, string fign="");
+unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, long insert, bool getDendV=false, vector<vector<double>> &dendV = dummy_dendV, bool pas = false, string fign="", bool copy=false, bool cpi=true);
 
 size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jND &jnd, double end_t, double it, double &tBack, double &vBack, double tstep, std::vector<double> &tsp, double vStop, unsigned int &nc, Cell &cell, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp, string fign);
 

@@ -252,12 +252,12 @@ def getI0(i,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,to
     s.send(np.array([kv0,i]))
     print 'i0 ',i,'s out'
 
-def getSinglets(i,idt,dt,gList,pos,cell,v0,sL,vSL,n,trans,ntrans,relt,tstep,relit,run_nt,idtRange,leakyV,leakyDendV,spikes,s):
+def getSinglets(i,idt,dt,gList,loc,pos,cell,v0,sL,vSL,n,trans,ntrans,relt,tstep,relit,run_nt,idtRange,leakyV,leakyDendV,spikes,s):
     print " i = ", i
     sel = [i]
     RList = np.zeros((n,2))
     RList[i,:] = getGH(dt,gList[i])
-    v1tmp, fired, dendv = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + relt, 0, tstep, '', pos[i])
+    v1tmp, fired, dendv = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + relt, 0, tstep, '', pos[i], loc[i])
     dendv = dendv[ntrans:ntrans+relit] - leakyDendV[:relit]
     v1tmp = v1tmp[ntrans:ntrans+relit] - leakyV[:relit]
     tmax = idtRange[idt] + np.argmax(v1tmp)
@@ -308,10 +308,10 @@ def getNib(argv):
     #locE = np.random.randint(75,134,6)
     #===========================================================
     #locE = np.array([79, 82, 83, 108, 124, 129],dtype='int')
-    #locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
-    #locI = np.array([14, 28, 30],dtype='int')
-    locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
-    locI = np.array([14, 28, 40],dtype='int')
+    locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
+    locI = np.array([14, 28, 30],dtype='int')
+    #locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
+    #locI = np.array([14, 28, 40],dtype='int')
     vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
     #===========================================================
     #vRange = np.array([-74,-70,-65,-61],dtype='double')
@@ -333,12 +333,10 @@ def getNib(argv):
     #locI[-1] = swap
 
     g0 = 32.0*5e-4
-    #gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
-    #gI = -g0*np.array([10.0, 10.0, 10.0])
-    gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
-    gI = -g0*np.array([6.0, 10.0, 8.0])
-    #locE = np.array([32, 52, 66, 78, 98, 136],dtype='int')
-    #locE = np.array([74],dtype='int')
+    gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
+    gI = -g0*np.array([10.0, 10.0, 10.0])
+    #gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
+    #gI = -g0*np.array([6.0, 10.0, 8.0])
     #gE = (1e-1 + np.random.random_sample(locE.size) * (1-1e-1)) * (0.10/2.0)
     posE = np.array([0.3,0.3,0.9,0.6,0.4,0.2])
     posI = np.array([0.7,0.2,0.5])
@@ -430,15 +428,18 @@ def getNib(argv):
         theme = theme+'-V'+str(vid)
 
     cell, vecStimList, synList, _ = prepCell(gList, loc, pos, n, vrest)
-    #leakyV, _, _, _ = proceed(cell, v0, synList, RList, vecStimList, np.empty((n,0)), n, trans, run_t + trans, 0, 0, 0, 1, 0, tstep)
     leakyV, leakyDendV = leaky(cell, v0, synList, RList, vecStimList, n, trans, run_t + trans, tstep, loc, pos)
     leakyV = leakyV[ntrans:ntrans+run_nt]
     leakyDendV = leakyDendV[:,ntrans:ntrans+run_nt]
     print leakyV.size
     if plotData:
-        lfigname = 'leakyV-v'+str(vid)
+        if not vrestOnly:
+            lfigname = 'leakyV-v'+str(vid)
+        else:
+            lfigname = 'leakyV-vrest'
         pyplot.figure(lfigname, figsize = (8,4))
         pyplot.plot(t,leakyV)
+        pyplot.plot(t,leakyDendV.transpose(),':')
         if savePlot:
             pyplot.savefig(directory+'/'+lfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
             pyplot.close(lfigname)
@@ -458,7 +459,7 @@ def getNib(argv):
         recv = []
         for i in xrange(n):
             r, send = mp.Pipe(False)
-            p = mp.Process(target = getSinglets, args = (i,idt,dt,gList,pos,cell,v0,synList,vecStimList,n,trans,ntrans,relt,tstep,relit,run_nt,idtRange,leakyV,leakyDendV[i,:],spikes,send))
+            p = mp.Process(target = getSinglets, args = (i,idt,dt,gList,loc,pos,cell,v0,synList,vecStimList,n,trans,ntrans,relt,tstep,relit,run_nt,idtRange,leakyV,leakyDendV[i,:],spikes,send))
             jobs.append(p)
             recv.append(r)
             p.start()
@@ -482,10 +483,15 @@ def getNib(argv):
         if plotData:
             for i in xrange(n):
                 sfigname = 'singlets'+str(i)+'-v'+str(vid)
-                pyplot.figure(sfigname,figsize = (8,4))
+                fig = pyplot.figure(sfigname,figsize = (8,4))
+                ax1 = fig.add_subplot(111)
+                ax2 = ax1.twinx()
                 for idt in xrange(ndt):
-                    pyplot.plot(t[idtRange[idt]:],v1[idt,i,idtRange[idt]:],'r')
-                    pyplot.plot(t[idtRange[idt]:],dendDv[idt,i,idtRange[idt]:],':r')
+                    ax1.plot(t[idtRange[idt]:],v1[idt,i,idtRange[idt]:],'r')
+                    ax2.plot(t[idtRange[idt]:],dendDv[idt,i,idtRange[idt]:],':b')
+                ax1.set_xlabel('t ms')
+                ax1.set_ylabel('PSP(soma) mV')
+                ax2.set_ylabel('PSP(dend) mV')
                 if savePlot:
                     pyplot.savefig(directory+'/'+sfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
                     pyplot.close(sfigname)

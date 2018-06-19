@@ -155,12 +155,13 @@ void Inputs::print_this(int i) {
     cout << "dT index: " << dTijr[i].i << ", " << dTijr[i].j << ", " << dTijr[i].r << endl;
 }
 
-nNeuroSt::nNeuroSt(unsigned int seed, int nSyn0, bool *ei0, double trans0, double tRef0, double vTol0, double dtrans0) {
+nNeuroSt::nNeuroSt(unsigned int seed, int nSyn0, bool *ei0, double trans0, double tRef0, double vTol0, double dtrans0, double dtau0) {
     status = true;
     nOut = 0;
     nSyn = nSyn0;
     trans = trans0;
     dtrans = dtrans0;
+    dtau = dtau0;
     tRef = tRef0;
     vTol = vTol0;
     ei.assign(ei0,ei0+nSyn);

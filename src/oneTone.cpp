@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
         cout << " nInput > nSyn, exit" << endl;
         return 0;
     }
-    nNS neuron(inputArg.seed,neuroLib.nSyn,neuroLib.ei,inputArg.trans,inputArg.tRef,inputArg.vTol,inputArg.dtrans);
+    nNS neuron(inputArg.seed,neuroLib.nSyn,neuroLib.ei,inputArg.trans,inputArg.tRef,inputArg.vTol,inputArg.dtrans, inputArg.dtau);
     inputArg.reformat_input_table(neuroLib.tstep);
     if (inputArg.i < 0) {
         cout << "none method chosen" << endl;
@@ -91,6 +91,16 @@ int main(int argc, char **argv) {
         }; 
         cout << " NEURON" << endl;
         Cell cell(syn);
+
+        string fign = inputArg.theme + "-copy_cell_trans" + to_string(static_cast<unsigned int>(inputArg.trans)) + to_string(ii);
+        size plchldr_size0;
+        double plchldr_double = 0;
+        vector<double> dummyV, dummyTsp, dummyDendVclamp(neuroLib.nSyn,1000);
+        vector<long> dummyS1(neuroLib.nSyn,0);
+        vector<vector<double>> dummyDendV, dummySpikeTrain(neuroLib.nSyn,vector<double>(1,1)), dummyRList(neuroLib.nSyn,vector<double>(2,0));
+        // copy crossing state
+        Py_proceed(cell, inputArg.vThres, dummyRList, dummyS1, dummySpikeTrain, neuroLib.nSyn, inputArg.trans, inputArg.trans, plchldr_double, inputArg.tRef, inputArg.vThres, 1, dummyV, plchldr_size0, dummyTsp, 0, inputArg.tstep[ii], dummyDendVclamp, -1, false, dummyDendV, inputArg.pas, fign, true, false);
+        cout << " crossing state copied" << endl;
         if (ii == 0) {
             for (int i=0; i<neuroLib.nSyn; i++) {
                 neuroLib.dist[i] = cell.dist[i];
@@ -103,6 +113,9 @@ int main(int argc, char **argv) {
         double run_t = inputArg.runTime[ii];
         cout << "generating inputs" << endl;
         neuron.initialize(inputArg.runTime[ii],tstep,t0,rate[ii]);
+        neuron.vReset = inputArg.vRest;
+        neuron.vRest = inputArg.vRest;
+        neuron.vThres = inputArg.vThres;
         if (inputArg.vInit >= neuroLib.nv) {
             cout << "vInit " << inputArg.vInit << " out of range, nv " << neuroLib.nv << endl;
             assert(inputArg.vInit < neuroLib.nv);
@@ -159,8 +172,6 @@ int main(int argc, char **argv) {
         liV.push_back(v0);
         liV0.reserve(nt);
         liV0.push_back(v0);
-        neuron.vReset = inputArg.vRest;
-        neuron.vRest = inputArg.vRest;
         double vCrossl = inputArg.vRest + (inputArg.vThres - inputArg.vRest)*inputArg.rLinear;
         double vBackl = inputArg.vRest + (inputArg.vThres - inputArg.vRest)*inputArg.rLinear + inputArg.vBuffer;
         double vCrossb = inputArg.vRest + (inputArg.vThres - inputArg.vRest)*inputArg.rBiLinear;
@@ -169,20 +180,17 @@ int main(int argc, char **argv) {
         cout << " HH -> linear " << vBackl << endl;
         cout << " bilinear -> HH  " << vCrossb << endl;
         cout << " HH -> bilinear " << vBackb << endl;
-        size plchldr_size0,plchldr_size1=0;
-        double plchldr_double = 0;
-        vector<double> plchldr_vec;
         vector<long> s1(neuroLib.nSyn,0);
         vector<vector<double>> RList(neuroLib.nSyn,vector<double>(2,0));
         unsigned int nc = 0;
         // NEURON
         clock_gettime(clk_id,&tpS);
-        neuron.vThres = inputArg.vThres;
         vector<double> dendVclamp(neuroLib.nSyn,1000); // 1000 default no dend clamp
         if (inputArg.mode[0]) {  
             cout << " yale NEURON begin" << endl;
             cout << " point of no return unless spike " << inputArg.vThres << endl;
-            nc = Py_proceed(cell, v0, RList, s1,  spikeTrain, neuroLib.nSyn, inputArg.trans0, inputArg.trans0 + run_t, plchldr_double, inputArg.tRef, inputArg.vThres, 1, simV, plchldr_size0, tsp_sim, 0, inputArg.tstep[ii], dendVclamp, -1, inputArg.getDendV, dendV, inputArg.pas);
+            string dummy_fign = "";
+            nc = Py_proceed(cell, v0, RList, s1,  spikeTrain, neuroLib.nSyn, inputArg.trans0, inputArg.trans0 + run_t, plchldr_double, inputArg.tRef, inputArg.vThres, 1, simV, plchldr_size0, tsp_sim, 0, inputArg.tstep[ii], dendVclamp, -1, inputArg.getDendV, dendV, inputArg.pas,dummy_fign, false, false);
         } else {
             cout << " yale NEURON simulation skipped " << endl;
             nc = 0;
@@ -443,7 +451,7 @@ int main(int argc, char **argv) {
         neuron.clear();
         spikeTrain.clear();
         cout << "level " << ii << " finalized" << endl;
-        NEURON_cleanup(cell);
+        cell.NEURON_cleanup();
         cout << " cell cleaned " << endl;
     }
     if (data_file.is_open())        data_file.close();

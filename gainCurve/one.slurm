@@ -27,7 +27,7 @@ do
     ./one -d $method
 done
 
-matlab -nodisplay -nosplash -r "plotGainCurve('input.cfg','$ext',true,false,$getDendV);exit;"
+matlab -nodisplay -nosplash -r "plotGainCurve('input.cfg','$ext',true,true,$getDendV);exit;"
 
 date
 hostname

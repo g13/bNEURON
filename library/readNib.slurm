@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --mem=6G
-#SBATCH --cpus-per-task=15
+#SBATCH --mem=16G
+#SBATCH --cpus-per-task=1
 #SBATCH --time=0:15:00
 #SBATCH -o readLib_%A.out
 #SBATCH --job-name=readLib

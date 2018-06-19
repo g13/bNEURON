@@ -11,7 +11,7 @@ using std::cout;
 using std::endl;
 namespace jb {
     const bool debug = true;
-    const bool debug2 = true;
+    const bool debug2 = false;
     template<typename T>
     inline void getNear(T *range, size n, double target, double &ratio, size &istart, size &jnext) {
         size i;
@@ -259,21 +259,19 @@ inline void clampDend(nNL &neuroLib, nNS &neuron, Input &input, double tCross, d
             }
             dv = linear_interp_PSP(neuroLib.dendv, input.Vijr[i], input.dTijr[i], ID, idt, neuroLib.idtRange);
             if (jb::debug) {
-                cout << "       " << i << "th input " << ID << " dv = " << dv << endl;
+                cout << "       " << i << "th input " << ID << " dv = " << dv << " at " << input.dt[i] << endl;
             }
             dendv[ID] += dv;
-            if (dt*neuroLib.tstep < neuron.dtrans && ID < neuroLib.nE) {
-                ntrans[ID] += 1;
-            }
+            //if (dt*neuroLib.tstep < neuron.dtau && ID < neuroLib.nE) {
+            //    ntrans[ID] += 1;
+            //}
         }
         for (int i=0; i<neuron.nSyn; i++) {
             if (abs(dendv[i] - 0) > pow(2,-52)) {
                 dendVclamp[i] = v + dendv[i] * pow(-rd,ntrans[i]);
                 if (jb::debug) {
-                    cout << "   dend " << i << " will be clamped at " << dendVclamp[i] << ", with rd = " << dendv[i] << "x" << -rd << "^" << ntrans[i] << endl;
+                    cout << "   dend " << i << " will be hard clamped at " << dendVclamp[i] << ", with rd = " << dendv[i] << "x" << -rd << "^" << ntrans[i] << endl;
                 }
-            } else {
-                dendVclamp[i] = v;
             }
         }
     } else {
