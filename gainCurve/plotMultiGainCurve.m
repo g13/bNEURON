@@ -213,7 +213,11 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
             minV0 = 1000;
             maxV0 = -1000;
             if method(1)
+<<<<<<< HEAD
                 handle = plot(t0,v{i,1},lcolor{1});
+=======
+                handle = plot(t0,v{i,1},lcolor{im});
+>>>>>>> d98d1d3566ac2249553dc5ce2f61b7038ec12bf2
                 handles = [handles,handle];
                 [minV0, maxV0] = minmax(v{i,1},minV0,maxV0);
                 if plotDendV && p.getDendV
