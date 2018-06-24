@@ -24,7 +24,26 @@ const double tau_ir = 0.98814229249;
 const double tau_id = 50.0;
 static vector<vector<double>> dummy_dendV;
 
-inline void get_gh(vector<double> &spikeTrain, long j0, long j1, double t, double &g, double &h, double t0, double t1, double f) {
+inline void get_gh(vector<double> &spikeTrain, long j0, long j1, double t, double &g, double &h, double tau0, double tau1, double f) {
+    double nextRel, lastRel = -1e23;
+    double etd, etr, c, dt;
+    for (long j=j0; j<j1; j++) {
+        dt = t - spikeTrain[j];
+        if (dt < 0) {
+            cout << spikeTrain[j0] << "->" << spikeTrain[j1] << "| t " << t << endl;
+            assert(dt > 0);
+        }
+        etd = exp(-dt/tau1);
+        etr = exp(-dt/tau0);
+        c = (etd-etr)/(tau1-tau0);
+        g += f*c;
+        h += f/tau0*etr;
+    }
+    assert(f>0);
+    assert(h>=0);
+    assert(g>=0);
+}
+inline void get_gh_old(vector<double> &spikeTrain, long j0, long j1, double t, double &g, double &h, double t0, double t1, double f) {
     double nextRel, lastRel = -1e23;
     double etd, etr, c, dt, g0;
     g0 = g;

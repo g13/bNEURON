@@ -187,7 +187,6 @@ nNeuroLib::nNeuroLib(const char *filename) {
     assert(nStrength == nSyn);
 
     ei = new bool[nSyn];
-    dist = new double[nSyn];
     nE = 0;
     nI = 0;
     for (i=0; i<nSyn; i++) {
@@ -350,5 +349,4 @@ void nNeuroLib::clearLib() {
     delete []pos;
     delete []gList;
     delete []ei;
-    delete []dist;
 }

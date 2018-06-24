@@ -186,6 +186,6 @@ namespace jl {
     void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tCross, double vCross, size i_prior, size &tail, size head, size corrSize, int afterCrossBehavior);
 }
 
-unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape, int itrial, bool sliceDebugPlot);
+unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, double rd, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape, int itrial, bool sliceDebugPlot);
 
 #endif

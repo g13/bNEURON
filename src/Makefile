@@ -10,11 +10,14 @@ PYLIB=-lpython2.7
 LBOOST=-lboost_program_options
 OPT=-msse4.2 -march=westmere -fPIC -fno-omit-frame-pointer -O2
 DEBUG=-g -fmax-errors=2 -fno-omit-frame-pointer
-CXXFLAG=-std=c++11 $(OPT)
+CXXFLAG=-std=c++11 $(DEBUG)
 OBJ=nNeuroSt.o nNeuroLib.o jumpy_linear.o jumpy_bilinear.o linear_bilinear.o input_args_CA1.o Yale_NEURON_PyAPI.o input_args.o
 DEP=matFunc.h typedefs.h heap.h
 
 # to do gain curve
+multi: $(OBJ) multiTone.o $(DEP)
+	$(CC) $(CXXFLAG) $(OBJ) multiTone.o -o $(OUTPUTDIR)$@ $(RPATH) $(PYLIB) $(MATLAB) $(LBOOST)
+
 one: $(OBJ) oneTone.o $(DEP)
 	$(CC) $(CXXFLAG) $(OBJ) oneTone.o -o $(OUTPUTDIR)$@ $(RPATH) $(PYLIB) $(MATLAB) $(LBOOST)
 
@@ -40,4 +43,4 @@ linear_bilinear.o: linear_bilinear.cpp linear_bilinear.h nNeuroLib.h nNeuroSt.h
 	$(CC) $(CXXFLAG) -c $< -o $@
 
 clean:
-	rm $(OBJ) variableInput.o oneTone.o
+	rm $(OBJ) variableInput.o oneTone.o multiTone.o

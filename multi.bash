@@ -9,6 +9,7 @@ ext=$3
 input=true
 level=false
 
+nMethod=7
 if [ "$fdr" == "" ]; then
     echo "need to assign fdr"
     exit 0
@@ -41,11 +42,11 @@ else
     echo no new input
 fi
 cp base/neuroAlter.py $dir
-cp $dir0/one.slurm $dir
+cp $dir0/multi.slurm $dir
 cp $dir0/plot.slurm $dir
 cp gainCurve.cfg $dir/input.cfg
-cp $dir0/one $dir
-cp $dir0/plotGainCurve.m $dir
+cp $dir0/multi $dir
+cp $dir0/plotMultiGainCurve.m $dir
 cp $dir0/read_cfg.m $dir
 cp -r x86_64 $dir
 
@@ -54,6 +55,21 @@ cp $dir0/inputTable.bin $dir
 
 
 cd $dir
+export nMethod
+
+jobID=`sbatch --export=ALL --array=1-${nMethod} multi.slurm`
+echo $jobID
+jobID=${jobID:20}
+jobList=${jobID}_1
+for i in {2..17}
+do
+    if [ "$i" -le "$nMethod" ]; then
+        jobList=$jobList:${jobID}_$i
+    else
+        break
+    fi
+done
+#echo $jobList
 export ext
 export getDendV
-sbatch --export=ALL one.slurm
+sbatch --export=ALL --dependency=afterok$jobList plot.slurm
