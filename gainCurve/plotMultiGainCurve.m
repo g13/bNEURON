@@ -46,7 +46,7 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
         end
     end
     method = false(7,1);
-    lcolor = {'k','b','r','.b','r','m','g'};
+    lcolor = {'k','b','r','.b','r','g','m'};
     dcolor = {'*k','*b','*r','ob','or','sb','sr'};
     mcolor = {'-*k','-*b','-*r','-ob','-or','-sb','-sr'};
     label = {'sim','bilinear','linear','bilinear0','linear0','jb','jl'};
