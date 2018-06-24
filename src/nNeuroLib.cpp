@@ -28,6 +28,36 @@ nNeuroLib::nNeuroLib(const char *filename) {
     
     readVar(nSyn,"n", pmat, file);
     readVar(tstep,"tstep", pmat, file);
+    readVar(nvAS,"nvAS", pmat, file);
+    readVar(nvASt,"nvASt", pmat, file);
+    readVar(nvNS,"nvNS", pmat, file);
+    readVar(nvNSt,"nvNSt", pmat, file);
+
+    readArray(tmp,"vASrange", dimSize, arraySize, pmat, file);
+    vASrange = new double[arraySize];
+    memcpy((void *) vASrange, (void *)(mxGetPr(tmp)),arraySize*sizeof(double));
+    mxDestroyArray(tmp);
+
+    readArray(tmp,"vAS", dimSize, arraySize, pmat, file);
+    vAS_ptr = new double[arraySize];
+    memcpy((void *) vAS_ptr, (void *)(mxGetPr(tmp)),arraySize*sizeof(double));
+    pointer2d(vAS,vAS_ptr,dimSize);
+    mxDestroyArray(tmp);
+    assert(nvASt == dimSize[1]);
+    assert(nvAS == dimSize[0]);
+
+    readArray(tmp,"vNSrange", dimSize, arraySize, pmat, file);
+    vNSrange = new double[arraySize];
+    memcpy((void *) vNSrange, (void *)(mxGetPr(tmp)),arraySize*sizeof(double));
+    mxDestroyArray(tmp);
+
+    readArray(tmp,"vNS", dimSize, arraySize, pmat, file);
+    vNS_ptr = new double[arraySize];
+    memcpy((void *) vNS_ptr, (void *)(mxGetPr(tmp)),arraySize*sizeof(double));
+    pointer2d(vNS,vNS_ptr,dimSize);
+    mxDestroyArray(tmp);
+    assert(nvNSt == dimSize[1]);
+    assert(nvNS == dimSize[0]);
 
     readArray(tmp,"sPSP", dimSize, arraySize, pmat, file);
     sPSP_ptr = new double[arraySize];
@@ -194,6 +224,8 @@ nNeuroLib::nNeuroLib(const char *filename) {
     std::cout << "tstep = " << tstep << std::endl;
 
     std::cout << "vRange:" << std::endl; disp1d(vRange,nv);
+    std::cout << "vASrange:" << std::endl; disp1d(vASrange,nvAS);
+    std::cout << "vNSrange:" << std::endl; disp1d(vNSrange,nvNS);
     std::cout << "dtRange:" << std::endl; disp1d(dtRange,ndt);
     std::cout << "loc:" << std::endl; disp1d(loc,nSyn);
     std::cout << "pos:" << std::endl; disp1d(pos,nSyn);
@@ -281,6 +313,18 @@ void nNeuroLib::clearLib() {
     delete []fireCap_ptr;
     cout << "fireCap unloaded" << endl;
 
+    dimSize[1] = nvASt;
+    dimSize[0] = nvAS;
+    del2d(vAS);
+    delete []vAS_ptr;
+    cout << "vAS unloaded" << endl;
+
+    dimSize[1] = nvNSt;
+    dimSize[0] = nvNS;
+    del2d(vNS);
+    delete []vNS_ptr;
+    cout << "vNS unloaded" << endl;
+
     dimSize[3] = nt;
     dimSize[2] = nSyn;
     dimSize[1] = nSyn;
@@ -297,6 +341,8 @@ void nNeuroLib::clearLib() {
     cout << "dendVleak unloaded" << endl;
 
     delete []vRange;
+    delete []vASrange;
+    delete []vNSrange;
     delete []dtRange;
     delete []idtRange;
     delete []loc;

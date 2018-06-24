@@ -3,7 +3,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
 #SBATCH --mem-per-cpu=6G
-#SBATCH --time=12:00:00
+#SBATCH --time=16:00:00
 #SBATCH -a 1-10
 #SBATCH -o mpiLib_%A_%a.out
 #SBATCH --job-name=mpiLib
@@ -14,6 +14,7 @@ module load anaconda
 module list
 
 date
+set -e
 source activate py2
 echo $theme
 echo $SLURM_ARRAY_TASK_ID

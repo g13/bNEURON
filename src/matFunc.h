@@ -75,7 +75,7 @@ void disp1d(T v, U dimSize) {
 template<typename T, typename U>
 void disp2d(T v, U *dimSize) {
     U i,j;
-    std::cout << "{" << std::endl;
+    std::cout << "{";
     for (i=0; i<dimSize[0]; i++) {
         std::cout << "{";
         for (j=0; j<dimSize[1]; j++) {

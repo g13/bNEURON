@@ -6,11 +6,90 @@ import numpy as np
 class RealisticNeuron(object):
     def init(self,v0=None):
         if not v0:
-            print "init_V = ", self.Vrest
+            print "    init_V = ", self.Vrest
             self.current_balance(self.Vrest)
         else:
-            print "init_V = ", v0
+            print "    init_V = ", v0
             self.current_balance(v0)
+    #
+    def copy_volt(self):
+        print "copy voltage from cell:"
+        self.dummy_soma = np.empty(self.soma.nseg)
+        i = 0
+        for seg in self.soma:
+            self.dummy_soma[i] = self.soma(seg.x).v
+            i = i + 1
+        print "soma at", np.average(self.dummy_soma)
+        avgDend = 0.0
+        nDendSeg = 0.0
+        self.dummy_dend = np.empty(self.ndend,dtype=object)
+        for i in xrange(self.ndend):
+            self.dummy_dend[i] = np.empty(self.dend[i].nseg,dtype=float)
+            j = 0
+            for seg in self.dend[i]:
+                self.dummy_dend[i][j] = self.dend[i](seg.x).v
+                avgDend = avgDend + self.dummy_dend[i][j]
+                j = j + 1
+            nDendSeg = nDendSeg + self.dummy_dend[i].size
+        print "dend average at", avgDend/nDendSeg
+    #
+    def paste_volt(self):
+        print "paste voltage from dummy:"
+        i = 0
+        for seg in self.soma:
+            self.soma(seg.x).v = self.dummy_soma[i]
+            i = i + 1
+        print "soma at", np.average(self.soma.v)
+        avgDend = 0.0
+        nDendSeg = 0.0
+        for i in xrange(self.ndend):
+            j = 0
+            for seg in self.dend[i]:
+                self.dend[i](seg.x).v = self.dummy_dend[i][j]
+                avgDend = avgDend + self.dend[i](seg.x).v
+                j= j + 1
+            nDendSeg = nDendSeg + self.dend[i].nseg
+        print "dend average at", avgDend/nDendSeg
+    #
+    def copy_epas(self):
+        print "copy e_pas from cell:"
+        self.dummy_soma_epas = np.empty(self.soma.nseg)
+        i = 0
+        for seg in self.soma:
+            self.dummy_soma_epas[i] = self.soma(seg.x).e_pas
+            i = i + 1
+        self.dummy_dend_epas = np.empty(self.ndend,dtype=object)
+        for i in xrange(self.ndend):
+            self.dummy_dend_epas[i] = np.empty(self.dend[i].nseg,dtype=float)
+            j = 0
+            for seg in self.dend[i]:
+                self.dummy_dend_epas[i][j] = self.dend[i](seg.x).e_pas
+                j = j + 1
+    #
+    def paste_epas(self):
+        i = 0
+        for seg in self.soma:
+            self.soma(seg.x).e_pas = self.dummy_soma_epas[i]
+            i = i + 1
+        for i in xrange(self.ndend):
+            self.dend[i].push()
+            j = 0
+            for seg in self.dend[i]:
+                self.dend[i](seg.x).e_pas = self.dummy_dend_epas[i][j]
+                j = j + 1
+            h.fcurrent()
+            h.pop_section()
+    #
+    def dummy_copy(self):
+        self.copy_volt()
+        self.copy_epas()
+    #
+    def cp_init(self):
+        self.set_ion_reversals()
+        self.paste_volt()
+        h.finitialize()
+        h.fcurrent()
+        self.paste_epas()
     #
     def __init__(self,v0):
         self.create_sections()
@@ -5061,7 +5140,7 @@ class RealisticNeuron(object):
                 sec.nseg = int(sec.L/10)+1
         print "compressed"
     #
-    def current_balance(self,v0):
+    def set_ion_reversals(self):
         for sec in self.all:
             sec.push()
             if h.ismembrane("na3") or h.ismembrane("nax"):
@@ -5071,7 +5150,10 @@ class RealisticNeuron(object):
             if h.ismembrane("hd"):
                 sec.ehd_hd = -30
             h.pop_section()
-        h.finitialize(v0)
+    #
+    def current_balance(self,v0):
+        self.set_ion_reversals()
+        h.finitialize(self.Vrest)
         h.fcurrent()
         for sec in self.all:
             sec.push()
@@ -5083,4 +5165,10 @@ class RealisticNeuron(object):
                     segX.e_pas = segX.e_pas + segX.i_hd/segX.g_pas
             h.fcurrent()
             h.pop_section()
+
+        #if h.cvode.active:
+        #    h.cvode.re_init()
+        #else:
+        #    h.fcurrent()
+        #h.frecord_init()
     #

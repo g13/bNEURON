@@ -28,6 +28,32 @@ function readNib4(dir)
     fclose(fid);
 
     nt = round(dur/tstep)+1;
+
+    file = [dir,'/',theme,'-vASrange.bin'];
+    fid = fopen(file);
+    vASrange = fread(fid,[1,inf],'double')
+    nvAS = length(vASrange)
+    fclose(fid);
+
+    file = [dir,'/',theme,'-vAS.bin'];
+    fid = fopen(file);
+    vAS = fread(fid,[nvAS,inf],'double');
+    nvASt = size(vAS,2)
+    vAS = vAS';
+    fclose(fid)
+
+    file = [dir,'/',theme,'-vNSrange.bin'];
+    fid = fopen(file);
+    vNSrange = fread(fid,[1,inf],'double')
+    nvNS = length(vNSrange)
+    fclose(fid);
+
+    file = [dir,'/',theme,'-vNS.bin'];
+    fid = fopen(file);
+    vNS = fread(fid,[nvNS,inf],'double');
+    nvNSt = size(vNS,2)
+    vNS = vNS';
+    fclose(fid)
     
     kv = zeros(nt,ndt,n,n,ndt,nv0);
     tmax = zeros(n,ndt,nv0);
@@ -103,5 +129,5 @@ function readNib4(dir)
     %hold on
     %plot(t,sPSP(:,1,1,1));
     %plot(t,kv(:,2,1,2,2,1));
-    save(['../data/',theme,'-NEURON'],'kv0','kv','sPSP','tmax','vleakage','dendvleak','sf','bf','fireCap','dendv','loc','pos','n','gList','dtRange','vRange','tstep','-v7.3');
+    save(['../data/',theme,'-NEURON'],'kv0','kv','sPSP','tmax','vleakage','dendvleak','sf','bf','fireCap','dendv','loc','pos','n','gList','dtRange','vRange','tstep','nvAS','vASrange','vAS','nvASt','nvNS','vNSrange','vNS','nvNSt','-v7.3');
 end

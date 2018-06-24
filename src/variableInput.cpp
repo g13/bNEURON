@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
         cout << " yale NEURON begin" << endl;
         cout << " point of no return unless spike " << inputArg.vThres << endl;
         vector<double> dendVclamp(neuroLib.nSyn,1000); // 1000 default no dend clamp
-        nc = Py_proceed(cell, v0, RList, s1,  spikeTrain, neuroLib.nSyn, inputArg.trans0, inputArg.trans0 + run_t, plchldr_double, inputArg.tRef, inputArg.vThres, 1, simV, plchldr_size0, tsp_sim, 0, inputArg.tstep[ii], dendVclamp, -1, false, dendV, inputArg.pas);
+        nc = Py_proceed(cell, v0, RList, s1,  spikeTrain, neuroLib.nSyn, inputArg.trans0, inputArg.trans0 + run_t, plchldr_double, inputArg.tRef, inputArg.vThres, 1, simV, plchldr_size0, tsp_sim, 0, inputArg.tstep[ii], dendVclamp, -1, inputArg.getDendV, dendV, inputArg.pas);
         clock_gettime(clk_id,&tpE);
         
         cpu_t_sim = static_cast<double>(tpE.tv_sec-tpS.tv_sec) + static_cast<double>(tpE.tv_nsec - tpS.tv_nsec)/1e9;
@@ -237,7 +237,6 @@ int main(int argc, char **argv) {
         cout << "spikes: " << nc << endl;
         cout << endl;
 
-        if (true) {
         cpu_file.write((char*)&(cpu_t_sim),sizeof(double));
         cpu_file.write((char*)&(cpu_t_bilinear), sizeof(double));
         cpu_file.write((char*)&(cpu_t_linear), sizeof(double));
@@ -323,7 +322,6 @@ int main(int argc, char **argv) {
         output[0] = &tsp_bi0;
         rasterSize = tsp_bi0.size();
         size_data_write(raster_file, output, 1, rasterSize, 0);
-        }
 
         simV.clear();
         biV.clear();

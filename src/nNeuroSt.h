@@ -36,12 +36,15 @@ struct CrossData {
     // index 0 for vinit
     // counting from 1.
     size nCross;
+    std::vector<bool> spiked;
+    double vRest;
+    std::vector<double> v0;
     std::vector<size> iCross; // next Cross index
-    std::vector<IJR> vCross;
+    std::vector<IJR> vCross,vNScross,vAScross;
     std::vector<double> tCross; // t of crossing back
     std::vector<double> t,v,gE,gI,m,n,h,hE,hI;
-    CrossData(size nt, double vinit);
-    void initialize(size nt, double vinit);
+    CrossData(size nt, double vinit, double vRest0);
+    void initialize(size nt, double vinit, double vRest0);
 };
 typedef struct CrossData Cross;
 
@@ -73,7 +76,7 @@ struct Inputs {
 typedef struct Inputs Input;
 
 struct nNeuroSt{
-    double vTol, run_t, trans;
+    double vTol, run_t, trans, dtrans, dtau;
     double vThres, vReset, vRest, tRef, tstep;
     unsigned int nSyn;
     vector<double> tin;
@@ -88,7 +91,7 @@ struct nNeuroSt{
     vector<bool> ei;
     std::uniform_real_distribution<double> uniform0_1 = std::uniform_real_distribution<double>(0.0,1.0);;
 
-    nNeuroSt(unsigned int seed, int nSyn0, bool *ei0, double trans0, double tRef0, double vTol0);
+    nNeuroSt(unsigned int seed, int nSyn0, bool *ei0, double trans0, double tRef0, double vTol0, double dtrans0, double dtau);
     void initialize(double run_t0, double tstep0, vector<double> &t0, vector<double> &rate, unsigned int seed=0);
     void getNextInput(vector<double> rate);
     void setInputs(vector<vector<double>> &inputs);

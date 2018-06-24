@@ -10,18 +10,29 @@ using std::endl;
 using std::vector;
 
 namespace jl {
-    const bool debug = false;
-    const bool debug2 = false;
+    const bool debug = true;
+    const bool debug2 = true;
 
     inline double find_v_at_t(Input &input, nNL &neuroLib, Cross &cross, size head, size tail_l, double t, double tCross, double tol_tl, double tol_tb, double v) {
         size i, j, idt;
         double dt;
         dt = t - tCross;
         if (dt < tol_tl) {
-            v = add_vinit_contribution(neuroLib.vLeak, cross.vCross.back(), dt);
+            if (cross.nCross == 0) {
+                v = add_vinit_contribution(neuroLib.vLeak, cross.vCross.back(), dt);
+            } else {
+                if (cross.spiked.back()) {
+                    if (dt < neuroLib.nvASt) {
+                        v = add_vAS_contribution(neuroLib.vAS, cross.vAScross.back(), dt, cross.v0.back(), cross.vRest);
+                    }
+                } else {
+                    if (dt < neuroLib.nvNSt) {
+                        v = add_vinit_contribution(neuroLib.vNS, cross.vNScross.back(), dt);
+                    }
+                }
+            }
         }
-        // else v = neuron.vReset (presetted)
-    
+
         if (dt < tol_tb) {
             move_corr_window_i(input.t, tail_l, t, tol_tb);
         } else {
@@ -40,7 +51,7 @@ namespace jl {
         return v;
     }
 
-    inline double interp_for_t_cross(double v_right, double v_left, double t_right, double t_left, size head, size tail_l, double tCross, double tol_tl, double tol_tb, nNL &neuroLib, Cross &cross, Input &input, double v0, double vtol, double vC, double &v) {
+    inline double interp_for_t_cross(double v_right, double v_left, double t_right, double t_left, size head, size tail_l, double tCross, double tol_tl, double tol_tb, nNL &neuroLib, Cross &cross, Input &input, double v0, double vtol, double vC, double vB, double &v) {
         size ival = 0;
         double v1, v2, vC_;
         double t_cross1, t_cross2, t_cross;
@@ -79,7 +90,7 @@ namespace jl {
                 v = v1;
             } else {
                 if (dt-1.0 < pow(2,-52) && v1>vC) {
-                    if (v1-vC > vC-v_left) {
+                    if (v1-vC > vC-v_left && v_left > vB) {
                         t_cross = t_left;
                         v = v_left;
                     } else {
@@ -89,7 +100,7 @@ namespace jl {
                     break;
                 } else {
                     if (t_right - t_cross1 - 1.0 < pow(2,-52) && v1<vC) {
-                        if (vC-v1 > v_right-vC) {
+                        if (vC-v1 > v_right-vC || v1 <= vB) {
                             t_cross = t_right;
                             v = v_right;
                         } else {
@@ -126,7 +137,7 @@ namespace jl {
                 break;
             } else {
                 if (dt-1.0 < pow(2,-52) && v2>vC) {
-                    if (v2-vC > vC-v_left) {
+                    if (v2-vC > vC-v_left && v_left > vB) {
                         t_cross = t_left;
                         v = v_left;
                     } else {
@@ -136,7 +147,7 @@ namespace jl {
                     break;
                 } else {
                     if (t_right - t_cross2 - 1.0 < pow(2,-52) && v2<vC) {
-                        if (vC-v2 > v_right-vC) {
+                        if (vC-v2 > v_right-vC || v2 <= vB) {
                             t_cross = t_right;
                             v = v_right;
                         } else {
@@ -168,13 +179,13 @@ namespace jl {
         return t_cross;
     }
 
-    bool check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tol_tl, double tol_tb, double end_t, size tail_l, size head, jND &jnd, double &t_cross, double vC);
+    bool check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tol_tl, double tol_tb, double end_t, size tail_l, size head, jND &jnd, double &t_cross, double vC, double vB);
 
-    bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &neuroLib, nNS &neuron, size head, size &tail_l, size old_tail_l, double tol_tl, double tol_tb, double end_t, jND &jnd, double &t_cross, double vC, size corrSize);
+    bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &neuroLib, nNS &neuron, size head, size &tail_l, size old_tail_l, double tol_tl, double tol_tb, double end_t, jND &jnd, double &t_cross, double vC, double vB, size corrSize);
 
     void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tCross, double vCross, size i_prior, size &tail, size head, size corrSize, int afterCrossBehavior);
 }
 
-unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, vector<double> dendVclamp, double rd, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape);
+unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, double rd, nNS &neuron, nNL &neuroLib, Input &input, jND &jnd, Cross &cross, double end_t, double ignore_t, size corrSize, vector<double> &tsp, double vC, double vB, int afterCrossBehavior, bool spikeShape, int itrial, bool sliceDebugPlot);
 
 #endif
