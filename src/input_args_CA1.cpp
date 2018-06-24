@@ -22,9 +22,13 @@ input_args_CA1::input_args_CA1() {
         ("dtSquare",po::value<bool>(&dtSquare)->default_value(false)," if true, the second dt variable of kV is considered a second tier variable when interpolating")
         ("method,d",po::value<int>(&i)->default_value(-1), "0-5 for sim,bi,jb,jl,li,b0 !!")
         ("getDendV",po::value<bool>(&getDendV)->default_value(false), "record dendV at syn input locations")
+        ("tIn",po::value<bool>(&tIn)->default_value(false), "record and output poisson input time")
         ("spikeShape",po::value<bool>(&spikeShape)->default_value(true),"if false, crossing is spiking")
         ("sliceDebugPlot",po::value<bool>(&sliceDebugPlot)->default_value(false),"plot every cross")
         ("pas",po::value<bool>(&pas)->default_value(false),"if true, crossing is spiking and reset")
+        ("clusterDend", po::value<vector<int>>()->multitoken()->composing(), "sequence of clustering ID")
+        ("clusterSizeCDF", po::value<vector<int>>()->multitoken()->composing(), "CDF of cluster size matching with ID sequence")
+        ("clusterClampRatio", po::value<vector<double>>()->multitoken()->composing(), "dendClampRatio in clusters")
 		("ignoreT", po::value<double>(&ignoreT),"ingore time while applying bilinear rules");
         
     cmdLineOptions.add(CA1_options);
@@ -32,4 +36,40 @@ input_args_CA1::input_args_CA1() {
 }
 void input_args_CA1::setbit() {
     mode.set(i);
+}
+void input_args_CA1::get_rd() {
+    vector<int> dendSeq = vm["clusterDend"].as<vector<int>>();
+    clusterSizeCDF = vm["clusterSizeCDF"].as<vector<int>>();
+    clusterClampRatio = vm["clusterClampRatio"].as<vector<double>>();
+    assert(clusterClampRatio.size() == clusterSizeCDF.size());
+    assert(dendSeq.size() == nInput);
+    clusterDend.assign(clusterSizeCDF.size(),vector<int>());
+    int j = 0;
+    int i = 0;
+    while (j<nInput) {
+        clusterDend[i].push_back(dendSeq[j]);
+        if (j==clusterSizeCDF[i]-1 && j!=nInput-1) {
+            i++;     
+            clusterSizeCDF[i] = clusterSizeCDF[i-1] + clusterSizeCDF[i];
+        }
+        j++;
+    }
+    assert(clusterSizeCDF.back() == nInput);
+    cout << "Clustering Dendrites: {";
+    for (i=0; i<clusterClampRatio.size(); i++) {
+        cout << "(";
+        for (j=0; j<clusterDend[i].size(); j++) {
+            cout << clusterDend[i][j];
+            if (j<clusterDend[i].size()-1) {
+                 cout << ", ";
+            } else {
+                cout << ")";
+            }
+        }
+        if (i<clusterClampRatio.size()-1) {
+            cout << ",";
+        } else {
+            cout << "}\n";
+        }
+    }
 }

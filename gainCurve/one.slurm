@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-##SBATCH --mem=60G
-#SBATCH --cpus-per-task=15
-#SBATCH --time=8:00:00
+#SBATCH --mem=10G
+#SBATCH --cpus-per-task=1
+#SBATCH --time=0:20:00
 #SBATCH -o one_%A.out
 #SBATCH --job-name=one
 #SBATCH --mail-type=END,FAIL
@@ -17,15 +17,16 @@ module load anaconda
 
 set -e
 date
-echo $ext
-echo $getDendV
 
 source activate py2
 
-for method in {0..6}
+for method in  {0..6}
 do
     ./one -d $method
 done
+
+echo $ext
+echo $getDendV
 
 matlab -nodisplay -nosplash -r "plotGainCurve('input.cfg','$ext',true,true,$getDendV);exit;"
 

@@ -2,6 +2,7 @@
 #define NNL_H
 #include <cmath>
 #include <cstring>
+#include <vector>
 #include <cassert>
 #include "matFunc.h"
 #include "typedefs.h"
@@ -9,10 +10,12 @@
 using std::cout;
 using std::endl;
 using std::memcpy;
+using std::vector;
 
 struct nNeuroLib {
     size ndt,nt,nv,nSyn,nvAS,nvASt,nvNS,nvNSt;
-
+    vector<double> clusterClampRatio;
+    vector<vector<int>> clusterDend;
     double ****sPSP,    *sPSP_ptr, 
            ******kV,     *kV_ptr,
            ****kV0,     *kV0_ptr,
@@ -29,7 +32,7 @@ struct nNeuroLib {
     double ****dendv, *dendv_ptr;
     double *pos;
     double *gList;
-    double *dist;
+    vector<double> dist;
     bool *ei;
     int nE, nI;
     //double vReset, vThres;

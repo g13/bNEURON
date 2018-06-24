@@ -525,32 +525,16 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
     end
     figure;
     for i=1:nTrial
-        L0 = length(simV{i});
-        l0 = 2^nextpow2(L0);
-        fSim = fft(simV{i},l0);
-        psdSim = (abs(fSim)/l0).^2;
-        autoSim = ifft(psdSim);
-
-        L = length(biV{i});
-        l = 2^nextpow2(L0);
-        fBi = fft(biV{i},l);
-        psdBi = (abs(fBi)/l).^2;
-        autoBi = ifft(psdBi);
-
-        fLi = fft(liV{i},l);
-        psdLi = (abs(fLi)/l).^2;
-        autoLi = ifft(psdLi);
-
-        fBi0 = fft(biV0{i},l);
-        psdBi0 = (abs(fBi0)/l).^2;
-        autoBi0 = ifft(psdBi0);
-
-        fLi0 = fft(liV0{i},l);
-        psdLi0 = (abs(fLi0)/l).^2;
-        autoLi0 = ifft(psdLi0);
+        autoSim = autoCorr(simV{i});
+        autoBi = autoCorr(biV{i});
+        autoLi = autoCorr(liV{i});
+        autoBi0 = autoCorr(biV0{i});
+        autoLi0 = autoCorr(liV0{i});
 
         subplot(ceil(nTrial/2),2,i)
         hold on
+        l0 = length(autoSim);
+        l = length(autoBi);
         tau0 = linspace(-l0/2*tstep,l0/2*tstep,l0);
         tau = linspace(-l/2*tstep,l/2*tstep,l);
         autoSim = [autoSim(l0/2+1:l0);autoSim(1:l0/2)];
@@ -577,4 +561,12 @@ function plotGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, siz
     if plotInput
         fclose(tInfid);
     end
+end
+function auto = autoCorr(data)
+    normedData = (data-mean(data))./std(data);
+    L = length(normedData);
+    l = 2^nextpow2(L);
+    f = fft(data,l);
+    psd = (abs(f)/l).^2;
+    auto = ifft(psd);
 end

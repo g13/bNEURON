@@ -1,11 +1,11 @@
-#include "oneTone.h"
+#include "multiTone.h"
 
 namespace po = boost::program_options;
 
 int main(int argc, char **argv) {
     //bool win = true;
     //feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
-    ofstream data_file, tIncome_file, raster_file, jND_file, cpu_file;
+    ofstream data_file[7], raster_file[7], jND_file[7], cpu_file[7], tIncome_file;
     double cpu_t_sim, cpu_t_bilinear, cpu_t_linear, cpu_t_bilinear0, cpu_t_linear0;
     double cpu_t_jbilinear, cpu_t_jlinear;
     clockid_t clk_id = CLOCK_PROCESS_CPUTIME_ID;
@@ -58,18 +58,19 @@ int main(int argc, char **argv) {
         cout << endl;
     }
     string prefix = inputArg.theme + "-s" + to_string(static_cast<unsigned int>(inputArg.seed));
-    if (inputArg.mode[0]) {
-	    data_file.open("Data-" + prefix + ".bin", ios::out|ios::binary);
-	    raster_file.open("Raster-" + prefix + ".bin", ios::out|ios::binary);
+    for (int i=0; i<inputArg.mode.size(); i++) {
+        if (inputArg.mode[i]) {
+            if (i==3||i==4) {
+	            jND_file[i].open("jND-" + to_string(i+1) + "-" + prefix + ".bin", ios::out|ios::binary);
+            } else {
+	            data_file[i].open("Data-" + to_string(i+1) + "-" + prefix + ".bin", ios::out|ios::binary);
+            }
+	        raster_file[i].open("Raster-" + to_string(i+1) + "-" + prefix + ".bin", ios::out|ios::binary);
+	        cpu_file[i].open("cpuTime-" + to_string(i+1) + "-" + prefix + ".bin", ios::out|ios::binary);
+        }
+    }
+    if (inputArg.tIn) {
 	    tIncome_file.open("tIn-" + prefix + ".bin", ios::out|ios::binary);
-	    jND_file.open("jND-" + prefix + ".bin", ios::out|ios::binary);
-	    cpu_file.open("cpuTime-" + prefix + ".bin", ios::out|ios::binary);
-    } else {
-	    data_file.open("Data-" + prefix + ".bin", ios::out|ios::binary|ios::app);
-	    raster_file.open("Raster-" + prefix + ".bin", ios::out|ios::binary|ios::app);
-	    tIncome_file.open("tIn-" + prefix + ".bin", ios::out|ios::binary|ios::app);
-	    jND_file.open("jND-" + prefix + ".bin", ios::out|ios::binary|ios::app);
-	    cpu_file.open("cpuTime-" + prefix + ".bin", ios::out|ios::binary|ios::app);
     }
     double tstep = neuroLib.tstep;
     cout << "using tstep: " << tstep << " ms" << endl;
@@ -313,56 +314,56 @@ int main(int argc, char **argv) {
         cout << "spikes: " << nc << endl;
         cout << endl;
         //=============== data ouput
-        if (inputArg.mode[0]) {
+        if (inputArg.tIn) {
             neuron.writeAndUpdateIn(neuron.tin.size(), tIncome_file);
         }
         vector<double> *output[2]; 
         if (inputArg.mode[0]) {
-            cpu_file.write((char*)&(cpu_t_sim),sizeof(double));
+            cpu_file[0].write((char*)&(cpu_t_sim),sizeof(double));
 
-            data_file.write((char*)simV.data(), nt0*sizeof(double));
+            data_file[0].write((char*)simV.data(), nt0*sizeof(double));
             if (inputArg.getDendV) {
                 for (int i=0; i<neuroLib.nSyn; i++) {
-                    data_file.write((char*)dendV[i].data(), nt0*sizeof(double));
+                    data_file[0].write((char*)dendV[i].data(), nt0*sizeof(double));
                 }
             }
 
             output[0] = &tsp_sim;
             size rasterSize = tsp_sim.size();
-            size_data_write(raster_file, output, 1, rasterSize, 0);
+            size_data_write(raster_file[0], output, 1, rasterSize, 0);
 
             simV.clear();
             tsp_sim.clear();
         }
 
         if (inputArg.mode[1]) {
-            cpu_file.write((char*)&(cpu_t_bilinear), sizeof(double));
+            cpu_file[1].write((char*)&(cpu_t_bilinear), sizeof(double));
 
-            data_file.write((char*)biV.data(), nt*sizeof(double));
+            data_file[1].write((char*)biV.data(), nt*sizeof(double));
 
             output[0] = &tsp_bi;
             size rasterSize = tsp_bi.size();
-            size_data_write(raster_file, output, 1, rasterSize, 0);
+            size_data_write(raster_file[1], output, 1, rasterSize, 0);
 
             biV.clear();
             tsp_bi.clear();
         }
 
         if (inputArg.mode[2]) {
-            cpu_file.write((char*)&(cpu_t_linear), sizeof(double));
+            cpu_file[2].write((char*)&(cpu_t_linear), sizeof(double));
 
-            data_file.write((char*)liV.data(), nt*sizeof(double));
+            data_file[2].write((char*)liV.data(), nt*sizeof(double));
 
             output[0] = &tsp_li;
             size rasterSize = tsp_li.size();
-            size_data_write(raster_file, output, 1, rasterSize, 0);
+            size_data_write(raster_file[2], output, 1, rasterSize, 0);
 
             liV.clear();
             tsp_li.clear(); 
         }
 
         if (inputArg.mode[3]) {
-            cpu_file.write((char*)&(cpu_t_jbilinear), sizeof(double));
+            cpu_file[3].write((char*)&(cpu_t_jbilinear), sizeof(double));
 
             vector<size> tmpSize;
             size ncross, jndSize;
@@ -371,7 +372,7 @@ int main(int argc, char **argv) {
             output[1] = &jndb.v;
             assert(jndb.v.size() == jndb.t.size());
             jndSize = jndb.t.size();
-            size_data_write(jND_file, output, 2, jndSize, 0);
+            size_data_write(jND_file[3], output, 2, jndSize, 0);
 
             tmpSize.reserve(crossb.nCross);
             assert(crossb.nCross == crossb.iCross.size()-1);
@@ -384,17 +385,17 @@ int main(int argc, char **argv) {
             }
             output[0] = &(crossb.t);
             output[1] = &(crossb.v);
-            nsection_write(jND_file, output, 2, crossb.iCross, tmpSize);
+            nsection_write(jND_file[3], output, 2, crossb.iCross, tmpSize);
 
             output[0] = &tsp_jbi;
             size rasterSize = tsp_jbi.size();
-            size_data_write(raster_file, output, 1, rasterSize, 0);
+            size_data_write(raster_file[3], output, 1, rasterSize, 0);
 
             tsp_jbi.clear();
         }
 
         if (inputArg.mode[4]) {
-            cpu_file.write((char*)&(cpu_t_jlinear), sizeof(double));
+            cpu_file[4].write((char*)&(cpu_t_jlinear), sizeof(double));
 
             vector<size> tmpSize;
             size ncross, jndSize;
@@ -403,7 +404,7 @@ int main(int argc, char **argv) {
             output[1] = &jndl.v;
             assert(jndl.v.size() == jndl.t.size());
             jndSize = jndl.t.size();
-            size_data_write(jND_file, output, 2, jndSize, 0);
+            size_data_write(jND_file[4], output, 2, jndSize, 0);
 
             tmpSize.reserve(crossl.nCross);
             assert(crossl.nCross == crossl.iCross.size()-1);
@@ -416,36 +417,36 @@ int main(int argc, char **argv) {
             }
             output[0] = &(crossl.t);
             output[1] = &(crossl.v);
-            nsection_write(jND_file, output, 2, crossl.iCross, tmpSize);
+            nsection_write(jND_file[4], output, 2, crossl.iCross, tmpSize);
 
             output[0] = &tsp_jli;
             size rasterSize = tsp_jli.size();
-            size_data_write(raster_file, output, 1, rasterSize, 0);
+            size_data_write(raster_file[4], output, 1, rasterSize, 0);
 
             tsp_jli.clear();
         }
 
         if (inputArg.mode[5]) {
-            cpu_file.write((char*)&(cpu_t_bilinear0), sizeof(double));
+            cpu_file[5].write((char*)&(cpu_t_bilinear0), sizeof(double));
 
-            data_file.write((char*)biV0.data(), nt*sizeof(double));
+            data_file[5].write((char*)biV0.data(), nt*sizeof(double));
 
             output[0] = &tsp_bi0;
             size rasterSize = tsp_bi0.size();
-            size_data_write(raster_file, output, 1, rasterSize, 0);
+            size_data_write(raster_file[5], output, 1, rasterSize, 0);
 
             biV0.clear();
             tsp_bi0.clear();
         }
 
         if (inputArg.mode[6]) {
-            cpu_file.write((char*)&(cpu_t_linear0), sizeof(double));
+            cpu_file[6].write((char*)&(cpu_t_linear0), sizeof(double));
 
-            data_file.write((char*)liV0.data(), nt*sizeof(double));
+            data_file[6].write((char*)liV0.data(), nt*sizeof(double));
 
             output[0] = &tsp_li0;
             size rasterSize = tsp_li0.size();
-            size_data_write(raster_file, output, 1, rasterSize, 0);
+            size_data_write(raster_file[6], output, 1, rasterSize, 0);
 
             liV0.clear();
             tsp_li0.clear(); 
@@ -457,11 +458,13 @@ int main(int argc, char **argv) {
         cell.NEURON_cleanup();
         cout << " cell cleaned " << endl;
     }
-    if (data_file.is_open())        data_file.close();
-    if (jND_file.is_open())         jND_file.close();
-    if (raster_file.is_open())      raster_file.close();
+    for (int i=0; i<inputArg.mode.size(); i++) {
+        if (data_file[i].is_open())        data_file[i].close();
+        if (jND_file[i].is_open())         jND_file[i].close();
+        if (raster_file[i].is_open())      raster_file[i].close();
+        if (cpu_file[i].is_open())         cpu_file[i].close();
+    }
     if (tIncome_file.is_open())     tIncome_file.close();
-    if (cpu_file.is_open())         cpu_file.close();
     neuroLib.clearLib();
     //Py_Finalize();
     cout << "size: " <<  sizeof(size) << " bytes" << endl;

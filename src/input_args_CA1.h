@@ -26,11 +26,16 @@ struct input_args_CA1 : input_args {
     int i;
     bool dtSquare;
     bool getDendV;
+    bool tIn;
     unsigned int vInit;
     std::bitset<7> mode;
+    vector<double> clusterClampRatio;
+    vector<int> clusterSizeCDF;
+    vector<vector<int>> clusterDend;
     input_args_CA1();
     void setbit();
     using input_args::read;
+    void get_rd(); 
 };
 
 typedef struct input_args_CA1 InputArgsCA1;

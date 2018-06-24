@@ -303,11 +303,11 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
                     vHolds.append(h.SEClamp(pos[i]))
                     vHolds[j].dur2 = 0.0
                     vHolds[j].dur3 = 0.0
-                    if oneGo or dendVclamp[i] > 0:
+                    if oneGo:
                         vHolds[j].rs = cell.dend[loc[i]].Ra
-                        dendVclamp[i] = -dendVclamp[i]
-                    else:
+                    elif dendVclamp[i] > 0:
                         vHolds[j].rs = 1e-9
+                        dendVclamp[i] = -dendVclamp[i]
                     vHolds[j].dur1 = t0 + trans
                     vHolds[j].amp1 = dendVclamp[i]
                     j = j + 1
