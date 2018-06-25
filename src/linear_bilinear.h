@@ -151,7 +151,7 @@ inline void clampDendRaw(nNL &neuroLib, nNS &neuron, double tol_tb, double tCros
         for (int i=0; i<nCluster; i++) {
             int clusterSize = neuroLib.clusterDend[i].size(); 
             int exclude = 0;
-            for (int j=0; j<clusterSize[i]; j++) {
+            for (int j=0; j<clusterSize; j++) {
                 if (dendv[neuroLib.clusterDend[i][j]] > pow(2,-52)) {
                     clusterAvg[i] += dendv[neuroLib.clusterDend[i][j]];
                     clusterSomaAvg[i] += somav[neuroLib.clusterDend[i][j]];
@@ -163,7 +163,7 @@ inline void clampDendRaw(nNL &neuroLib, nNS &neuron, double tol_tb, double tCros
             if (abs(clusterAvg[i]) > pow(2,-52)) {
                 cout << "    dend ";
                 double vClamp = -(clusterSomaAvg[i] + clusterAvg[i] * neuroLib.clusterClampRatio[i]);
-                for (int j=0; j<clusterSize[i]; j++) {
+                for (int j=0; j<clusterSize; j++) {
                     dendVclamp[neuroLib.clusterDend[i][j]] = vClamp;
                     cout << neuroLib.clusterDend[i][j] << " ";
                 }
