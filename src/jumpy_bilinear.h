@@ -247,7 +247,11 @@ inline void clampDend(nNL &neuroLib, nNS &neuron, Input &input, double tCross, d
     IJR vinit = cross.vCross.back();
     vector<double> dendv(neuron.nSyn,0);
     vector<double> ntrans(neuron.nSyn,1);
+    vector<double> somav(neuron.nSyn,-1000);
     for (i = head; i>tail; i--) {
+        if (neuron.tin[i] < tCross*neuroLib.tstep - neuron.dtau) {
+            break;
+        }
         dt = tCross - input.dt[i];
         idt = static_cast<size>(round(dt));
         ID = input.ID[i];
@@ -260,10 +264,11 @@ inline void clampDend(nNL &neuroLib, nNS &neuron, Input &input, double tCross, d
         if (jb::debug) {
             cout << "       " << i << "th input " << ID << " dv = " << dv << " at " << input.dt[i] << endl;
         }
+
+        if (somav[ID] == -1000) {
+            somav[ID] = neuroLib.vRange[input.Vijr[i].i] + input.Vijr[i].r*(neuroLib.vRange[input.Vijr[i].j] - neuroLib.vRange[input.Vijr[i].j]);
+        }
         dendv[ID] += dv;
-        //if (dt*neuroLib.tstep < neuron.dtau && ID < neuroLib.nE) {
-        //    ntrans[ID] += 1;
-        //}
     }
     if (rd < 0.0) {
         for (int i=0; i<neuron.nSyn; i++) {
@@ -277,20 +282,28 @@ inline void clampDend(nNL &neuroLib, nNS &neuron, Input &input, double tCross, d
     } else {
         int nCluster = neuroLib.clusterDend.size();
         vector<double> clusterAvg(nCluster,0.0);
+        vector<double> clusterSomaAvg(nCluster,0.0);
         for (int i=0; i<nCluster; i++) {
             int clusterSize = neuroLib.clusterDend[i].size(); 
+            int exclude = 0;
             for (int j=0; j<clusterSize; j++) {
-                clusterAvg[i] += dendv[neuroLib.clusterDend[i][j]];
+                if (dendv[neuroLib.clusterDend[i][j]] > pow(2,-52)) {
+                    clusterAvg[i] += dendv[neuroLib.clusterDend[i][j]];
+                    clusterSomaAvg[i] += somav[neuroLib.clusterDend[i][j]];
+                } else {
+                    exclude ++;
+                }
             }
-            //clusterAvg[i] = clusterAvg[i]/clusterSize;
+            clusterSomaAvg[i] = clusterSomaAvg[i]/(clusterSize-exclude);
             if (abs(clusterAvg[i]) > pow(2,-52)) {
                 cout << "   dend ";
-                double vClamp = v + clusterAvg[i] * neuroLib.clusterClampRatio[i];
+                double vClamp = clusterSomaAvg[i] + clusterAvg[i] * neuroLib.clusterClampRatio[i];
                 for (int j=0; j<clusterSize; j++) {
                     dendVclamp[neuroLib.clusterDend[i][j]] = vClamp;
                     cout << neuroLib.clusterDend[i][j] << " ";
                 }
-                cout << " will be hard clamped at " << vClamp << " = " << clusterAvg[i] << " x " << neuroLib.clusterClampRatio[i] << "\n";
+                cout << " will be hard clamped at " << vClamp << " = " << clusterSomaAvg[i] << " + " << 
+                    clusterAvg[i] << " x " << neuroLib.clusterClampRatio[i] << "\n";
             }
         }
     }
