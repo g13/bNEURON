@@ -255,29 +255,32 @@ inline void clampDend(nNL &neuroLib, nNS &neuron, Input &input, double tCross, d
         idt = static_cast<size>(round(dt));
         ID = input.ID[i];
         if (jb::debug2) {
-            cout << "       it " << idt << "\n";
-            cout << "       v " << input.Vijr[i].i  << ", " << input.Vijr[i].j << ", " << input.Vijr[i].r << "\n";
-            cout << "       idt " << input.dTijr[i].i << ", " <<  input.dTijr[i].j << ", " << input.dTijr[i].r << "\n";
+            cout << "        it " << idt << "\n";
+            cout << "        v " << input.Vijr[i].i  << ", " << input.Vijr[i].j << ", " << input.Vijr[i].r << "\n";
+            cout << "        idt " << input.dTijr[i].i << ", " <<  input.dTijr[i].j << ", " << input.dTijr[i].r << "\n";
         }
         dv = linear_interp_PSP(neuroLib.dendv, input.Vijr[i], input.dTijr[i], ID, idt, neuroLib.idtRange);
         if (jb::debug) {
-            cout << "       " << i << "th input " << ID << " dv = " << dv << " at " << input.dt[i] << "\n";
+            cout << "        " << i << "th input " << ID << " dv = " << dv << " at " << input.dt[i] << "\n";
         }
 
         if (somav[ID] == -1000) {
             somav[ID] = (neuroLib.vRange[input.Vijr[i].i] + input.Vijr[i].r*(neuroLib.vRange[input.Vijr[i].j] - neuroLib.vRange[input.Vijr[i].i]) + v)/2.0;
             if (jb::debug) {
-                cout << "       somav = " << somav[ID] << "\n";
+                cout << "        somav = " << somav[ID] << "\n";
             }
         }
         dendv[ID] += dv;
+    }
+    if (jb::debug) {
+        cout << "linear dendv collected\n";
     }
     if (rd < 0.0) {
         for (int i=0; i<neuron.nSyn; i++) {
             if (abs(dendv[i] - 0) > pow(2,-52)) {
                 dendVclamp[i] = v + dendv[i] * pow(-rd,ntrans[i]);
                 if (jb::debug) {
-                    cout << "   dend " << i << " will be hard clamped at " << dendVclamp[i] << ", with rd = " << dendv[i] << "x" << -rd << "^" << ntrans[i] << "\n";
+                    cout << "    dend " << i << " will be hard clamped at " << dendVclamp[i] << ", with rd = " << dendv[i] << "x" << -rd << "^" << ntrans[i] << "\n";
                 }
             }
         }
@@ -304,8 +307,7 @@ inline void clampDend(nNL &neuroLib, nNS &neuron, Input &input, double tCross, d
                     dendVclamp[neuroLib.clusterDend[i][j]] = vClamp;
                     cout << neuroLib.clusterDend[i][j] << " ";
                 }
-                cout << " will be hard clamped at " << vClamp << " = " << clusterSomaAvg[i] << " + " << 
-                    clusterAvg[i] << " x " << neuroLib.clusterClampRatio[i] << "\n";
+                cout << " will be hard clamped at " << vClamp << " = " << clusterSomaAvg[i] << " + " << clusterAvg[i] << " x " << neuroLib.clusterClampRatio[i] << "\n";
             }
         }
     }

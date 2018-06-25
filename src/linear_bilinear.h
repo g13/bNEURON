@@ -70,7 +70,7 @@ inline void interpPSP0(vector<double> &v, size vs, double ****PSP, double *vRang
     }
 }
 
-inline void clampDendRaw(nNL &neuroLib, nNS &neuron, double tol_tb, double tCross, double v0, vector<double> &dendVclamp, size head, double rd, double tCross_old, double vCross_old, vector<double>& vS) {
+inline void clampDendRaw(nNL &neuroLib, nNS &neuron, double tol_tb, double tCross, double v, vector<double> &dendVclamp, size head, double rd, double tCross_old, double vCross_old, vector<double>& vS) {
     double dt, vbase, dv;
     size i, ID, idt, iDt;
     double rv, rdt;
@@ -78,11 +78,15 @@ inline void clampDendRaw(nNL &neuroLib, nNS &neuron, double tol_tb, double tCros
     size iidt, jjdt;
     vector<double> dendv(neuron.nSyn,0);
     vector<double> ntrans(neuron.nSyn,1);
+    vector<double> somav(neuron.nSyn,-1000);
     if (lb::debug) {
         cout << "collecting dendv\n";
     }
     for (i = head; i>0; i--) {
-        if (tCross - neuron.tin[i] > tol_tb) break;
+        //if (tCross - neuron.tin[i] > tol_tb) break;
+        if (neuron.tin[i] < tCross - neuron.dtau) {
+            break;
+        }
         if (neuron.tin[i] > tCross_old) {
             dt = tCross - neuron.tin[i];
             getNear(neuroLib.vRange,neuroLib.nv,vS[i],rv,iv,jv); 
@@ -96,9 +100,9 @@ inline void clampDendRaw(nNL &neuroLib, nNS &neuron, double tol_tb, double tCros
         idt = static_cast<size>(round(dt/neuroLib.tstep));
         ID = neuron.inID[i];
         if (lb::debug2) {
-            cout << "   it " << idt << "\n";
-            cout << "   v " << iv << ", " << jv << ", " << rv << "\n";
-            cout << "   idt " << iidt << ", " << jjdt << ", " << rdt << "\n";
+            cout << "        it " << idt << "\n";
+            cout << "        v " << iv << ", " << jv << ", " << rv << "\n";
+            cout << "        idt " << iidt << ", " << jjdt << ", " << rdt << "\n";
         }
         vbase = neuroLib.dendv[iv][iidt][ID][neuroLib.idtRange[iidt]+idt];
         dv = vbase + rv * (neuroLib.dendv[jv][iidt][ID][neuroLib.idtRange[iidt]+idt] - vbase)
@@ -106,10 +110,13 @@ inline void clampDendRaw(nNL &neuroLib, nNS &neuron, double tol_tb, double tCros
         if (lb::debug) {
             cout << i << "th input " << ID << " dv = " << dv << " at " << tCross-dt << "\n";
         }
+        if (somav[ID] == -1000) {
+            somav[ID] = (neuroLib.vRange[iv] + rv*(neuroLib.vRange[jv] - neuroLib.vRange[iv]) + v)/2.0;
+            if (lb::debug) {
+                cout << "        somav = " << somav[ID] << "\n";
+            }
+        }
         dendv[ID] += dv;
-        //if (dt < neuron.dtau && ID < neuroLib.nE) {
-        //    ntrans[ID] += 1;
-        //}
     }
     if (lb::debug) {
         cout << "linear dendv collected\n";
@@ -119,7 +126,7 @@ inline void clampDendRaw(nNL &neuroLib, nNS &neuron, double tol_tb, double tCros
         int maxDvi = -1;
         for (int i=0; i<neuron.nSyn; i++) {
             if (abs(dendv[i] - 0) > pow(2,-52)) {
-                dendVclamp[i] = -(v0 + dendv[i] * pow(-rd,ntrans[i]));
+                dendVclamp[i] = -(v + dendv[i] * pow(-rd,ntrans[i]));
                 if (dendv[i] > maxDv) {
                     maxDv = dendv[i];
                     maxDvi = i;
@@ -128,52 +135,39 @@ inline void clampDendRaw(nNL &neuroLib, nNS &neuron, double tol_tb, double tCros
         }
         if (maxDvi != -1) {
             dendVclamp[maxDvi] = -dendVclamp[maxDvi];
-            cout << "   maximal dend " << maxDvi << " will be hard clamped at " << dendVclamp[maxDvi] << ", with rd = " << maxDv << "x" << -rd << "^" << ntrans[maxDvi] << "\n";
+            cout << "    maximal dend " << maxDvi << " will be hard clamped at " << dendVclamp[maxDvi] << ", with rd = " << maxDv << "x" << -rd << "^" << ntrans[maxDvi] << "\n";
         }
         for (int i=0; i<neuron.nSyn; i++) {
             if (abs(dendv[i] - 0) > pow(2,-52)) {
                 if (i!=maxDvi) {
-                    cout << "   dend " << i << " will be soft clamped at " << -dendVclamp[i] << ", with rd = " << dendv[i] << "x" << -rd << "^" << ntrans[i] << "\n";
+                    cout << "    dend " << i << " will be soft clamped at " << -dendVclamp[i] << ", with rd = " << dendv[i] << "x" << -rd << "^" << ntrans[i] << "\n";
                 }
             }
         }
     } else {
         int nCluster = neuroLib.clusterDend.size();
         vector<double> clusterAvg(nCluster,0.0);
-        vector<double> clusterSize;
-        double maxDv = 0.0;
-        int maxDvi = -1;
+        vector<double> clusterSomaAvg(nCluster,0.0);
         for (int i=0; i<nCluster; i++) {
-            clusterSize.push_back(neuroLib.clusterDend[i].size()); 
+            int clusterSize = neuroLib.clusterDend[i].size(); 
+            int exclude = 0;
             for (int j=0; j<clusterSize[i]; j++) {
-                clusterAvg[i] += dendv[neuroLib.clusterDend[i][j]];
-            }
-            clusterAvg[i] = clusterAvg[i]/clusterSize[i];
-            if (clusterAvg[i] > maxDv) {
-                maxDv = clusterAvg[i];
-                maxDvi = i;
-            }
-        }
-        if (maxDvi != -1) {
-            cout << "   dend ";
-            double vClamp = v0 + clusterAvg[maxDvi] * neuroLib.clusterClampRatio[maxDvi];
-            for (int j=0; j<clusterSize[maxDvi]; j++) {
-                dendVclamp[neuroLib.clusterDend[maxDvi][j]] = vClamp;
-                cout << neuroLib.clusterDend[maxDvi][j] << " ";
-            }
-            cout << " will be hard clamped at " << vClamp << " = " << clusterAvg[maxDvi] << " x " << neuroLib.clusterClampRatio[maxDvi] << "\n";
-        }
-        for (int i=0; i<nCluster; i++) {
-            if (i!=maxDvi) {
-                if (abs(clusterAvg[i]) > pow(2,-52)) {
-                    cout << "   dend ";
-                    double vClamp = -(v0 + clusterAvg[i] * neuroLib.clusterClampRatio[i]);
-                    for (int j=0; j<clusterSize[i]; j++) {
-                        dendVclamp[neuroLib.clusterDend[i][j]] = vClamp;
-                        cout << neuroLib.clusterDend[i][j] << " ";
-                    }
-                    cout << " will be soft clamped at " << -vClamp << " = " << clusterAvg[i] << " x " << neuroLib.clusterClampRatio[i] << "\n";
+                if (dendv[neuroLib.clusterDend[i][j]] > pow(2,-52)) {
+                    clusterAvg[i] += dendv[neuroLib.clusterDend[i][j]];
+                    clusterSomaAvg[i] += somav[neuroLib.clusterDend[i][j]];
+                } else {
+                    exclude ++;
                 }
+            }
+            clusterSomaAvg[i] = clusterSomaAvg[i]/(clusterSize-exclude);
+            if (abs(clusterAvg[i]) > pow(2,-52)) {
+                cout << "    dend ";
+                double vClamp = -(clusterSomaAvg[i] + clusterAvg[i] * neuroLib.clusterClampRatio[i]);
+                for (int j=0; j<clusterSize[i]; j++) {
+                    dendVclamp[neuroLib.clusterDend[i][j]] = vClamp;
+                    cout << neuroLib.clusterDend[i][j] << " ";
+                }
+                cout << " will be soft clamped at " << -vClamp << " = " << clusterSomaAvg[i] << " + " <<  clusterAvg[i] << " x " << neuroLib.clusterClampRatio[i] << "\n";
             }
         }
     }
