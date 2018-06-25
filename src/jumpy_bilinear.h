@@ -8,7 +8,6 @@
 
 using std::vector;
 using std::cout;
-using std::endl;
 namespace jb {
     const bool debug = true;
     const bool debug2 = true;
@@ -68,8 +67,8 @@ inline void reverse_corr_window(vector<double> &input, size &tail, double t_head
 inline void add_relation_between_new_and_ith_input(Input &input, size inew, size i, size *idtRange, size ndt) {
     double t = input.t[inew] - input.t[i];
     if (t < 0) {
-        cout << i << ", " << inew << endl;
-        cout << input.t[i] << ", " << input.t[inew] << endl;
+        cout << i << ", " << inew << "\n";
+        cout << input.t[i] << ", " << input.t[inew] << "\n";
     }
     double r_;
     size i_,j_;
@@ -120,8 +119,8 @@ inline double add_vAS_contribution(double **vAS, IJR &v, double dt, double vTar,
 inline double linear_interp_PSP(double ****PSP, IJR &v, IJR &dT, size ID, size idt, size *idtRange) {
     size iidt = idt + idtRange[dT.i];
     size jjdt = idt + idtRange[dT.j];
-    //cout << " dT.i " << dT.i << endl;
-    //cout << " dT.r " << dT.r << endl;
+    //cout << " dT.i " << dT.i << "\n";
+    //cout << " dT.r " << dT.r << "\n";
     double base = PSP[v.i][dT.i][ID][iidt];
     return base + v.r *  (PSP[v.j][dT.i][ID][iidt] -base)
                 + dT.r * (PSP[v.i][dT.j][ID][jjdt] -base);
@@ -130,10 +129,10 @@ inline double linear_interp_PSP(double ****PSP, IJR &v, IJR &dT, size ID, size i
 inline double linear_interp_kV(double ******kV, IJR &v, IJR &ijdT, size dT, size it, size *idtRange, size ndt, size i, size j, bool debug, bool dtSquare) {
     if (dT == 0) {
         if (debug) {
-            cout << "           dT" << dT << ", dt " << it << endl;
-            cout << "           rdt0 " << ijdT.r << endl;
-            cout << "           idt0 " << ijdT.i << ": " << idtRange[ijdT.i] << endl;
-            cout << "           jdt0 " << ijdT.j << ": " << idtRange[ijdT.j] << endl;
+            cout << "           dT" << dT << ", dt " << it << "\n";
+            cout << "           rdt0 " << ijdT.r << "\n";
+            cout << "           idt0 " << ijdT.i << ": " << idtRange[ijdT.i] << "\n";
+            cout << "           jdt0 " << ijdT.j << ": " << idtRange[ijdT.j] << "\n";
         }
         size iidt = idtRange[ijdT.i] + it;
         size jjdt = idtRange[ijdT.j] + it;
@@ -141,7 +140,7 @@ inline double linear_interp_kV(double ******kV, IJR &v, IJR &ijdT, size dT, size
         double dv = kV[v.j][ijdT.i][i][j][ijdT.i][iidt] - base;
         double dt = kV[v.i][ijdT.j][i][j][ijdT.j][jjdt] - base;
         if (debug) {
-            cout << "           base " << base << ", dv " << dv << ", dt " << dt << endl;
+            cout << "           base " << base << ", dv " << dv << ", dt " << dt << "\n";
         }
         return base + v.r * dv + ijdT.r * dt;
     } else {
@@ -149,20 +148,20 @@ inline double linear_interp_kV(double ******kV, IJR &v, IJR &ijdT, size dT, size
         double rdt;
         size dT0 = idtRange[ijdT.i] + ijdT.r*(idtRange[ijdT.j]-idtRange[ijdT.i]);
         if (debug) {
-            cout << "           dT0 " << dT0 << ", dT " << dT << ", dt " << it << endl;
-            cout << "           rdt0 " << ijdT.r << endl;
-            cout << "           idt0 " << ijdT.i << ": " << idtRange[ijdT.i] << endl;
-            cout << "           jdt0 " << ijdT.j << ": " << idtRange[ijdT.j] << endl;
+            cout << "           dT0 " << dT0 << ", dT " << dT << ", dt " << it << "\n";
+            cout << "           rdt0 " << ijdT.r << "\n";
+            cout << "           idt0 " << ijdT.i << ": " << idtRange[ijdT.i] << "\n";
+            cout << "           jdt0 " << ijdT.j << ": " << idtRange[ijdT.j] << "\n";
         }
         size dT1 = dT0 + dT;
         jb::getNear(idtRange,ndt,dT1,rdt,idt,jdt);
         size iidt = idtRange[idt] + it;
         size jjdt = idtRange[jdt] + it;
         if (debug) {
-            cout << "           dT1 " << dT <<  ", dt " << it << endl;
-            cout << "           rdt1 " << rdt << endl;
-            cout << "           idt1 " << idt << ": " << idtRange[idt] <<", iidt1 " << iidt << endl;
-            cout << "           jdt1 " << jdt << ": " << idtRange[jdt] <<", jjdt1 " << jjdt << endl;
+            cout << "           dT1 " << dT <<  ", dt " << it << "\n";
+            cout << "           rdt1 " << rdt << "\n";
+            cout << "           idt1 " << idt << ": " << idtRange[idt] <<", iidt1 " << iidt << "\n";
+            cout << "           jdt1 " << jdt << ": " << idtRange[jdt] <<", jjdt1 " << jjdt << "\n";
         }
         if (dtSquare) {
 
@@ -191,8 +190,8 @@ inline double linear_interp_kV(double ******kV, IJR &v, IJR &ijdT, size dT, size
 inline double linear_interp_kV_old(double ******kV, IJR &v, IJR &ijdT, size dT, size it, size *idtRange, size ndt, size i, size j, bool debug) {
     if (dT == 0) {
         if (debug) {
-            cout << "           dT " << dT << ": i " << ijdT.i << ", j " << ijdT.j << ", r " << ijdT.r << endl;
-            cout << "           dt " << it <<": it " << idtRange[ijdT.i] << ", jt " << idtRange[ijdT.j] << endl;
+            cout << "           dT " << dT << ": i " << ijdT.i << ", j " << ijdT.j << ", r " << ijdT.r << "\n";
+            cout << "           dt " << it <<": it " << idtRange[ijdT.i] << ", jt " << idtRange[ijdT.j] << "\n";
         }
         size jt = idtRange[ijdT.j] + it;
         it = idtRange[ijdT.i] + it;
@@ -200,15 +199,15 @@ inline double linear_interp_kV_old(double ******kV, IJR &v, IJR &ijdT, size dT, 
         double dv = kV[v.j][ijdT.i][i][j][ijdT.i][it] - base;
         double dt = kV[v.i][ijdT.j][i][j][ijdT.j][jt] - base;
         if (debug) {
-            cout << "           base " << base << ", dv " << dv << ", dt " << dt << endl;
+            cout << "           base " << base << ", dv " << dv << ", dt " << dt << "\n";
         }
         return base + v.r * dv + ijdT.r * dt;
     } else {
         size idt0, jdt0, idt1, jdt1;
         double rdt0, rdt1;
         if (debug) {
-            cout << "           dT " << dT << ": i " << ijdT.i << ", j " << ijdT.j << ", r " << ijdT.r << endl;
-            cout << "           dt " << it <<": it " << idtRange[ijdT.i] << ", jt " << idtRange[ijdT.j] << endl;
+            cout << "           dT " << dT << ": i " << ijdT.i << ", j " << ijdT.j << ", r " << ijdT.r << "\n";
+            cout << "           dt " << it <<": it " << idtRange[ijdT.i] << ", jt " << idtRange[ijdT.j] << "\n";
         }
         jb::getNear(idtRange,ndt,idtRange[ijdT.i] + dT, rdt0, idt0, jdt0);
         jb::getNear(idtRange,ndt,idtRange[ijdT.j] + dT, rdt1, idt1, jdt1);
@@ -217,11 +216,11 @@ inline double linear_interp_kV_old(double ******kV, IJR &v, IJR &ijdT, size dT, 
         size iidt1 = idtRange[idt1]+it;
         size jjdt1 = idtRange[jdt1]+it;
         if (debug) {
-            cout << "           rdt0 " << rdt0 << " rdt1 " << rdt1 << endl;
-            cout << "           idt0 " << idt0 << ": idt " << idtRange[idt0] <<", iidt0 " << iidt0 << endl;
-            cout << "           jdt0 " << jdt0 << ": jdt " << idtRange[jdt0] <<", jjdt0 " << jjdt0 << endl;
-            cout << "           idt1 " << idt1 << ": idt " << idtRange[idt1] <<", iidt1 " << iidt1 << endl;
-            cout << "           jdt1 " << jdt1 << ": jdt " << idtRange[jdt1] <<", jjdt1 " << jjdt1 << endl;
+            cout << "           rdt0 " << rdt0 << " rdt1 " << rdt1 << "\n";
+            cout << "           idt0 " << idt0 << ": idt " << idtRange[idt0] <<", iidt0 " << iidt0 << "\n";
+            cout << "           jdt0 " << jdt0 << ": jdt " << idtRange[jdt0] <<", jjdt0 " << jjdt0 << "\n";
+            cout << "           idt1 " << idt1 << ": idt " << idtRange[idt1] <<", iidt1 " << iidt1 << "\n";
+            cout << "           jdt1 " << jdt1 << ": jdt " << idtRange[jdt1] <<", jjdt1 " << jjdt1 << "\n";
         }
 
         double base0 = kV[v.i][ijdT.i][i][j][idt0][iidt0];
@@ -234,8 +233,8 @@ inline double linear_interp_kV_old(double ******kV, IJR &v, IJR &ijdT, size dT, 
         double dt = dt0 + rdt1*(kV[v.i][ijdT.j][i][j][jdt1][jjdt1]-dt0);
 
         if (debug) {
-            cout << "           base0 " << base0 << ", dv0 " << dv0 << ", dt0 " << dt0 << endl;
-            cout << "           base " << base << ", dv " << dv << ", dt " << dt << endl;
+            cout << "           base0 " << base0 << ", dv0 " << dv0 << ", dt0 " << dt0 << "\n";
+            cout << "           base " << base << ", dv " << dv << ", dt " << dt << "\n";
         }
         return base + v.r * (dv-base) + ijdT.r * (dt-base);
     }
@@ -256,17 +255,20 @@ inline void clampDend(nNL &neuroLib, nNS &neuron, Input &input, double tCross, d
         idt = static_cast<size>(round(dt));
         ID = input.ID[i];
         if (jb::debug2) {
-            cout << "       it " << idt << endl;
-            cout << "       v " << input.Vijr[i].i  << ", " << input.Vijr[i].j << ", " << input.Vijr[i].r << endl;
-            cout << "       idt " << input.dTijr[i].i << ", " <<  input.dTijr[i].j << ", " << input.dTijr[i].r << endl;
+            cout << "       it " << idt << "\n";
+            cout << "       v " << input.Vijr[i].i  << ", " << input.Vijr[i].j << ", " << input.Vijr[i].r << "\n";
+            cout << "       idt " << input.dTijr[i].i << ", " <<  input.dTijr[i].j << ", " << input.dTijr[i].r << "\n";
         }
         dv = linear_interp_PSP(neuroLib.dendv, input.Vijr[i], input.dTijr[i], ID, idt, neuroLib.idtRange);
         if (jb::debug) {
-            cout << "       " << i << "th input " << ID << " dv = " << dv << " at " << input.dt[i] << endl;
+            cout << "       " << i << "th input " << ID << " dv = " << dv << " at " << input.dt[i] << "\n";
         }
 
         if (somav[ID] == -1000) {
-            somav[ID] = neuroLib.vRange[input.Vijr[i].i] + input.Vijr[i].r*(neuroLib.vRange[input.Vijr[i].j] - neuroLib.vRange[input.Vijr[i].j]);
+            somav[ID] = (neuroLib.vRange[input.Vijr[i].i] + input.Vijr[i].r*(neuroLib.vRange[input.Vijr[i].j] - neuroLib.vRange[input.Vijr[i].i]) + v)/2.0;
+            if (jb::debug) {
+                cout << "       somav = " << somav[ID] << "\n";
+            }
         }
         dendv[ID] += dv;
     }
@@ -275,7 +277,7 @@ inline void clampDend(nNL &neuroLib, nNS &neuron, Input &input, double tCross, d
             if (abs(dendv[i] - 0) > pow(2,-52)) {
                 dendVclamp[i] = v + dendv[i] * pow(-rd,ntrans[i]);
                 if (jb::debug) {
-                    cout << "   dend " << i << " will be hard clamped at " << dendVclamp[i] << ", with rd = " << dendv[i] << "x" << -rd << "^" << ntrans[i] << endl;
+                    cout << "   dend " << i << " will be hard clamped at " << dendVclamp[i] << ", with rd = " << dendv[i] << "x" << -rd << "^" << ntrans[i] << "\n";
                 }
             }
         }
@@ -310,7 +312,7 @@ inline void clampDend(nNL &neuroLib, nNS &neuron, Input &input, double tCross, d
 }
 
 inline void add_input_i_contribution(size i, size idt, nNL &neuroLib, Input &input, double &v) {
-    //cout << "synapse " << input.ID[i] << " contributing " << input.t[i] << endl;
+    //cout << "synapse " << input.ID[i] << " contributing " << input.t[i] << "\n";
     v = v + linear_interp_PSP(neuroLib.sPSP, 
                               input.Vijr[i], input.dTijr[i], 
                               input.ID[i], idt, neuroLib.idtRange);
@@ -320,8 +322,8 @@ inline void add_input_i_j_bilinear_contribution(Input &input, nNL &neuroLib, siz
     size k = j-i-1;
     if (debug) {
         if (input.cCross[j] > input.cCross[i]) {
-            cout << "i.cCross " << input.cCross[i] << " < j.cCross " << input.cCross[j] << endl;
-            cout << i << " t " << input.t[i] << j << " t " << input.t[j] <<  "-> " << input.t[j] - input.t[i] << endl;
+            cout << "i.cCross " << input.cCross[i] << " < j.cCross " << input.cCross[j] << "\n";
+            cout << i << " t " << input.t[i] << j << " t " << input.t[j] <<  "-> " << input.t[j] - input.t[i] << "\n";
             assert(input.cCross[j] <= input.cCross[i]);
         }
     }
@@ -337,21 +339,21 @@ inline double find_v_at_t(Input &input, nNL &neuroLib, Cross &cross, size head, 
         if (cross.nCross == 0) {
             v = add_vinit_contribution(neuroLib.vLeak, cross.vCross.back(), dt);
             if (jb::debug) {
-                cout << " vinit = " << v << endl;
+                cout << " vinit = " << v << "\n";
             }
         } else {
             if (cross.spiked.back()) {
                 if (dt < neuroLib.nvASt) {
                     v = add_vAS_contribution(neuroLib.vAS, cross.vAScross.back(), dt, cross.v0.back(), cross.vRest);
                     if (jb::debug) {
-                        cout << " vAS = " << v << endl;
+                        cout << " vAS = " << v << "\n";
                     }
                 }
             } else {
                 if (dt < neuroLib.nvNSt) {
                     v = add_vinit_contribution(neuroLib.vNS, cross.vNScross.back(), dt);
                     if (jb::debug) {
-                        cout << " vNS = " << v << endl;
+                        cout << " vNS = " << v << "\n";
                     }
                 }
             }
