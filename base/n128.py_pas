@@ -1,7 +1,7 @@
 from neuron import h
 import numpy as np
 
-# passive
+# partial passive
 
 class RealisticNeuron(object):
     def init(self,v0=None):
@@ -5183,7 +5183,7 @@ class RealisticNeuron(object):
             h.fcurrent()
             h.pop_section()
 
-        #if h.cvode.active:
+        #if h.cvode.active():
         #    h.cvode.re_init()
         #else:
         #    h.fcurrent()

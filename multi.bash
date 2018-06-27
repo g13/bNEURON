@@ -1,5 +1,5 @@
 #!/bin/bash
-n128=1
+n128=0
 dir0='gainCurve'
 getDendV=true
 

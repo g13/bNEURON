@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
         cout << " NEURON" << endl;
         Cell cell(syn);
 
-        string fign = inputArg.theme + "-copy_cell_trans" + to_string(static_cast<unsigned int>(inputArg.trans)) + to_string(ii);
+        string fign = inputArg.theme + "-copy_cell_trans" + to_string(static_cast<unsigned int>(inputArg.trans)) + "-" + to_string(ii);
         size plchldr_size0;
         double plchldr_double = 0;
         vector<double> dummyV, dummyTsp, dummyDendVclamp(neuroLib.nSyn,1000);

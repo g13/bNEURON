@@ -49,7 +49,7 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
     lcolor = {'k','b','r','.b','r','g','m'};
     dcolor = {'*k','*b','*r','ob','or','sb','sr'};
     mcolor = {'-*k','-*b','-*r','-ob','-or','-sb','-sr'};
-    label = {'sim','bilinear','linear','bilinear0','linear0','jb','jl'};
+    label = {'sim','bilinear','linear','jb','jl','bilinear0','linear0'};
     % name, fdr, date, bytes, isdir, datenum
     filter = [1,5];
     fdr = fdr(filter,:);
@@ -88,6 +88,7 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
     rasterSize = zeros(nTrial,7);
     rasterTime = cell(nTrial,7);
     figure;
+    cm = 1;
     for im=1:7
         if method(im)
             RasterFid = fopen(RasterFn{im},'r');
@@ -95,11 +96,12 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
                 subplot(nTrial,2,(i-1)*2+1)
                 hold on
                 rasterSize(i,im) = fread(RasterFid,1,sizeSize);
-                if rasterSize(i) >0
+                if rasterSize(i,im) >0
                     rasterTime{i,im} = fread(RasterFid,rasterSize(i,im),'double');
                 end
-                plot(rasterTime{i,im},zeros(rasterSize(i,im),1)+im,dcolor{im},'MarkerSize',2);
+                plot(rasterTime{i,im},zeros(rasterSize(i,im),1)+cm,dcolor{im},'MarkerSize',2);
             end
+            cm = cm + 1;
             fclose(RasterFid);
         end
     end
@@ -164,17 +166,20 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
         if method(4) 
             jNDfid = fopen(jNDFn{4},'r');
             jbt = cell(nTrial,1);
+            jbCrossT = cell(nTrial,1);
+            jbCrossV = cell(nTrial,1);
+            jbnCross = zeros(nTrial,1);
             for i=1:nTrial
                 jbSize = fread(jNDfid,1,sizeSize);
                 jbt{i} = fread(jNDfid,jbSize,'double')*tstep;
                 v{i,4} = fread(jNDfid,jbSize,'double');
-                jbnCross = fread(jNDfid,1,'int')
-                jbCrossT = cell(nTrial,jbnCross);
-                jbCrossV = cell(nTrial,jbnCross);
-                for j=1:jbnCross
+                jbnCross(i) = fread(jNDfid,1,'int')
+                jbCrossT{i} = cell(jbnCross(i),1);
+                jbCrossV{i} = cell(jbnCross(i),1);
+                for j=1:jbnCross(i)
                     tmpSize = fread(jNDfid, 1, sizeSize)
-                    jbCrossT{i,j} = fread(jNDfid, tmpSize, 'double')*tstep;
-                    jbCrossV{i,j} = fread(jNDfid, tmpSize, 'double');
+                    jbCrossT{i}{j} = fread(jNDfid, tmpSize, 'double')*tstep
+                    jbCrossV{i}{j} = fread(jNDfid, tmpSize, 'double')
                 end
             end
             fclose(jNDfid);
@@ -182,17 +187,20 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
         if method(5) 
             jNDfid = fopen(jNDFn{5},'r');
             jlt = cell(nTrial,1);
+            jlCrossT = cell(nTrial,1);
+            jlCrossV = cell(nTrial,1);
+            jlnCross = zeros(nTrial,1);
             for i=1:nTrial
                 jlSize = fread(jNDfid,1,sizeSize);
                 jlt{i} = fread(jNDfid,jlSize,'double')*tstep;
                 v{i,5} = fread(jNDfid,jlSize,'double');
-                jlnCross = fread(jNDfid,1,'int')
-                jlCrossT = cell(nTrial,jlnCross);
-                jlCrossV = cell(nTrial,jlnCross);
-                for j=1:jlnCross
+                jlnCross(i) = fread(jNDfid,1,'int')
+                jlCrossT{i} = cell(jlnCross(i),1);
+                jlCrossV{i} = cell(jlnCross(i),1);
+                for j=1:jlnCross(i)
                     tmpSize = fread(jNDfid, 1, sizeSize)
-                    jlCrossT{i,j} = fread(jNDfid, tmpSize, 'double')*tstep;
-                    jlCrossV{i,j} = fread(jNDfid, tmpSize, 'double');
+                    jlCrossT{i}{j} = fread(jNDfid, tmpSize, 'double')*tstep;
+                    jlCrossV{i}{j} = fread(jNDfid, tmpSize, 'double');
                 end
             end
             fclose(jNDfid);
@@ -242,15 +250,15 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
             ylim(yl);
             if method(4) 
                 handle = plot(jbt{i},v{i,4},'.b','MarkerSize',3);
-                for j=1:jbnCross
-                    plot(jbCrossT{i,j}, jbCrossV{i,j},':b');
+                for j=1:jbnCross(i)
+                    plot(jbCrossT{i}{j}, jbCrossV{i}{j},':b');
                 end
                 handles = [handles, handle];
             end
             if method(5) 
                 handle = plot(jlt{i},v{i,5},'.r','MarkerSize',3);
-                for j=1:jlnCross
-                    plot(jlCrossT{i,j}, jlCrossV{i,j},':r');
+                for j=1:jlnCross(i)
+                    plot(jlCrossT{i}{j}, jlCrossV{i}{j},':r');
                 end
                 handles = [handles, handle];
             end
@@ -326,7 +334,7 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
             cm = 1;
             for im = 1:7
                 if method(im)
-                    plot(rasterTime{i,im},ones(1,rasterSize(i,im))+cm,dcolor{im});
+                    plot(rasterTime{i,im},zeros(1,rasterSize(i,im))+cm,dcolor{im});
                     cm = cm + 1;
                 end
             end

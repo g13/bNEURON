@@ -308,10 +308,10 @@ def getNib(argv):
     #locE = np.random.randint(75,134,6)
     #===========================================================
     #locE = np.array([79, 82, 83, 108, 124, 129],dtype='int')
-    locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
-    locI = np.array([14, 28, 30],dtype='int')
-    #locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
-    #locI = np.array([14, 28, 40],dtype='int')
+    #locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
+    #locI = np.array([14, 28, 30],dtype='int')
+    locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
+    locI = np.array([14, 28, 40],dtype='int')
     vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
     #===========================================================
     #vRange = np.array([-74,-70,-65,-61],dtype='double')
@@ -332,11 +332,11 @@ def getNib(argv):
     #locE[0] = locI[-1]
     #locI[-1] = swap
 
-    g0 = 32.0*5e-4
-    gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
-    gI = -g0*np.array([10.0, 10.0, 10.0])
-    #gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
-    #gI = -g0*np.array([6.0, 10.0, 8.0])
+    g0 = 32.0*1e-3
+    #gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
+    #gI = -g0*np.array([10.0, 10.0, 10.0])
+    gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
+    gI = -g0*np.array([6.0, 10.0, 8.0])
     #gE = (1e-1 + np.random.random_sample(locE.size) * (1-1e-1)) * (0.10/2.0)
     posE = np.array([0.3,0.3,0.9,0.6,0.4,0.2])
     posI = np.array([0.7,0.2,0.5])

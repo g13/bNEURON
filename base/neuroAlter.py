@@ -51,7 +51,7 @@ def getR(RList, gList, spikeTrain, t0, rel, front, sel, ampa, gaba):
             RList[i] = recep.Rinf + (R - recep.Rinf) * recep.expr
             RList[i] = R * np.exp (- recep.b * (t0 - (lastRel + recep.c)))
 
-def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alphaR = True, loc=np.array([]), pos=np.array([]), pas = False, v=h.Vector, t=h.Vector(), cpi = False):
+def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alphaR = True, loc=np.array([]), pos=np.array([]), pas = False, v=h.Vector, t=h.Vector(), cpi = False, rdv=[h.Vector()]):
     f = open('pylog','a')
     nc = 0
     #if not oneGo:
@@ -161,8 +161,10 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alph
                 for sec in cell.all: 
                     sec.v = cell.Vrest
                 h.t = h.t + h.dt
-                v.append(cell.soma(0.5).v)
+                v.append(cell.Vrest)
                 t.append(h.t)
+                for i in xrange(n):
+                    rdv[i].append(cell.Vrest)
             else:
                 h.fadvance()
 
@@ -351,7 +353,7 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
                 synList[i].deltat = h.dt
     print '    ready to run'
     print >>f, '    ready to run'
-    fired, tsp = run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alphaR, loc, pos, pas, v, t, cpi)
+    fired, tsp = run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alphaR, loc, pos, pas, v, t, cpi, dendv)
     if copy:
         cell.dummy_copy()
     #print   'i ran and i killed ', fired, ' bedbug(s)'
@@ -402,7 +404,7 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
                 ymax = np.amax(v1)
             dline = []
             for i in xrange(n):
-                dv = dendv[i].as_numpy(i)
+                dv = dendv[i].as_numpy()
                 dv = dv[:v1.size]
                 #pyplot.plot(t1[ntrans:]-trans,dv[ntrans:],':')
                 if not oneGo:
@@ -412,7 +414,7 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
                 dline.append(dl)
                 if np.amax(dv) > ymax:
                     ymax = np.amax(dv)
-            pyplot.ylim(-80,np.amin([-30,ymax]))
+            #pyplot.ylim(-80,np.amin([-30,ymax]))
             #pyplot.ylim(-69,-62)
             pyplot.legend(dline,labels)
         else:
@@ -476,7 +478,7 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
             pyplot.ylim(v0-0.25,v0+0.25)
         pyplot.savefig(fign+'.png',format='png',bbox_inches='tight',dpi=900)
         pyplot.close()
-        print 'plot saved'
+        print fign,'.png saved'
         
     f.close()
     if getDendV:
@@ -1046,33 +1048,21 @@ def vASproceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend
 if __name__ == '__main__':
     tstep = 1.0/10.0
     #dtv = [10,25,50,100,170,240]
-    run_t = 10.0
+    run_t = 1200.0
     tol_t = min([300,run_t])
     tol_nt = int(round(tol_t/tstep))+1
     seed = 231271 
     np.random.seed(seed)
-    #locE = np.array([36, 53, 74, 79, 83, 90, 97, 101, 117, 125, 132, 174],dtype='int')
-    #locE = np.array([36, 74, 83, 97, 117, 132],dtype='int')
-    #locE = np.array([36, 73, 97, 117, 146, 180],dtype='int')
-    #locE = np.array([79, 82, 83, 108, 124, 129],dtype='int')
-    locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
+    #locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
     #locI = np.array([14, 28, 30],dtype='int')
-    locI = np.array([14, 28, 30],dtype='int')
-    #locE = np.array([32, 52, 66, 78, 98, 136],dtype='int')
-    #locE = np.array([74],dtype='int')
-    #gE = 1e-4 + np.random.random_sample(locE.size) * (1e-4-1e-4) + 2e-2 + 1e-3*3
-    #gE = 3.2e-2 * (1 + np.random.random_sample(locE.size) * 0.2 - 0.1)
-    #g0 = 3.2e-3
-    #gE = np.repeat(g0,locE.size)
-    #posE = np.random.random_sample(locE.size)
-    #locI = np.array([2, 14, 28],dtype='int')
-    #locI = np.array([7, 28, 137],dtype='int')
-    #locI = np.array([28],dtype='int')
-    #gI = (1e-1 + np.random.random_sample(locI.size) * (1-1e-1)) * (-0.1/2.0)
-    #gI = -np.repeat(g0,locI.size)
-    g0 = 32.0*5e-4
-    gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
-    gI = -g0*np.array([10.0, 10.0, 10.0])
+    locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
+    locI = np.array([14, 28, 40],dtype='int')
+
+    g0 = 32.0*1e-3
+    #gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
+    #gI = -g0*np.array([10.0, 10.0, 10.0])
+    gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
+    gI = -g0*np.array([6.0, 10.0, 8.0])
     posE = np.array([0.3,0.3,0.9,0.6,0.4,0.2])
     posI = np.array([0.7,0.2,0.5])
     pos = np.concatenate((posE, posI))
@@ -1092,9 +1082,9 @@ if __name__ == '__main__':
 
     sel = range(n)
 
-    #vecTuple = (np.array([0, run_t+1]),np.array([100,run_t+1]),np.array([200,run_t+1]),np.array([300,run_t+1]),np.array([400,run_t+1]),np.array([500,run_t+1]),np.array([600,run_t+1]),np.array([800,run_t+1]),np.array([1000,run_t+1]))
+    vecTuple = (np.array([0, run_t+1]),np.array([100,run_t+1]),np.array([200,run_t+1]),np.array([300,run_t+1]),np.array([400,run_t+1]),np.array([500,run_t+1]),np.array([600,run_t+1]),np.array([800,run_t+1]),np.array([1000,run_t+1]))
     #vecTuple = (np.array([0,20,40, run_t+1]),np.array([100,120,140,run_t+1]),np.array([200,220,240,run_t+1]),np.array([300,320,340,run_t+1]),np.array([400,420,440,run_t+1]),np.array([500,520,540,run_t+1]),np.array([600,620,640,run_t+1]),np.array([800,run_t+1]),np.array([1000,run_t+1]))
-    vecTuple = [np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1])]
+    #vecTuple = [np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1])]
     #vecTuple = (np.array([0,330,run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([0,660,run_t+1]))
     RList = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
     dendVclamp = np.array([1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000])
@@ -1102,8 +1092,8 @@ if __name__ == '__main__':
     t0 = 0.0
     tref = 13
     vThres = -65.0
-    #v_pre = -70
-    v_pre = vThres
+    v_pre = -70
+    #v_pre = vThres
     vBack = -vThres - 1
     printR = False
     getDendV = False 
@@ -1111,13 +1101,12 @@ if __name__ == '__main__':
     oneGo = True 
     clampDend = False
     monitorDend = False 
-    trans = 0
     pas = False 
 
-    run_t0 = 0.0
-    trans = 500
-    v, fired, tsp, ntrans = proceed(cell, v_pre, synList, RList, vecStimList, vecTuple, n, trans, trans+run_t0, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, alphaR, getDendV, monitorDend, pas, True, 'slice0-'+str(trans), True, False)
-    trans = 10
-    v, fired, tsp, ntrans = proceed(cell, v_pre, synList, RList, vecStimList, vecTuple, n, trans, trans+run_t, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, alphaR, getDendV, monitorDend, pas, True, 'slice1-'+str(trans), False, True)
+    trans = 30
+    vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
+    #v_pre = -60
+    #for v_pre in vRange:
+    v, fired, tsp, ntrans = proceed(cell, v_pre, synList, RList, vecStimList, vecTuple, n, trans, trans+run_t, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, alphaR, getDendV, monitorDend, pas, True, 'slice2-'+str(-v_pre), False, False)
 
     pyplot.close()
