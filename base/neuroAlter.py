@@ -59,6 +59,7 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alph
     #else:
     if cpi:
         cell.cp_init()
+        v.x[0] = cell.soma(0.5).v
     else:
         cell.init()
     print '    cell initiated'
@@ -355,7 +356,7 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
     print >>f, '    ready to run'
     fired, tsp = run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alphaR, loc, pos, pas, v, t, cpi, dendv)
     if copy:
-        cell.dummy_copy()
+        cell.copy_volt()
     #print   'i ran and i killed ', fired, ' bedbug(s)'
     #print >>f,   'i ran and i killed ', fired, ' bedbug(s)'
     v1 = v.as_numpy()
@@ -926,125 +927,6 @@ def clampEffects(cell, v0, trans, tend, t0, tstep, clampDend):
     #print >>f, 'highest voltage ', np.amax(v1), ' in ', v1.size, ' steps'
     f.close()
 
-def vASproceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, vBack, tref, vThres, t0, tstep, damp3, ddur2 = 5.0, ddur3 = 5.0, damp2=-65, sdur2 = 5.0, samp2=-70, loc=np.array([]), pos=np.array([]), dendVclamp=np.array([]), alphaR = True, getDendV = False, pas = False):
-    f = open('pylog','a')
-    h.tstop = tend
-    print   '     ', t0, ' with ', trans, ' trans ', ' to ', tend , ', tref: ', tref
-    print >>f,   '     ', t0, ' with ', trans, ' trans ', ' to ', tend , ', tref: ', tref
-    print   '     ', 'vBack: ', vBack, ' vThres: ', vThres, ' vStart ', v0
-    print >>f,   '     ', 'vBack: ', vBack, ' vThres: ', vThres, ' vStart ', v0
-    print   '      RList:', RList
-    print >>f,   '      RList:', RList
-    print   '      spikeTrain:', spikeTrain
-    print >>f,   '      spikeTrain:', spikeTrain
-    print loc
-    print >>f, loc
-    print pos
-    print >>f, pos
-    print dendVclamp 
-    print >>f, dendVclamp 
-    h.dt = tstep
-    v = h.Vector()
-    t = h.Vector()
-    v.record(cell.soma(0.5)._ref_v)
-    t.record(h._ref_t)
-    if trans > 0:
-        cell.soma.push()
-        vHold = h.SEClamp(0.5)
-        vHold.dur2 = sdur2
-        vHold.dur3 = 0
-        vHold.rs = cell.soma.Ra
-        vHold.dur1 = t0 + trans
-        vHold.amp1 = v0
-        vHold.amp2 = samp2
-        h.pop_section()
-        print ' soma clamp'
-        vHolds = []
-        j = 0
-        for i in xrange(len(loc)):
-            if not abs(dendVclamp[i] -1000) < 1e-10:
-                cell.dend[loc[i]].push()
-                vHolds.append(h.SEClamp(pos[i]))
-                vHolds[j].dur2 = ddur2
-                vHolds[j].dur3 = ddur3
-                vHolds[j].rs = cell.dend[loc[i]].Ra
-                vHolds[j].dur1 = t0 + trans
-                vHolds[j].amp1 = dendVclamp[i]
-                vHolds[j].amp2 = damp2
-                vHolds[j].amp3 = damp3
-                j = j + 1
-                h.pop_section()
-                print ' dend[',loc[i],'] clamped'
-    dendv = []
-    for i in xrange(n):
-        dendv.append(h.Vector())
-        dendv[i].record(cell.dend[loc[i]](pos[i])._ref_v)
-    for i in xrange(n):
-        if len(spikeTrain) > 0:
-            vecStimList[i].play(h.Vector(spikeTrain[i] + trans))
-            vecStimList[i].dt = h.dt
-            if alphaR:
-                print ' played ', i, ' s: ', synList[i].g
-                print >>f, '    played ', i, ' s: ', synList[i].g
-            else:
-                print ' played ', i, ' s: ', synList[i].gmax
-                print >>f, '    played ', i, ' s: ', synList[i].gmax
-            if alphaR:
-                synList[i].deltat = h.dt
-    print   'ready to run'
-    print >>f, 'ready to run'
-    fired, tsp = run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, True, t0, alphaR, loc, pos, pas, v, t)
-    #print   'i ran and i killed ', fired, ' bedbug(s)'
-    #print >>f,   'i ran and i killed ', fired, ' bedbug(s)'
-    v1 = v.as_numpy()
-    ntotal = int(round((tend-t0)/tstep)+1)
-    t1 = t.as_numpy()
-    if v1.size!=ntotal:
-        print ' steps ', v1.size, ', ntotal ', ntotal
-        print ' remove extra step'
-        print >>f, ' remove extra step'
-        v1 = v1[:-1]
-        #if __name__ == '__main__':
-        t1 = t1[:-1]
-    assert(t1.size == v1.size)
-    print   ' is this nan ', v1[-1], v1[0]
-    print >>f,   ' is this nan ', v1[-1], v1[0]
-    print   ' v size ', v1.size
-    print >>f,   ' v size ', v1.size
-    ntrans = int(round(trans/tstep))
-    print ' trans size ', ntrans
-    print   ' trans end, v0, v1', v1[ntrans-1], v1[ntrans], v1[-1]
-    print >>f,   ' trans end, v0, v1', v1[ntrans-1], v1[ntrans], v1[-1]
-    print   ' v w/o trans size ', v1.size - ntrans
-    print >>f,   ' v w/o trans size ', v1.size - ntrans
-    if trans > 0:
-        vHold = None
-
-    if __name__ == '__main__':
-        pyplot.figure('vAS',figsize=(8,4))
-        pyplot.plot(t1[ntrans:]-trans,v1[ntrans:],'k')
-        for i in xrange(n):
-            dv = dendv[i].as_numpy(i)
-            dv = dv[:v1.size]
-            pyplot.plot(t1[ntrans:]-trans,dv[ntrans:],':')
-        pyplot.ylim(-80,-40)
-        pyplot.xlim(t0,tend-trans)
-
-        pyplot.savefig('vAS.png',format='png',bbox_inches='tight',dpi=900)
-        
-    if getDendV:
-        dendVecOut = np.array([])
-        for i in xrange(n):
-            dendVecOut = np.concatenate((dendVecOut,dendv[i].as_numpy().copy()))
-        print >> f, 'returning dendV', dendVecOut.size
-        print 'returning dendV', dendVecOut.size
-        return v1.copy(), fired, tsp, ntrans, dendVecOut
-    else:
-        print >> f, 'returning somaV only'
-        print 'returning somaV only'
-        return v1.copy(), fired, tsp, ntrans
-    f.close()
-
 if __name__ == '__main__':
     tstep = 1.0/10.0
     #dtv = [10,25,50,100,170,240]
@@ -1082,9 +964,9 @@ if __name__ == '__main__':
 
     sel = range(n)
 
-    vecTuple = (np.array([0, run_t+1]),np.array([100,run_t+1]),np.array([200,run_t+1]),np.array([300,run_t+1]),np.array([400,run_t+1]),np.array([500,run_t+1]),np.array([600,run_t+1]),np.array([800,run_t+1]),np.array([1000,run_t+1]))
+    #vecTuple = (np.array([0, run_t+1]),np.array([100,run_t+1]),np.array([200,run_t+1]),np.array([300,run_t+1]),np.array([400,run_t+1]),np.array([500,run_t+1]),np.array([600,run_t+1]),np.array([800,run_t+1]),np.array([1000,run_t+1]))
     #vecTuple = (np.array([0,20,40, run_t+1]),np.array([100,120,140,run_t+1]),np.array([200,220,240,run_t+1]),np.array([300,320,340,run_t+1]),np.array([400,420,440,run_t+1]),np.array([500,520,540,run_t+1]),np.array([600,620,640,run_t+1]),np.array([800,run_t+1]),np.array([1000,run_t+1]))
-    #vecTuple = [np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1])]
+    vecTuple = [np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1])]
     #vecTuple = (np.array([0,330,run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([0,660,run_t+1]))
     RList = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
     dendVclamp = np.array([1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000])
@@ -1107,6 +989,7 @@ if __name__ == '__main__':
     vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
     #v_pre = -60
     #for v_pre in vRange:
-    v, fired, tsp, ntrans = proceed(cell, v_pre, synList, RList, vecStimList, vecTuple, n, trans, trans+run_t, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, alphaR, getDendV, monitorDend, pas, True, 'slice2-'+str(-v_pre), False, False)
+    cell.set_volt(-67.0)
+    v, fired, tsp, ntrans = proceed(cell, v_pre, synList, RList, vecStimList, vecTuple, n, trans, trans+run_t, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, alphaR, getDendV, monitorDend, pas, True, 'slice2-'+str(-v_pre), False, True)
 
     pyplot.close()

@@ -4,17 +4,11 @@ import numpy as np
 # partial passive
 
 class RealisticNeuron(object):
-    def init(self,v0=None):
-        if not v0:
-            print "    init_V = ", self.Vrest
-            self.current_balance(self.Vrest)
-        else:
-            print "    init_V = ", v0
-            self.current_balance(v0)
+    def init(self):
+        self.current_balance()
     #
     def copy_volt(self):
         print "copy voltage from cell:"
-        self.dummy_soma = np.empty(self.soma.nseg)
         i = 0
         for seg in self.soma:
             self.dummy_soma[i] = self.soma(seg.x).v
@@ -22,9 +16,7 @@ class RealisticNeuron(object):
         print "soma at", np.average(self.dummy_soma)
         avgDend = 0.0
         nDendSeg = 0.0
-        self.dummy_dend = np.empty(self.ndend,dtype=object)
         for i in xrange(self.ndend):
-            self.dummy_dend[i] = np.empty(self.dend[i].nseg,dtype=float)
             j = 0
             for seg in self.dend[i]:
                 self.dummy_dend[i][j] = self.dend[i](seg.x).v
@@ -51,45 +43,35 @@ class RealisticNeuron(object):
             nDendSeg = nDendSeg + self.dend[i].nseg
         print "dend average at", avgDend/nDendSeg
     #
-    def copy_epas(self):
-        print "copy e_pas from cell:"
-        self.dummy_soma_epas = np.empty(self.soma.nseg)
-        i = 0
-        for seg in self.soma:
-            self.dummy_soma_epas[i] = self.soma(seg.x).e_pas
-            i = i + 1
-        self.dummy_dend_epas = np.empty(self.ndend,dtype=object)
-        for i in xrange(self.ndend):
-            self.dummy_dend_epas[i] = np.empty(self.dend[i].nseg,dtype=float)
-            j = 0
-            for seg in self.dend[i]:
-                self.dummy_dend_epas[i][j] = self.dend[i](seg.x).e_pas
-                j = j + 1
+    def cp_init(self):
+        self.current_balance()
+        self.paste_volt()
+        h.finitialize()
+        h.fcurrent
     #
-    def paste_epas(self):
-        i = 0
-        for seg in self.soma:
-            self.soma(seg.x).e_pas = self.dummy_soma_epas[i]
-            i = i + 1
-        for i in xrange(self.ndend):
-            self.dend[i].push()
-            j = 0
-            for seg in self.dend[i]:
-                self.dend[i](seg.x).e_pas = self.dummy_dend_epas[i][j]
-                j = j + 1
+    def default_epas(self):
+        for sec in self.all:
+            sec.push()
+            for seg in sec:
+                segX = sec(seg.x)
+                if h.ismembrane("na_ion") or h.ismembrane("k_ion"):
+                    segX.e_pas = segX.v + (segX.ina + segX.ik)/segX.g_pas
+                if h.ismembrane("hd"):
+                    segX.e_pas = segX.e_pas + segX.i_hd/segX.g_pas
             h.fcurrent()
             h.pop_section()
     #
-    def dummy_copy(self):
-        self.copy_volt()
-        self.copy_epas()
-    #
-    def cp_init(self):
-        self.set_ion_reversals()
-        self.paste_volt()
-        h.finitialize()
-        h.fcurrent()
-        self.paste_epas()
+    def set_volt(self,setV):
+        print "set voltage to all segment:", setV
+        i = 0
+        for seg in self.soma:
+            self.dummy_soma[i] = setV
+            i = i + 1
+        for i in xrange(self.ndend):
+            j = 0
+            for seg in self.dend[i]:
+                self.dummy_dend[i][j] = setV
+                j = j + 1
     #
     def __init__(self,v0):
         self.create_sections()
@@ -101,6 +83,10 @@ class RealisticNeuron(object):
         self.define_biophysics()
         self.scale_bar()
         print " cell built"
+        self.dummy_soma = np.empty(self.soma.nseg)
+        self.dummy_dend = np.empty(self.ndend,dtype=object)
+        for i in xrange(self.ndend):
+            self.dummy_dend[i] = np.empty(self.dend[i].nseg,dtype=float)
     #
     def create_sections(self):
         self.ndend = 199
@@ -5168,21 +5154,11 @@ class RealisticNeuron(object):
                 sec.ehd_hd = -30
             h.pop_section()
     #
-    def current_balance(self,v0):
+    def current_balance(self):
         self.set_ion_reversals()
         h.finitialize(self.Vrest)
         h.fcurrent()
-        for sec in self.all:
-            sec.push()
-            for seg in sec:
-                segX = sec(seg.x)
-                if h.ismembrane("na_ion") or h.ismembrane("k_ion"):
-                    segX.e_pas = segX.v + (segX.ina + segX.ik)/segX.g_pas
-                if h.ismembrane("hd"):
-                    segX.e_pas = segX.e_pas + segX.i_hd/segX.g_pas
-            h.fcurrent()
-            h.pop_section()
-
+        self.default_epas()
         #if h.cvode.active():
         #    h.cvode.re_init()
         #else:
