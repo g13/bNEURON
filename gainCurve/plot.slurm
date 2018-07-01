@@ -16,7 +16,12 @@ date
 echo $ext
 echo $getDendV
 
-matlab -nodisplay -nosplash -r "plotMultiGainCurve('input.cfg','$ext',true,true,$getDendV);exit;"
+plotSub=true
+plotAuto=true
+plotInput=true
+cfgFile=input.cfg
+sizeSize=int64
+matlab -nodisplay -nosplash -r "plotMultiGainCurve('$cfgFile','$ext',$plotSub,$plotInput,$getDendV,'$sizeSize',$plotAuto);exit;"
 
 date
 hostname

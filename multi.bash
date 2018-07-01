@@ -1,5 +1,5 @@
 #!/bin/bash
-n128=0
+n128=1
 dir0='gainCurve'
 getDendV=true
 
@@ -60,16 +60,16 @@ export nMethod
 jobID=`sbatch --export=ALL --array=1-${nMethod} multi.slurm`
 echo $jobID
 jobID=${jobID:20}
-jobList=${jobID}_1
+jobList=":${jobID}_1"
 for i in {2..17}
 do
     if [ "$i" -le "$nMethod" ]; then
-        jobList=$jobList:${jobID}_$i
+        jobList="$jobList:${jobID}_$i"
     else
         break
     fi
 done
-#echo $jobList
+echo $jobList
 export ext
 export getDendV
 sbatch --export=ALL --dependency=afterok$jobList plot.slurm

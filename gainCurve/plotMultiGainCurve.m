@@ -1,15 +1,18 @@
-function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, sizeSize)
+function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV, sizeSize, plotAuto)
     textFontSize = 6;
-    if nargin < 6
-        sizeSize = 'int64';
-        if nargin < 5
-            plotDendV = false;
-            if nargin < 4
-                plotInput = true;
-                if nargin < 3
-                    plotSubthreshold = true;
-                    if nargin < 2
-                        ext = '';
+    if nargin < 7
+        plotAuto = true;
+        if nargin < 6
+            sizeSize = 'int64';
+            if nargin < 5
+                plotDendV = false;
+                if nargin < 4
+                    plotInput = true;
+                    if nargin < 3
+                        plotSubthreshold = true;
+                        if nargin < 2
+                            ext = '';
+                        end
                     end
                 end
             end
@@ -95,8 +98,11 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
             for i = 1:nTrial
                 subplot(nTrial,2,(i-1)*2+1)
                 hold on
+                i
+                im
                 rasterSize(i,im) = fread(RasterFid,1,sizeSize);
-                if rasterSize(i,im) >0
+
+                if rasterSize(i,im) > 0
                     rasterTime{i,im} = fread(RasterFid,rasterSize(i,im),'double');
                 end
                 plot(rasterTime{i,im},zeros(rasterSize(i,im),1)+cm,dcolor{im},'MarkerSize',2);
@@ -140,7 +146,7 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
     if ~isempty(ext)
         saveas(gcf,[p.theme,'-gainCurve.',ext],format);
     end
-    if plotSubthreshold
+    if plotSubthreshold || plotAuto
         dendV = cell(nTrial,n);
         v = cell(nTrial,7);
         if plotInput
@@ -163,6 +169,8 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
             end
             fclose(datafid);
         end
+    end
+    if plotSubthreshold
         if method(4) 
             jNDfid = fopen(jNDFn{4},'r');
             jbt = cell(nTrial,1);
@@ -360,31 +368,44 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
             end
         end
     end
-    figure;
-    for i=1:nTrial
-        subplot(ceil(nTrial/2),2,i)
-        hold on
-        for im=[1,2,3,6,7]
-            if method(im)
-                auto = autoCorr(v{i,im});
-                l = length(auto);
-                auto = [auto(l/2+1:l);auto(1:l/2)];
-                tau = linspace(-l/2*tstep,l/2*tstep,l);
-                plot(tau, auto,lcolor{im});
+    if plotAuto
+        figure;
+        for i=1:nTrial
+            %subplot(ceil(nTrial/2),2,i)
+            %hold on
+            for im=[1,2,3,6,7]
+                if method(im)
+                    [auto,psd,normed] = autoCorr(v{i,im});
+                    l = length(auto);
+                    ns = 2/tstep+1;
+                    auto = [auto(l/2+1:l);auto(1:l/2)];
+                    tau = linspace(-l/2*tstep,l/2*tstep,l);
+                    subplot(nTrial,3,(i-1)*3+1)
+                    plot(linspace(0,(length(normed)-1)*tstep,length(normed)), normed, lcolor{im});
+                    hold on
+                    title(['Trial ',num2str(i)]);
+                    subplot(nTrial,3,(i-1)*3+2)
+                    semilogy(linspace(0,(l/2-1),l/2).*1000./tstep./l,smooth(psd(1:(l/2)),ns),lcolor{im});
+                    hold on
+                    xlabel('Hz')
+                    subplot(nTrial,3,(i-1)*3+3)
+                    plot(tau, auto,lcolor{im});
+                    hold on
+                end
             end
+            %xlabel('\tau');
+            %ylabel('autocorr');
+            %title(['Trial ',num2str(i)]);
         end
-        xlabel('\tau');
-        ylabel('autocorr');
-        title(['Trial ',num2str(i)]);
-    end
-    if ~isempty(ext)
-        saveas(gcf,[p.theme,'-autoCorr.',ext],format);
-    end
-    if plotInput
-        fclose(tInfid);
+        if ~isempty(ext)
+            saveas(gcf,[p.theme,'-autoCorr.',ext],format);
+        end
+        if plotInput
+            fclose(tInfid);
+        end
     end
 end
-function auto = autoCorr(data)
+function [auto,psd,normedData] = autoCorr(data)
     normedData = (data-mean(data))./std(data);
     L = length(normedData);
     l = 2^nextpow2(L);
