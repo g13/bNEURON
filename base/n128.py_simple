@@ -7,13 +7,125 @@ class RealisticNeuron(object):
     def init(self):
         self.current_balance()
     #
+    def copy_state(self):
+        print "    copy state from cell"
+        i = 0
+        self.soma.push()
+        for seg in self.soma:
+            if h.ismembrane("hh"):  
+                self.dummy_soma_m_hh[i] = self.soma(seg.x).m_hh
+                self.dummy_soma_n_hh[i] = self.soma(seg.x).n_hh
+                self.dummy_soma_h_hh[i] = self.soma(seg.x).h_hh
+            if h.ismembrane("na3"): 
+                self.dummy_soma_m_na3[i] = self.soma(seg.x).m_na3
+                self.dummy_soma_h_na3[i] = self.soma(seg.x).h_na3
+                self.dummy_soma_s_na3[i] = self.soma(seg.x).s_na3
+            if h.ismembrane("nax"): 
+                self.dummy_soma_m_nax[i] = self.soma(seg.x).m_nax
+                self.dummy_soma_h_nax[i] = self.soma(seg.x).h_nax
+            if h.ismembrane("kdr"):
+                self.dummy_soma_n_kdr[i] = self.soma(seg.x).n_kdr
+            if h.ismembrane("kap"):
+                self.dummy_soma_n_kap[i] = self.soma(seg.x).n_kap
+                self.dummy_soma_l_kap[i] = self.soma(seg.x).l_kap
+            if h.ismembrane("kad"):
+                self.dummy_soma_n_kad[i] = self.soma(seg.x).n_kad
+                self.dummy_soma_l_kad[i] = self.soma(seg.x).l_kad
+            if h.ismembrane("hd"):
+                self.dummy_soma_l_hd[i] = self.soma(seg.x).l_hd
+            i = i + 1
+        h.pop_section()
+        for i in xrange(self.ndend):
+            j = 0
+            self.dend[i].push()
+            for seg in self.dend[i]:
+                if h.ismembrane("hh"):  
+                    self.dummy_dend_m_hh[i][j] = self.dend[i](seg.x).m_hh
+                    self.dummy_dend_n_hh[i][j] = self.dend[i](seg.x).n_hh
+                    self.dummy_dend_h_hh[i][j] = self.dend[i](seg.x).h_hh
+                if h.ismembrane("na3"): 
+                    self.dummy_dend_m_na3[i][j] = self.dend[i](seg.x).m_na3
+                    self.dummy_dend_h_na3[i][j] = self.dend[i](seg.x).h_na3
+                    self.dummy_dend_s_na3[i][j] = self.dend[i](seg.x).s_na3
+                if h.ismembrane("nax"): 
+                    self.dummy_dend_m_nax[i][j] = self.dend[i](seg.x).m_nax
+                    self.dummy_dend_h_nax[i][j] = self.dend[i](seg.x).h_nax
+                if h.ismembrane("kdr"):
+                    self.dummy_dend_n_kdr[i][j] = self.dend[i](seg.x).n_kdr
+                if h.ismembrane("kap"):
+                    self.dummy_dend_n_kap[i][j] = self.dend[i](seg.x).n_kap
+                    self.dummy_dend_l_kap[i][j] = self.dend[i](seg.x).l_kap
+                if h.ismembrane("kad"):
+                    self.dummy_dend_n_kad[i][j] = self.dend[i](seg.x).n_kad
+                    self.dummy_dend_l_kad[i][j] = self.dend[i](seg.x).l_kad
+                if h.ismembrane("hd"):
+                    self.dummy_dend_l_hd[i][j] = self.dend[i](seg.x).l_hd
+                j = j + 1
+            h.pop_section()
+    #
+    def paste_state(self):
+        print "    paste state from cell:"
+        i = 0
+        self.soma.push()
+        for seg in self.soma:
+            if h.ismembrane("hh"):  
+                self.soma(seg.x).m_hh = self.dummy_soma_m_hh[i]
+                self.soma(seg.x).n_hh = self.dummy_soma_n_hh[i]
+                self.soma(seg.x).h_hh = self.dummy_soma_h_hh[i]
+            if h.ismembrane("na3"): 
+                self.soma(seg.x).m_na3 = self.dummy_soma_m_na3[i]
+                self.soma(seg.x).h_na3 = self.dummy_soma_h_na3[i]
+                self.soma(seg.x).s_na3 = self.dummy_soma_s_na3[i]
+            if h.ismembrane("nax"): 
+                self.soma(seg.x).m_nax = self.dummy_soma_m_nax[i]
+                self.soma(seg.x).h_nax = self.dummy_soma_h_nax[i]
+            if h.ismembrane("kdr"):
+                self.soma(seg.x).n_kdr = self.dummy_soma_n_kdr[i]
+            if h.ismembrane("kap"):
+                self.soma(seg.x).n_kap = self.dummy_soma_n_kap[i]
+                self.soma(seg.x).l_kap = self.dummy_soma_l_kap[i]
+            if h.ismembrane("kad"):
+                self.soma(seg.x).n_kad = self.dummy_soma_n_kad[i]
+                self.soma(seg.x).l_kad = self.dummy_soma_l_kad[i]
+            if h.ismembrane("hd"):
+                self.soma(seg.x).l_hd = self.dummy_soma_l_hd[i]
+            i = i + 1
+        h.pop_section()
+        for i in xrange(self.ndend):
+            j = 0
+            self.dend[i].push()
+            for seg in self.dend[i]:
+                if h.ismembrane("hh"):  
+                    self.dend[i](seg.x).m_hh = self.dummy_dend_m_hh[i][j]
+                    self.dend[i](seg.x).n_hh = self.dummy_dend_n_hh[i][j]
+                    self.dend[i](seg.x).h_hh = self.dummy_dend_h_hh[i][j]
+                if h.ismembrane("na3"): 
+                    self.dend[i](seg.x).m_na3 = self.dummy_dend_m_na3[i][j]
+                    self.dend[i](seg.x).h_na3 = self.dummy_dend_h_na3[i][j]
+                    self.dend[i](seg.x).s_na3 = self.dummy_dend_s_na3[i][j]
+                if h.ismembrane("nax"): 
+                    self.dend[i](seg.x).m_nax = self.dummy_dend_m_nax[i][j]
+                    self.dend[i](seg.x).h_nax = self.dummy_dend_h_nax[i][j]
+                if h.ismembrane("kdr"):
+                    self.dend[i](seg.x).n_kdr = self.dummy_dend_n_kdr[i][j]
+                if h.ismembrane("kap"):
+                    self.dend[i](seg.x).n_kap = self.dummy_dend_n_kap[i][j]
+                    self.dend[i](seg.x).l_kap = self.dummy_dend_l_kap[i][j]
+                if h.ismembrane("kad"):
+                    self.dend[i](seg.x).n_kad = self.dummy_dend_n_kad[i][j]
+                    self.dend[i](seg.x).l_kad = self.dummy_dend_l_kad[i][j]
+                if h.ismembrane("hd"):
+                    self.dend[i](seg.x).l_hd = self.dummy_dend_l_hd[i][j]
+                j = j + 1
+            h.pop_section()
+    #
     def copy_volt(self):
         print "copy voltage from cell:"
         i = 0
         for seg in self.soma:
             self.dummy_soma[i] = self.soma(seg.x).v
             i = i + 1
-        print "soma at", np.average(self.dummy_soma)
+        print "    soma: ", np.average(self.dummy_soma)
         avgDend = 0.0
         nDendSeg = 0.0
         for i in xrange(self.ndend):
@@ -23,7 +135,7 @@ class RealisticNeuron(object):
                 avgDend = avgDend + self.dummy_dend[i][j]
                 j = j + 1
             nDendSeg = nDendSeg + self.dummy_dend[i].size
-        print "dend average at", avgDend/nDendSeg
+        print "    dend: ", avgDend/nDendSeg
     #
     def paste_volt(self):
         print "paste voltage from dummy:"
@@ -47,7 +159,8 @@ class RealisticNeuron(object):
         self.current_balance()
         self.paste_volt()
         h.finitialize()
-        h.fcurrent
+        if self.include_states:
+            self.paste_state()
     #
     def default_epas(self):
         for sec in self.all:
@@ -71,7 +184,7 @@ class RealisticNeuron(object):
                 self.dummy_dend[i][j] = setV
                 j = j + 1
     #
-    def __init__(self,v0):
+    def __init__(self,v0,inc_stat=False):
         self.create_sections()
         self.build_topology()
         self.build_subsets()
@@ -82,9 +195,75 @@ class RealisticNeuron(object):
         self.scale_bar()
         print " cell built"
         self.dummy_soma = np.empty(self.soma.nseg)
+
+        self.dummy_soma_m_hh = np.zeros(self.soma.nseg,dtype='double')
+        self.dummy_soma_h_hh = np.zeros(self.soma.nseg,dtype='double')
+        self.dummy_soma_n_hh = np.zeros(self.soma.nseg,dtype='double')
+
+        self.dummy_soma_m_na3 = np.zeros(self.soma.nseg,dtype='double')
+        self.dummy_soma_h_na3 = np.zeros(self.soma.nseg,dtype='double')
+        self.dummy_soma_s_na3 = np.zeros(self.soma.nseg,dtype='double')
+
+        self.dummy_soma_m_nax = np.zeros(self.soma.nseg,dtype='double')
+        self.dummy_soma_h_nax = np.zeros(self.soma.nseg,dtype='double')
+
+        self.dummy_soma_n_kdr = np.zeros(self.soma.nseg,dtype='double')
+        
+        self.dummy_soma_n_kap = np.zeros(self.soma.nseg,dtype='double')
+        self.dummy_soma_l_kap = np.zeros(self.soma.nseg,dtype='double')
+
+        self.dummy_soma_n_kad = np.zeros(self.soma.nseg,dtype='double')
+        self.dummy_soma_l_kad = np.zeros(self.soma.nseg,dtype='double')
+
+        self.dummy_soma_l_hd = np.zeros(self.soma.nseg,dtype='double')
+        #
         self.dummy_dend = np.empty(self.ndend,dtype=object)
+
+        self.dummy_dend_m_hh = np.empty(self.ndend,dtype=object)
+        self.dummy_dend_h_hh = np.empty(self.ndend,dtype=object)
+        self.dummy_dend_n_hh = np.empty(self.ndend,dtype=object)
+
+        self.dummy_dend_m_nax = np.empty(self.ndend,dtype=object)
+        self.dummy_dend_h_nax = np.empty(self.ndend,dtype=object)
+
+        self.dummy_dend_m_na3 = np.empty(self.ndend,dtype=object)
+        self.dummy_dend_h_na3 = np.empty(self.ndend,dtype=object)
+        self.dummy_dend_s_na3 = np.empty(self.ndend,dtype=object)
+
+        self.dummy_dend_n_kdr = np.empty(self.ndend,dtype=object)
+        
+        self.dummy_dend_n_kap = np.empty(self.ndend,dtype=object)
+        self.dummy_dend_l_kap = np.empty(self.ndend,dtype=object)
+
+        self.dummy_dend_n_kad = np.empty(self.ndend,dtype=object)
+        self.dummy_dend_l_kad = np.empty(self.ndend,dtype=object)
+
+        self.dummy_dend_l_hd = np.empty(self.ndend,dtype=object)
         for i in xrange(self.ndend):
             self.dummy_dend[i] = np.empty(self.dend[i].nseg,dtype=float)
+
+            self.dummy_dend_m_hh[i] = np.zeros(self.dend[i].nseg,dtype=object)
+            self.dummy_dend_h_hh[i] = np.zeros(self.dend[i].nseg,dtype=object)
+            self.dummy_dend_n_hh[i] = np.zeros(self.dend[i].nseg,dtype=object)
+
+            self.dummy_dend_m_nax[i] = np.zeros(self.dend[i].nseg,dtype=object)
+            self.dummy_dend_h_nax[i] = np.zeros(self.dend[i].nseg,dtype=object)
+
+            self.dummy_dend_m_na3[i] = np.zeros(self.dend[i].nseg,dtype=object)
+            self.dummy_dend_h_na3[i] = np.zeros(self.dend[i].nseg,dtype=object)
+            self.dummy_dend_s_na3[i] = np.zeros(self.dend[i].nseg,dtype=object)
+
+            self.dummy_dend_n_kdr[i] = np.zeros(self.dend[i].nseg,dtype=object)
+
+            self.dummy_dend_n_kap[i] = np.zeros(self.dend[i].nseg,dtype=object)
+            self.dummy_dend_l_kap[i] = np.zeros(self.dend[i].nseg,dtype=object)
+
+            self.dummy_dend_n_kad[i] = np.zeros(self.dend[i].nseg,dtype=object)
+            self.dummy_dend_l_kad[i] = np.zeros(self.dend[i].nseg,dtype=object)
+
+            self.dummy_dend_l_hd[i] = np.zeros(self.dend[i].nseg,dtype=object)
+        self.include_states = inc_stat
+        print "dummy cell initialized, include_states is default to", inc_stat
     #
     def create_sections(self):
         self.ndend = 199

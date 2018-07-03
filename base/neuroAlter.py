@@ -51,7 +51,7 @@ def getR(RList, gList, spikeTrain, t0, rel, front, sel, ampa, gaba):
             RList[i] = recep.Rinf + (R - recep.Rinf) * recep.expr
             RList[i] = R * np.exp (- recep.b * (t0 - (lastRel + recep.c)))
 
-def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alphaR = True, loc=np.array([]), pos=np.array([]), pas = False, v=h.Vector, t=h.Vector(), cpi = False, rdv=[h.Vector()]):
+def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alphaR = True, loc=np.array([]), pos=np.array([]), pas = False, v=h.Vector, t=h.Vector(), rdv=[h.Vector()], cpi = False, cpt = -1.0):
     f = open('pylog','a')
     nc = 0
     #if not oneGo:
@@ -59,7 +59,8 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alph
     #else:
     if cpi:
         cell.cp_init()
-        v.x[0] = cell.soma(0.5).v
+        if trans > 0:
+            print "starting with copied voltage (and gating states), trans should be 0 if not intentional"
     else:
         cell.init()
     print '    cell initiated'
@@ -73,7 +74,8 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alph
     h.t = t0
     print  '    t0 = ', h.t
     print >>f, '    t0 = ', h.t
-    while round(h.t/h.dt) < round((t0+trans)/h.dt):
+    neTrans = int(round((t0+trans)/h.dt))
+    while int(round(h.t/h.dt)) < int(round((t0+trans)/h.dt)):
         h.fadvance()
         steps = steps + 1
         #print  cell.soma(0.5).v
@@ -99,11 +101,18 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alph
             else:
                 print >>f, synList[i].R
                 print synList[i].R
-    checkList = [];
+    if cpt > -1 and int(round(cpt/h.dt)) == int(round(h.t/h.dt)):
+        cell.copy_volt()
+        if cell.include_states:
+            cell.copy_state()
     if not pas:
         if oneGo:
-            while (round(h.t/h.dt) < round(h.tstop/h.dt)):
+            while (int(round(h.t/h.dt)) < int(round(h.tstop/h.dt))):
                 h.fadvance()
+                if cpt > -1 and int(round(cpt/h.dt)) == int(round(h.t/h.dt)):
+                    cell.copy_volt()
+                    if cell.include_states:
+                        cell.copy_state()
                 if cell.soma(0.5).v > vThres+15 and cell.soma(0.5).v < vold and not firing:
                     tsp = h.t-trans
                     print 'nc =', nc, '<', tsps.size 
@@ -113,18 +122,10 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alph
                     print  tsp, 'fired expecting finish', tsp + tref
                     print >>f,  tsp, 'fired expecting finish', tsp + tref
                 vold = cell.soma(0.5).v
-                if len(checkList) > 0 and len(loc) > 0:
-                    for checkTime in checkList:
-                        if abs(h.t-checkTime-trans) < 1e-10:
-                            print >>f, '    check at', checkTime
-                            print '    check at', checkTime
-                            for i in xrange(n): 
-                                print '    dend[', loc[i], ']' ,'(',pos[i],').v =', cell.dend[loc[i]](pos[i]).v
-                                print >> f, '    dend[', loc[i], ']' ,'(',pos[i],').v =', cell.dend[loc[i]](pos[i]).v
                 if (cell.soma(0.5).v <= vThres+7.5):
                     firing = 0
         else:
-            while ((cell.soma(0.5).v > vBack or firing) and round(h.t/h.dt) < round(h.tstop/h.dt)):
+            while ((cell.soma(0.5).v > vBack or firing) and int(round(h.t/h.dt)) < int(round(h.tstop/h.dt))):
                 h.fadvance()
                 if cell.soma(0.5).v > vThres+15 and cell.soma(0.5).v < vold and not firing:
                     tsp = h.t-trans
@@ -136,11 +137,15 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alph
                 if cell.soma(0.5).v <= vBack and cell.soma(0.5).v > vold and firing:
                     firing = 0
                 vold = cell.soma(0.5).v
-            print >> f, '    ((', cell.soma(0.5).v > vBack, ' or ', firing > 0, ') and ', round(h.t/h.dt) < round(h.tstop/h.dt), ')'
-            print '    ((', cell.soma(0.5).v > vBack, ' or ', firing > 0, ') and ', round(h.t/h.dt) < round(h.tstop/h.dt), ')'
+            print >> f, '    ((', cell.soma(0.5).v > vBack, ' or ', firing > 0, ') and ', int(round(h.t/h.dt)) < int(round(h.tstop/h.dt)), ')'
+            print '    ((', cell.soma(0.5).v > vBack, ' or ', firing > 0, ') and ', int(round(h.t/h.dt)) < int(round(h.tstop/h.dt)), ')'
     else:
         assert(oneGo==True)
-        while (round(h.t/h.dt) < round(h.tstop/h.dt)):
+        while (int(round(h.t/h.dt)) < int(round(h.tstop/h.dt))):
+            if cpt > -1 and int(round(cpt/h.dt)) == int(round(h.t/h.dt)):
+                cell.copy_volt()
+                if cell.include_states:
+                    cell.copy_state()
             if cell.soma(0.5).v >= vThres:
                 tsp = h.t-trans
                 print >>f, '    nc =', nc, '<', tsps.size 
@@ -149,14 +154,6 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alph
                 nc = nc + 1
                 print >>f,  tsp, 'fired expecting finish', tsp + tref
                 print  tsp, 'fired expecting finish', tsp + tref
-
-            if len(checkList) > 0 and len(loc) > 0:
-                for checkTime in checkList:
-                    if abs(h.t-checkTime-trans) < 1e-10:
-                        print '    check at', checkTime
-                        for i in xrange(n): 
-                            print '    dend[', loc[i], ']' ,'(',pos[i],').v =', cell.dend[loc[i]](pos[i]).v
-                            print >> f, '    dend[', loc[i], ']' ,'(',pos[i],').v =', cell.dend[loc[i]](pos[i]).v
 
             if h.t < trans + tsp + tref:
                 for sec in cell.all: 
@@ -265,7 +262,10 @@ def prepCell(gList, loc, pos, n, v0, alphaR = True):
     f.close()
     return cell, vecStimList, synList, dist
 
-def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, vBack, tref, vThres, oneGo, t0, tstep, loc=np.array([]), pos=np.array([]), dendVclamp=np.array([]), alphaR = True, getDendV = False, monitorDend = False, pas = False, plotSlice=False, fign='slice', copy=False, cpi=False):
+def set_volt(cell,v):
+    cell.set_volt(v)
+
+def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, vBack, tref, vThres, oneGo, t0, tstep, loc=np.array([]), pos=np.array([]), dendVclamp=np.array([]), alphaR = True, getDendV = False, monitorDend = False, pas = False, plotSlice=False, fign='slice', cpi=False, cpt=-1.0):
     f = open('pylog','a')
     h.tstop = tend
     print '    ', t0, ' with ', trans, ' trans ', ' to ', tend , ', tref: ', tref
@@ -354,13 +354,9 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
                 synList[i].deltat = h.dt
     print '    ready to run'
     print >>f, '    ready to run'
-    fired, tsp = run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alphaR, loc, pos, pas, v, t, cpi, dendv)
-    if copy:
-        cell.copy_volt()
-    #print   'i ran and i killed ', fired, ' bedbug(s)'
-    #print >>f,   'i ran and i killed ', fired, ' bedbug(s)'
+    fired, tsp = run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alphaR, loc, pos, pas, v, t, dendv, cpi, cpt)
     v1 = v.as_numpy()
-    if oneGo or round(h.t/h.dt) > round(h.tstop/h.dt):
+    if oneGo or int(round(h.t/h.dt)) > int(round(h.tstop/h.dt)):
         ntotal = int(round((tend-t0)/tstep)+1)
     else:
         ntotal = int(round((h.t-t0)/tstep)+1)
@@ -500,7 +496,7 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
         print 'returning somaV only'
         return v1.copy(), fired, tsp, ntrans
 
-def leaky(cell, v0, synList, RList, vecStimList, n, trans, tend, tstep, loc, pos, alphaR = True):
+def leaky(cell, v0, synList, RList, vecStimList, n, trans, tend, tstep, loc, pos, alphaR = True, cpi = False, cpt = -1.0):
     f = open('pylog','a')
     h.tstop = tend
     print loc
@@ -535,7 +531,7 @@ def leaky(cell, v0, synList, RList, vecStimList, n, trans, tend, tstep, loc, pos
         vecStimList[i].dt = h.dt
     print   'ready to run'
     print >>f, 'ready to run'
-    run(cell, v0, 0, 0, 0, synList, RList, n, trans, 1, 0, alphaR, loc, pos)
+    run(cell, v0, 0, 0, 0, synList, RList, n, trans, 1, 0, alphaR, loc, pos, False, v, t, dendv, cpi, cpt)
     #print   'i ran and i killed ', fired, ' bedbug(s)'
     #print >>f,   'i ran and i killed ', fired, ' bedbug(s)'
     v1 = v.as_numpy()
@@ -737,7 +733,7 @@ def bproceed0(cell, v0, synList, gList, RList, vecStimList, spikeTrain, n, sel, 
         else:
             return v1.copy(), fired, dendv.as_numpy().copy()
 
-def bproceed(cell, v0, synList, gList, RList, vecStimList, spikeTrain, n, sel, trans, tend, t0, tstep, name, pos=-1.0, loc = 0, alphaR = True):
+def bproceed(cell, v0, synList, gList, RList, vecStimList, spikeTrain, n, sel, trans, tend, t0, tstep, name, pos = -1.0, loc = 0, alphaR = True, cpi = False, cpt = -1.0):
     f = open('pylog','a')
     h.tstop = tend
     print t0, ' with ', trans, ' trans ', ' to ', tend, ' v0 = ', v0
@@ -786,7 +782,7 @@ def bproceed(cell, v0, synList, gList, RList, vecStimList, spikeTrain, n, sel, t
             else:
                 synList[i].gmax = 0
 
-    fired, _ = run(cell, v0, 0, 0, 0, synList, RList, n, trans, 1, t0, alphaR)
+    fired, _ = run(cell, v0, 0, 0, 0, synList, RList, n, trans, 1, t0, alphaR, np.array([]), np.array([]), False, v, t, dendv, cpi, cpt)
     #print 'i ran and i killed ', fired, ' bedbug(s)'
     #print >>f, 'i ran and i killed ', fired, ' bedbug(s)'
     if fired > 0:
@@ -820,7 +816,7 @@ def srun(cell, v0, trans, t0):
     h.t = t0
     print  't0 = ', h.t
     print >>f,  't0 = ', h.t
-    while round(h.t/h.dt) < round((t0+trans)/h.dt):
+    while int(round(h.t/h.dt)) < int(round((t0+trans)/h.dt)):
         h.fadvance()
         steps = steps + 1
     print trans, 'ms trans complete, used ', steps , ' steps, t+trans = ', h.t, 'v = ', '%7.5f.' % cell.soma(0.5).v
@@ -930,7 +926,8 @@ def clampEffects(cell, v0, trans, tend, t0, tstep, clampDend):
 if __name__ == '__main__':
     tstep = 1.0/10.0
     #dtv = [10,25,50,100,170,240]
-    run_t = 1200.0
+    run_t = 200.0
+    run_nt = int(round(run_t/tstep))+1
     tol_t = min([300,run_t])
     tol_nt = int(round(tol_t/tstep))+1
     seed = 231271 
@@ -966,9 +963,12 @@ if __name__ == '__main__':
 
     #vecTuple = (np.array([0, run_t+1]),np.array([100,run_t+1]),np.array([200,run_t+1]),np.array([300,run_t+1]),np.array([400,run_t+1]),np.array([500,run_t+1]),np.array([600,run_t+1]),np.array([800,run_t+1]),np.array([1000,run_t+1]))
     #vecTuple = (np.array([0,20,40, run_t+1]),np.array([100,120,140,run_t+1]),np.array([200,220,240,run_t+1]),np.array([300,320,340,run_t+1]),np.array([400,420,440,run_t+1]),np.array([500,520,540,run_t+1]),np.array([600,620,640,run_t+1]),np.array([800,run_t+1]),np.array([1000,run_t+1]))
-    vecTuple = [np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1])]
+    vecTuple = [np.array([0,run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1])]
+    vecTuple0 = [np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1])]
     #vecTuple = (np.array([0,330,run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([run_t+1]),np.array([0,660,run_t+1]))
-    RList = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+    taue0 = 0.098814229249 
+    RList0 = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+    RList = [[0, gE[0]/taue0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
     dendVclamp = np.array([1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000])
     #dendVclamp = np.array([-50, -50, -50, -50, -50, -50, 1000, 1000, 1000])
     t0 = 0.0
@@ -984,12 +984,48 @@ if __name__ == '__main__':
     clampDend = False
     monitorDend = False 
     pas = False 
-
-    trans = 30
+    plotSv = False
+    plotSleak = False
     vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
-    #v_pre = -60
-    #for v_pre in vRange:
-    cell.set_volt(-67.0)
-    v, fired, tsp, ntrans = proceed(cell, v_pre, synList, RList, vecStimList, vecTuple, n, trans, trans+run_t, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, alphaR, getDendV, monitorDend, pas, True, 'slice2-'+str(-v_pre), False, True)
-
+    trans = 0
+    vtrace = np.empty((run_nt,vRange.size))
+    leakyV = np.empty((run_nt,vRange.size))
+    pyplot.figure('v',figsize=((8,4)))
+    ax1 = pyplot.subplot(1,2,1)
+    ax2 = pyplot.subplot(1,2,2)
+    for i in xrange(vRange.size):
+        v_pre = vRange[i]
+        cell.set_volt(v_pre)
+        vtrace[:,i], fired, tsp, ntrans = proceed(cell, v_pre, synList, RList0, vecStimList, vecTuple, n, trans, trans+run_t, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, alphaR, getDendV, monitorDend, pas, plotSv, 'v-'+str(-v_pre), True)
+        leakyV[:,i], fired, tsp, ntrans = proceed(cell, v_pre, synList, RList0, vecStimList, vecTuple0, n, trans, trans+run_t, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, alphaR, getDendV, monitorDend, pas, plotSleak, 'leak-'+str(-v_pre), True)
+        ax1.plot(vtrace[:,i],'b',lw = i*0.25)
+        ax1.plot(leakyV[:,i],'k',lw=0.25)
+        ax2.plot(vtrace[:,i]-leakyV[:,i],'r',lw = i*0.25)
+    pyplot.savefig('v.png',format='png',bbox_inches='tight',dpi=900)
     pyplot.close()
+
+    vtrace0 = np.empty((run_nt,vRange.size))
+    leakyV0 = np.empty((run_nt,vRange.size))
+    pyplot.figure('v0',figsize=((8,4)))
+    ax1 = pyplot.subplot(1,2,1)
+    ax2 = pyplot.subplot(1,2,2)
+    trans = 110.0
+    ntrans = int(round(trans/tstep))
+    for i in xrange(vRange.size):
+        v_pre = vRange[i]
+        vtmp, fired, tsp, ntrans = proceed(cell, v_pre, synList, RList0, vecStimList, vecTuple, n, trans, trans+run_t, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, alphaR, getDendV, monitorDend, pas, plotSv, 'v0-'+str(-v_pre))
+        vtrace0[:,i] = vtmp[ntrans:]
+        vtmp, fired, tsp, ntrans = proceed(cell, v_pre, synList, RList0, vecStimList, vecTuple0, n, trans, trans+run_t, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, alphaR, getDendV, monitorDend, pas, plotSleak, 'leak0-'+str(-v_pre))
+        leakyV0[:,i] = vtmp[ntrans:]
+        ax1.plot(vtrace0[:,i],'b',lw = i*0.25)
+        ax1.plot(leakyV0[:,i],'k',lw=0.25)
+        ax2.plot(vtrace0[:,i]-leakyV0[:,i],'r',lw = i*0.25)
+    pyplot.savefig('v0.png',format='png',bbox_inches='tight',dpi=900)
+    pyplot.close()
+    pyplot.figure('dv',figsize=((8,4)))
+    ax1 = pyplot.subplot(1,2,1)
+    ax2 = pyplot.subplot(1,2,2)
+    for i in xrange(vRange.size):
+        ax1.plot(leakyV[:,i]-leakyV0[:,i],'k',lw=0.25*i)
+        ax2.plot(vtrace[:,i]-leakyV[:,i]-vtrace0[:,i]+leakyV0[:,i],'r',lw=0.25*i)
+    pyplot.savefig('dv.png',format='png',bbox_inches='tight',dpi=900)

@@ -18,9 +18,9 @@ using std::to_string;
 namespace yl {
     const bool debug = true;
 }
-const double tau_er = 0.098814229249;
-const double tau_ed = 8.333333333333;
-const double tau_ir = 0.98814229249;
+const double tau_er = 0.0988142;
+const double tau_ed = 8.33333;
+const double tau_ir = 0.988142;
 const double tau_id = 50.0;
 static vector<vector<double>> dummy_dendV;
 
@@ -110,7 +110,9 @@ typedef struct get_cell Cell;
 
 //finialize
 
-unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, long insert, bool getDendV=false, vector<vector<double>> &dendV = dummy_dendV, bool pas = false, string fign="", bool copy=false, bool cpi=true);
+unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, long insert, bool getDendV=false, vector<vector<double>> &dendV = dummy_dendV, bool pas = false, string fign="", bool cpi=true, double cpt=-1.0);
+
+void Py_setV(Cell &cell, double v);
 
 size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jND &jnd, double end_t, double it, double &tBack, double &vBack, double tstep, std::vector<double> &tsp, double vStop, unsigned int &nc, Cell &cell, vector<vector<double>> &spikeTrain, vector<long> &s0, vector<long> &s1, vector<double> &dendVclamp, string fign);
 

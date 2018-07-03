@@ -96,7 +96,36 @@ void get_cell::NEURON_cleanup() {
     Py_CLEAR(Py_vecStimList);
 }
 
-unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, long insert, bool getDendV, vector<vector<double>> &dendV, bool pas, string fign, bool copy, bool cpi) {
+void Py_setV(Cell &cell, double v) {
+    PyObject *pFunc;
+    PyObject *pArgs;
+    if (cell.pModule != NULL) {
+        if (yl::debug) {
+            cout << "        module intact" << "\n";
+        }
+        pFunc = PyObject_GetAttrString(cell.pModule,"set_volt");
+        if (yl::debug) {
+            cout << "        set v" << "\n";
+        }
+        if (pFunc!=NULL && PyCallable_Check(pFunc)) {
+            pArgs = PyTuple_New(2);
+            Py_INCREF(cell.Py_Cell);
+            PyTuple_SetItem(pArgs, 0,cell.Py_Cell);
+            PyTuple_SetItem(pArgs, 1,PyDouble_FromDouble(v));
+            PyObject_CallObject(pFunc,pArgs);
+        } else {
+            if (yl::debug) {
+                cout << " The module's function is defected" << "\n"; 
+            }
+        }
+    } else {
+        if (yl::debug) {
+            cout << " Houston we have lost the module!" << "\n";
+        }
+    }
+}
+
+unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList, vector<long> &s1, vector<vector<double>> &spikeTrain, int n, double trans, double tend, double vBack, double tref, double vThres, long oneGo, vector<double> &v, long &nt, vector<double> &tsp, double t0, double tstep, vector<double> &dendVclamp, long insert, bool getDendV, vector<vector<double>> &dendV, bool pas, string fign, bool cpi, double cpt) {
     PyObject **pRList = new PyObject*[n];
     PyObject *pFunc;
     PyObject *pArgs, *pValue, *Py_dendVclamp;
@@ -210,7 +239,7 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
             pArgs = PyTuple_New(26);
             Py_INCREF(cell.Py_Cell);
             PyTuple_SetItem(pArgs, 0,cell.Py_Cell);
-            PyTuple_SetItem(pArgs, 1,PyFloat_FromDouble(vinit));
+            PyTuple_SetItem(pArgs, 1,PyDouble_FromDouble(vinit));
             Py_INCREF(cell.Py_synList);
             PyTuple_SetItem(pArgs, 2,cell.Py_synList);
             PyTuple_SetItem(pArgs, 3,Py_RList);
@@ -218,14 +247,14 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
             PyTuple_SetItem(pArgs, 4,cell.Py_vecStimList);
             PyTuple_SetItem(pArgs, 5,Py_spikeTrainTuple);
             PyTuple_SetItem(pArgs, 6,PyInt_FromLong(n));
-            PyTuple_SetItem(pArgs, 7,PyFloat_FromDouble(trans));
-            PyTuple_SetItem(pArgs, 8,PyFloat_FromDouble(tend));
-            PyTuple_SetItem(pArgs, 9,PyFloat_FromDouble(vBack));
-            PyTuple_SetItem(pArgs,10,PyFloat_FromDouble(tref));
-            PyTuple_SetItem(pArgs,11,PyFloat_FromDouble(vThres));
+            PyTuple_SetItem(pArgs, 7,PyDouble_FromDouble(trans));
+            PyTuple_SetItem(pArgs, 8,PyDouble_FromDouble(tend));
+            PyTuple_SetItem(pArgs, 9,PyDouble_FromDouble(vBack));
+            PyTuple_SetItem(pArgs,10,PyDouble_FromDouble(tref));
+            PyTuple_SetItem(pArgs,11,PyDouble_FromDouble(vThres));
             PyTuple_SetItem(pArgs,12,PyInt_FromLong(oneGo));
-            PyTuple_SetItem(pArgs,13,PyFloat_FromDouble(t0));
-            PyTuple_SetItem(pArgs,14,PyFloat_FromDouble(tstep));
+            PyTuple_SetItem(pArgs,13,PyDouble_FromDouble(t0));
+            PyTuple_SetItem(pArgs,14,PyDouble_FromDouble(tstep));
             Py_INCREF(cell.Py_loc);
             PyTuple_SetItem(pArgs,15,cell.Py_loc);
             Py_INCREF(cell.Py_pos);
@@ -255,16 +284,12 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
                 }
             }
             PyTuple_SetItem(pArgs,23,PyString_FromString(fign.c_str()));
-            if (copy) {
+            if (cpi) {
                 PyTuple_SetItem(pArgs,24,Py_True);
             } else {
                 PyTuple_SetItem(pArgs,24,Py_False);
             }
-            if (cpi) {
-                PyTuple_SetItem(pArgs,25,Py_True);
-            } else {
-                PyTuple_SetItem(pArgs,25,Py_False);
-            }
+            PyTuple_SetItem(pArgs,25,PyDouble_FromDouble(cpt));
             if (yl::debug) {
                 cout << "       ..." << "\n";
             }
@@ -399,7 +424,7 @@ size neuroAlter(nNS &neuron, nNL &neuroLib, Cross &cross, size i_prior_cross, jN
         assert(cross.t.size() == cross.v.size());
     }
     size nt = 0;
-    nc = nc + Py_proceed(cell, vinit, RList, s1, spikeTrain, neuron.nSyn, trans, trans + end_t, vStop, tref, vThres, 0, cross.v, nt, tsp, t0, tstep, dendVclamp, -1, false, dummy_dendV, false, fign); 
+    nc = nc + Py_proceed(cell, vinit, RList, s1, spikeTrain, neuron.nSyn, trans, trans + end_t, vStop, tref, vThres, 0, cross.v, nt, tsp, t0, tstep, dendVclamp, -1, false, dummy_dendV, false, fign, true); 
     assert(nt == cross.v.size() - lastSize);
     tBack = round(it + nt-1);
     assert(int(tBack) == tBack);
@@ -463,7 +488,7 @@ size neuroAlterB(nNS &neuron, nNL &neuroLib, vector<double> &v, size &ith, size 
     }
     double tend = trans + (run_nt-1)*tstep;
     npy_intp dim;
-    size nc = Py_proceed(cell, vinit, RList, s1, spikeTrain, neuron.nSyn, trans, tend, vBack, tref, vThres, 0, v, lCross, tsp, t, tstep, dendVclamp,vs, false, dummy_dendV, false, fign);
+    size nc = Py_proceed(cell, vinit, RList, s1, spikeTrain, neuron.nSyn, trans, tend, vBack, tref, vThres, 0, v, lCross, tsp, t, tstep, dendVclamp,vs, false, dummy_dendV, false, fign, true);
 
     vs = vs + lCross - 1;
     return nc;

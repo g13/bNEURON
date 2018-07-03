@@ -21,8 +21,8 @@ UNITS {
 PARAMETER {
 	Erev	= -80	(mV)		: reversal potential
 	Prethresh = 0 			    : voltage level nec for release
-	tau0 = 0.98814229249  (ms)    : open channels at end of release
-	tau1 = 50.0           (ms)    : open channels at start of release
+	tau0 = 0.988142     (ms)    : open channels at end of release
+	tau1 = 50.0         (ms)    : open channels at start of release
 }
 
 

@@ -18,10 +18,10 @@ UNITS {
 }
 
 PARAMETER {
-	Erev	= 0	(mV)		 : reversal potential
-	Prethresh = 0 			 : voltage level nec for release
-	tau0 = 0.098814229249	 (ms): open channels at end of release
-	tau1 = 8.333333333333  (ms): open channels at start of release
+	Erev	= 0	(mV)		  : reversal potential
+	Prethresh = 0 			  : voltage level nec for release
+	tau0 = 0.0988142      (ms): open channels at end of release
+	tau1 = 8.33333        (ms): open channels at start of release
 }
 
 
@@ -45,6 +45,8 @@ INITIAL {
     etr = exp(-deltat/tau0)
 	etd = exp(-deltat/tau1)
 	c = tau0/(tau1-tau0) * (etd-etr)
+    :printf("Initial dt: %.15e, f: %.15e\n", deltat,f)
+    :printf("    tau0: %.15e, tau1: %.15e\n", tau0, tau1)
 }
 
 BREAKPOINT {
@@ -53,12 +55,16 @@ BREAKPOINT {
 }
 
 PROCEDURE release() {
+    :printf("    release at v:%.15e, t:%.3f\n", v, t)
+    :printf("    with g:%.15e, h:%.15e \n", g, h)
 	if (pre > Prethresh) {
         h = h + f/tau0
+        :printf("h jumped:%.15e to %.15e \n", f/tau0, h)
 	}
 
 	g = g * etd + c * h
 	h = h * etr
+    :printf("    after release g:%.15e, h:%.15e \n", g, h)
 
 	VERBATIM
 	return 0;

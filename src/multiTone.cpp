@@ -99,11 +99,15 @@ int main(int argc, char **argv) {
         string fign = inputArg.theme + "-copy_cell_trans" + to_string(static_cast<unsigned int>(inputArg.trans)) + "-" + to_string(ii);
         size plchldr_size0;
         double plchldr_double = 0;
-        vector<double> dummyV, dummyTsp, dummyDendVclamp(neuroLib.nSyn,1000);
-        vector<long> dummyS1(neuroLib.nSyn,0);
-        vector<vector<double>> dummyDendV, dummySpikeTrain(neuroLib.nSyn,vector<double>(1,1)), dummyRList(neuroLib.nSyn,vector<double>(2,0));
-        // copy crossing state
-        Py_proceed(cell, inputArg.vThres, dummyRList, dummyS1, dummySpikeTrain, neuroLib.nSyn, inputArg.trans, inputArg.trans, plchldr_double, inputArg.tRef, inputArg.vThres, 1, dummyV, plchldr_size0, dummyTsp, 0, inputArg.tstep[ii], dummyDendVclamp, -1, false, dummyDendV, inputArg.pas, fign, true, false);
+        if (inputArg.setV) {
+            vector<double> dummyV, dummyTsp, dummyDendVclamp(neuroLib.nSyn,1000);
+            vector<long> dummyS1(neuroLib.nSyn,0);
+            vector<vector<double>> dummyDendV, dummySpikeTrain(neuroLib.nSyn,vector<double>(1,1)), dummyRList(neuroLib.nSyn,vector<double>(2,0));
+            // copy crossing state
+            Py_proceed(cell, inputArg.vThres, dummyRList, dummyS1, dummySpikeTrain, neuroLib.nSyn, inputArg.trans, inputArg.trans, plchldr_double, inputArg.tRef, inputArg.vThres, 1, dummyV, plchldr_size0, dummyTsp, 0, inputArg.tstep[ii], dummyDendVclamp, -1, false, dummyDendV, inputArg.pas, fign, false, inputArg.trans);
+        } else {
+            Py_setV(cell, inputArg.vThres);
+        }
         cout << " crossing state copied" << endl;
         if (ii == 0) {
             for (int i=0; i<neuroLib.nSyn; i++) {
@@ -194,7 +198,7 @@ int main(int argc, char **argv) {
             cout << " yale NEURON begin" << endl;
             cout << " point of no return unless spike " << inputArg.vThres << endl;
             string dummy_fign = "";
-            nc = Py_proceed(cell, v0, RList, s1,  spikeTrain, neuroLib.nSyn, inputArg.trans0, inputArg.trans0 + run_t, plchldr_double, inputArg.tRef, inputArg.vThres, 1, simV, plchldr_size0, tsp_sim, 0, inputArg.tstep[ii], dendVclamp, -1, inputArg.getDendV, dendV, inputArg.pas,dummy_fign, false, false);
+            nc = Py_proceed(cell, v0, RList, s1,  spikeTrain, neuroLib.nSyn, inputArg.trans0, inputArg.trans0 + run_t, plchldr_double, inputArg.tRef, inputArg.vThres, 1, simV, plchldr_size0, tsp_sim, 0, inputArg.tstep[ii], dendVclamp, -1, inputArg.getDendV, dendV, inputArg.pas,dummy_fign, false, -1.0);
         } else {
             cout << " yale NEURON simulation skipped " << endl;
             nc = 0;

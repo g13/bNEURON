@@ -8,9 +8,9 @@ h.load_file('stdlib.hoc')
 h.load_file('stdrun.hoc')
 
 figfmt = 'png'
-taue0 = 0.098814229249
-taue1 = 8.333333333333
-taui0 = 0.98814229249  
+taue0 = 0.0988142
+taue1 = 8.33333
+taui0 = 0.988142  
 taui1 = 50.0          
 def getGH(dt,f,g=0,h=0):
     if f<0:
