@@ -111,7 +111,7 @@ void Py_setV(Cell &cell, double v) {
             pArgs = PyTuple_New(2);
             Py_INCREF(cell.Py_Cell);
             PyTuple_SetItem(pArgs, 0,cell.Py_Cell);
-            PyTuple_SetItem(pArgs, 1,PyDouble_FromDouble(v));
+            PyTuple_SetItem(pArgs, 1,PyFloat_FromDouble(v));
             PyObject_CallObject(pFunc,pArgs);
         } else {
             if (yl::debug) {
@@ -239,7 +239,7 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
             pArgs = PyTuple_New(26);
             Py_INCREF(cell.Py_Cell);
             PyTuple_SetItem(pArgs, 0,cell.Py_Cell);
-            PyTuple_SetItem(pArgs, 1,PyDouble_FromDouble(vinit));
+            PyTuple_SetItem(pArgs, 1,PyFloat_FromDouble(vinit));
             Py_INCREF(cell.Py_synList);
             PyTuple_SetItem(pArgs, 2,cell.Py_synList);
             PyTuple_SetItem(pArgs, 3,Py_RList);
@@ -247,14 +247,14 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
             PyTuple_SetItem(pArgs, 4,cell.Py_vecStimList);
             PyTuple_SetItem(pArgs, 5,Py_spikeTrainTuple);
             PyTuple_SetItem(pArgs, 6,PyInt_FromLong(n));
-            PyTuple_SetItem(pArgs, 7,PyDouble_FromDouble(trans));
-            PyTuple_SetItem(pArgs, 8,PyDouble_FromDouble(tend));
-            PyTuple_SetItem(pArgs, 9,PyDouble_FromDouble(vBack));
-            PyTuple_SetItem(pArgs,10,PyDouble_FromDouble(tref));
-            PyTuple_SetItem(pArgs,11,PyDouble_FromDouble(vThres));
+            PyTuple_SetItem(pArgs, 7,PyFloat_FromDouble(trans));
+            PyTuple_SetItem(pArgs, 8,PyFloat_FromDouble(tend));
+            PyTuple_SetItem(pArgs, 9,PyFloat_FromDouble(vBack));
+            PyTuple_SetItem(pArgs,10,PyFloat_FromDouble(tref));
+            PyTuple_SetItem(pArgs,11,PyFloat_FromDouble(vThres));
             PyTuple_SetItem(pArgs,12,PyInt_FromLong(oneGo));
-            PyTuple_SetItem(pArgs,13,PyDouble_FromDouble(t0));
-            PyTuple_SetItem(pArgs,14,PyDouble_FromDouble(tstep));
+            PyTuple_SetItem(pArgs,13,PyFloat_FromDouble(t0));
+            PyTuple_SetItem(pArgs,14,PyFloat_FromDouble(tstep));
             Py_INCREF(cell.Py_loc);
             PyTuple_SetItem(pArgs,15,cell.Py_loc);
             Py_INCREF(cell.Py_pos);
@@ -289,7 +289,7 @@ unsigned int Py_proceed(Cell &cell, double vinit, vector<vector<double>> &RList,
             } else {
                 PyTuple_SetItem(pArgs,24,Py_False);
             }
-            PyTuple_SetItem(pArgs,25,PyDouble_FromDouble(cpt));
+            PyTuple_SetItem(pArgs,25,PyFloat_FromDouble(cpt));
             if (yl::debug) {
                 cout << "       ..." << "\n";
             }

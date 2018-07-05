@@ -555,7 +555,7 @@ unsigned int nsyn_jBilinear(Cell &cell, vector<vector<double>> &spikeTrain, doub
             }
             int exponent;
             frexp(neuron.tin[i]/tstep, &exponent);
-            if (t_cross < neuron.tin[i]/tstep + pow(2,exponent-52)) {
+            if (i == input.t.size()) {
                 if (jb::debug) {
                     cout << " unlikely, cross upon or before input" << endl;
                 }

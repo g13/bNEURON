@@ -166,7 +166,7 @@ def getWfig(fign,k,coef,b,directory,savePlot,EItype,it=-1,fmt='png'):
         
 argv = sys.argv[1:]
 try:
-    opts, args = getopt.getopt(argv,'ps',['vid=','vmin=','dV=','dt=','seed=','fmt=','so=','nf='])
+    opts, args = getopt.getopt(argv,'ps',['vid=','vmin=','dV=','dt=','seed=','fmt=','so=','nf=','nc='])
 except getopt.GetoptError:
     print "err"
     sys.exit(2)
@@ -191,7 +191,7 @@ if '--so' not in opt0:
 if '--nf' not in opt0:
     print "noFire default to True"
     noFire = True
-
+nc = False
 for opt,arg in opts:
     if opt == '--vmin':
         vmin = float(arg)
@@ -211,9 +211,12 @@ for opt,arg in opts:
     elif opt == '--nf':
         noFire = bool(int(arg))
         print noFire
+    elif opt == '--nc':
+        nc = bool(int(arg))
 
 v0 = vmin + dV*vid
 vrest = -70.0
+alphaR = True
 print "v0 == ",v0
 #v0 = -67
 #dt = 2
@@ -221,19 +224,25 @@ print "v0 == ",v0
 #print "seed = ", seed
 run_t = 240
 tstep = 0.1
-trans = 110
+if nc:
+    trans = 0
+else:
+    trans = 110
 #trans = 2 
 gList0 = np.array([4,8,16,32]) * 5e-4
 plim = 0.7
 #gList0 = np.array([1,3]) * 1e-4
-testEE = True
-#testEE = False 
-#testII = True
-testII = False 
-#testIE = True
-testIE = False 
-#testEI = True
-testEI = False 
+#testEE = True
+testEE = False 
+testII = True
+#testII = False 
+testIE = True
+#testIE = False 
+testEI = True
+#testEI = False 
+leakyReady = True
+singleEready = True
+singleIready = True
 directory0 = 'cK' + str(int(v0)) + '-' + str(0) + '-' + str(seed)
 singletE0Filename = directory0+'/singletE0.npy'
 singletI0Filename = directory0+'/singletI0.npy'
@@ -284,93 +293,108 @@ nlocI = locI.size
 posE = np.random.random_sample(nlocE)
 posI = np.random.random_sample(nlocI)
 ng = gList0.size
-rE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])*1.0
-rI = -7.0*np.array([1.0, 1.0, 1.0])
+#rE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])*1.0
+#rI = -7.0*np.array([1.0, 1.0, 1.0])
+rE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6])
+rI = -np.array([6.0, 10.0, 8.0])
+rE = rE[:locE.size]
+rI = rI[:locI.size]
 idt = np.round(dt/tstep).astype('int')
 end_t = run_t-dt
 iend = run_nt-idt
-cell, vSL, sL = prepCell([gList0[0]], [locE[0]], [posE[0]], 1, vrest)
-RList = np.zeros((1,2))
 t = np.arange(run_nt)*tstep
-leakyV, _ = leaky(cell, v0, sL, RList, vSL, 1, trans, run_t + trans, tstep, [locE[0]], [posE[0]])
-leakyV = leakyV[ntrans:ntrans+run_nt]
-leakyV.dump(directory+'/'+'leakyV.pickle')
-lfigname = 'leakyV'
-pyplot.figure()
-pyplot.plot(t[idt:],leakyV[:iend])
-if savePlot:
-    pyplot.savefig(directory+'/'+lfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
-    pyplot.close()
+if not leakyReady or not os.path.isfile(directory+'/leakyV.npy'):
+    cell, vSL, sL, _ = prepCell([gList0[0]], [locE[0]], [posE[0]], 1, vrest)
+    if nc:
+        cell.set_volt(v0)
+    RList = np.zeros((1,2))
+    leakyV, _ = leaky(cell, v0, sL, RList, vSL, 1, trans, run_t + trans, tstep, [locE[0]], [posE[0]], alphaR, nc)
+    leakyV = leakyV[ntrans:ntrans+run_nt]
+    leakyV.dump(directory+'/'+'leakyV.npy')
+    lfigname = 'leakyV'
+    pyplot.figure()
+    pyplot.plot(t[idt:],leakyV[:iend])
+    if savePlot:
+        pyplot.savefig(directory+'/'+lfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
+        pyplot.close()
 if testEE:
     #Singlet
-    print "singleE"
-    if plotData:
-        sfigname = 'Esinglets'
-        pyplot.figure(sfigname,figsize = (16,9))
-        ax1 = pyplot.subplot(1,2,1)
-        ax2 = pyplot.subplot(1,2,2)
-    singletE = np.empty((nlocE,ng,run_nt))
-    sfired = np.empty((nlocE,ng))
-    if idt == 0 and singleOnly:
-        print " check for double firing: "
-        spikeTime = np.array([[0],[0]])
+    if not singleEready or not os.path.isfile(directory+'/singletE.npy'):
+        print "singleE"
+        leakyV = np.load(directory+'/leakyV.npy')
+        if plotData:
+            sfigname = 'Esinglets'
+            pyplot.figure(sfigname,figsize = (16,9))
+            ax1 = pyplot.subplot(1,2,1)
+            ax2 = pyplot.subplot(1,2,2)
+        singletE = np.empty((nlocE,ng,run_nt))
+        sfired = np.empty((nlocE,ng))
+        if idt == 0 and singleOnly:
+            print " check for double firing: "
+            spikeTime = np.array([[0],[0]])
+            for i in xrange(nlocE):
+                for j in xrange(i,nlocE):
+                    print "i ", i, ", j", j
+                    if j > i:
+                        sel = [0, 1]
+                        loc = np.array([locE[i], locE[j]])
+                        pos = np.array([posE[i], posE[j]])
+                        gList = np.array([rE[i], rE[j]]) * gList0[ng-1]
+                        RList = np.zeros((2,2))
+                        cell, vSL, sL, _ = prepCell(gList, loc, pos, 2, vrest)
+                        if nc:
+                            cell.set_volt(v0)
+                        vtmp, fireCheck = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '', -1.0, 0, alphaR, nc)
+                    else:
+                        sel = [0]
+                        assert(i==j)
+                        gList = [float(rE[i])*float(gList0[ng-1])]
+                        loc = [locE[i]]
+                        cell, vSL, sL, _ = prepCell(gList, loc, [posE[i]], 1, vrest)
+                        if nc:
+                            cell.set_volt(v0)
+                        RList = np.zeros((1,2))
+                        RList[0,:] = getGH(0,2*gList[0])
+                        vtmp, fireCheck = bproceed(cell, v0, sL, gList, RList, vSL, np.array([[]]), 1, sel, trans, trans + end_t, 0, tstep, '', -1.0, 0, alphaR, nc)
+
+                    print 'max v', np.max(vtmp)
+                    print '######## ', gList, ' doubled at ', loc
+                    vtmp = vtmp[ntrans:ntrans+iend]-leakyV[:iend]
+                    ax1.plot(t[idt:],vtmp[idt:],'-k',lw=0.2)
+                    if fireCheck and noFire:
+                        quit()
+
         for i in xrange(nlocE):
-            for j in xrange(i,nlocE):
-                print "i ", i, ", j", j
-                if j > i:
-                    sel = [0, 1]
-                    loc = np.array([locE[i], locE[j]])
-                    pos = np.array([posE[i], posE[j]])
-                    gList = np.array([rE[i], rE[j]]) * gList0[ng-1]
-                    RList = np.zeros((2,2))
-                    cell, vSL, sL = prepCell(gList, loc, pos, 2, vrest)
-                    vtmp, fireCheck = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '')
-                else:
-                    sel = [0]
-                    assert(i==j)
-                    gList = [float(rE[i])*float(gList0[ng-1])]
-                    loc = [locE[i]]
-                    cell, vSL, sL = prepCell(gList, loc, [posE[i]], 1, vrest)
-                    RList = np.zeros((1,2))
-                    RList[0,:] = getGH(0,2*gList[0])
-                    vtmp, fireCheck = bproceed(cell, v0, sL, gList, RList, vSL, np.array([[]]), 1, sel, trans, trans + end_t, 0, tstep, '')
-
-                print 'max v', np.max(vtmp)
-                print '######## ', gList, ' doubled at ', loc
-                vtmp = vtmp[ntrans:ntrans+iend]-leakyV[:iend]
-                ax1.plot(t[idt:],vtmp[idt:],'-k',lw=0.2)
-                if fireCheck and noFire:
+            print "single ", i
+            loc = np.repeat(locE[i],ng)
+            pos = np.repeat(posE[i],ng)
+            gList = gList0*rE[i]
+            print "here ", gList
+            cell, vSL, sL, _ = prepCell(gList, loc, pos, ng, vrest)
+            if nc:
+                cell.set_volt(v0)
+            spikeTime = np.array([[]])
+            for ig in xrange(ng):
+                RList = np.zeros((ng,2))
+                RList[ig,:] = getGH(dt,gList[ig])
+                print '#### g: ', gList[ig], ' at loc: ', loc[0]
+                vtmp, sfired[i,ig] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, ng, [ig], trans, trans + end_t, 0, tstep, '', -1.0, 0, alphaR, nc)
+                if sfired[i,ig] and noFire:
                     quit()
+                singletE[i,ig,idt:] = vtmp[ntrans:ntrans+iend] - leakyV[:iend]
+                ax1.plot(t[idt:],singletE[i,ig,idt:],':r')
+                ax2.plot(t[idt:],vtmp[ntrans:ntrans+iend],':r')
+                ax2.plot(t[idt:],leakyV[:iend],':b')
 
-    for i in xrange(nlocE):
-        print "single ", i
-        loc = np.repeat(locE[i],ng)
-        pos = np.repeat(posE[i],ng)
-        gList = gList0*rE[i]
-        print "here ", gList
-        cell, vSL, sL = prepCell(gList, loc, pos, ng, vrest)
-        spikeTime = np.array([[]])
-        for ig in xrange(ng):
-            RList = np.zeros((ng,2))
-            RList[ig,:] = getGH(dt,gList[ig])
-            print '#### g: ', gList[ig], ' at loc: ', loc[0]
-            vtmp, sfired[i,ig] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, ng, [ig], trans, trans + end_t, 0, tstep, '')
-            if sfired[i,ig] and noFire:
-                quit()
-            singletE[i,ig,idt:] = vtmp[ntrans:ntrans+iend] - leakyV[:iend]
-            ax1.plot(t[idt:],singletE[i,ig,idt:],':r')
-            ax2.plot(t[idt:],vtmp[ntrans:ntrans+iend],':r')
-            ax2.plot(t[idt:],leakyV[:iend],':b')
-
-    if savePlot and plotData:
-        pyplot.savefig(directory+'/'+sfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
-        pyplot.close()
-    if idt == 0:
-        if not os.path.isfile(singletE0Filename):
-            singletE.dump(directory0+'/singletE0.npy')
-        singletE.dump(directory+'/singletE.npy')
-    else:
-        singletE.dump(directory+'/singletE.npy')
+        if savePlot and plotData:
+            pyplot.savefig(directory+'/'+sfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
+            pyplot.close()
+        if idt == 0:
+            if not os.path.isfile(singletE0Filename):
+                singletE.dump(directory0+'/singletE0.npy')
+            singletE.dump(directory+'/singletE.npy')
+        else:
+            singletE.dump(directory+'/singletE.npy')
     if not singleOnly:
         print "doubletEE"
         #Doublet
@@ -378,6 +402,7 @@ if testEE:
         sel = [0, 1]
         singletE0 = np.load(singletE0Filename)
         singletE = np.load(directory+'/singletE.npy')
+        leakyV = np.load(directory+'/leakyV.npy')
         doubletEE = np.empty((nlocE,nlocE,ng*ng,run_nt))
         doubletEE0 = np.empty((nlocE,nlocE,ng*ng,run_nt))
         dfiredEE = np.empty((nlocE,nlocE,ng,ng))
@@ -409,10 +434,12 @@ if testEE:
                         gList = [igList[ig],jgList[jg]]
                         RList = np.zeros((2,2))
                         RList[0,:] = getGH(dt,gList[0])
-                        cell, vSL, sL = prepCell(gList, loc, pos, 2, vrest)
+                        cell, vSL, sL, _  = prepCell(gList, loc, pos, 2, vrest)
+                        if nc:
+                            cell.set_volt(v0)
                         print '#### g: ', gList[0], ' at loc: ', loc[0]
                         print '#### g: ', gList[1], ' at loc: ', loc[1]
-                        vtmp, dfiredEE[i,j,ig,jg] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '')
+                        vtmp, dfiredEE[i,j,ig,jg] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '', -1.0, 0, alphaR, nc)
                         if dfiredEE[i,j,ig,jg] and noFire:
                             quit()
                         vtmp = vtmp[ntrans:ntrans+iend] - leakyV[:iend]
@@ -426,7 +453,7 @@ if testEE:
                         if v0 == vrest:
                             spikeTime0 = np.array([np.array([0.0]),np.array([dt])])  
                             RList = np.zeros((2,2))
-                            vtmp, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '')
+                            vtmp, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '', -1.0, 0, alphaR, nc)
                             vtmp = vtmp[ntrans+idt:ntrans+run_nt] - vrest 
                             doubletEE0[i,j,ig*ng+jg,idt:] = vtmp
                             addv = singletE0[j,jg,:iend] + singletE0[i,ig,idt:]
@@ -522,39 +549,43 @@ if testEE:
 
 if testII:
     #Singlet
-    print "singleI"
-    if plotData:
-        sfigname = 'Isinglets'
-        pyplot.figure(sfigname,figsize = (16,9))
-        ax1 = pyplot.subplot(1,2,1)
-        ax2 = pyplot.subplot(1,2,2)
-    singletI = np.empty((nlocI,ng,run_nt))
-    sfired = np.empty((nlocI,ng))
-    for i in xrange(nlocI):
-        print "single ", i
-        loc = np.repeat(locI[i],ng)
-        pos = np.repeat(posI[i],ng)
-        gList = gList0*rI[i]
-        cell, vSL, sL = prepCell(gList, loc, pos, ng, vrest)
-        spikeTime = np.array([[]])
-        for ig in xrange(ng):
-            RList = np.zeros((ng,2))
-            RList[ig,:] = getGH(dt,gList[ig])
-            print '#### g: ', gList[ig], ' at loc: ', loc[0]
-            vtmp, sfired[i,ig] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, ng, [ig], trans, trans + end_t, 0, tstep, '')
-            singletI[i,ig,idt:] = vtmp[ntrans:ntrans+iend] - leakyV[:iend]
-            ax1.plot(t[idt:],singletI[i,ig,idt:],':r')
-            ax2.plot(t[idt:],vtmp[ntrans:ntrans+iend],':r')
-            ax2.plot(t[idt:],leakyV[:iend],':b')
-    if savePlot and plotData:
-        pyplot.savefig(directory+'/'+sfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
-        pyplot.close()
-    if idt == 0:
-        if not os.path.isfile(singletI0Filename):
-            singletI.dump(directory0+'/singletI0.npy')
-        singletI.dump(directory+'/singletI.npy')
-    else:
-        singletI.dump(directory+'/singletI.npy')
+    if not singleIready or not os.path.isfile(directory+'/singletI.npy'):
+        print "singleI"
+        leakyV = np.load(directory+'/leakyV.npy')
+        if plotData:
+            sfigname = 'Isinglets'
+            pyplot.figure(sfigname,figsize = (16,9))
+            ax1 = pyplot.subplot(1,2,1)
+            ax2 = pyplot.subplot(1,2,2)
+        singletI = np.empty((nlocI,ng,run_nt))
+        sfired = np.empty((nlocI,ng))
+        for i in xrange(nlocI):
+            print "single ", i
+            loc = np.repeat(locI[i],ng)
+            pos = np.repeat(posI[i],ng)
+            gList = gList0*rI[i]
+            cell, vSL, sL, _  = prepCell(gList, loc, pos, ng, vrest)
+            if nc:
+                cell.set_volt(v0)
+            spikeTime = np.array([[]])
+            for ig in xrange(ng):
+                RList = np.zeros((ng,2))
+                RList[ig,:] = getGH(dt,gList[ig])
+                print '#### g: ', gList[ig], ' at loc: ', loc[0]
+                vtmp, sfired[i,ig] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, ng, [ig], trans, trans + end_t, 0, tstep, '', -1.0, 0, alphaR, nc)
+                singletI[i,ig,idt:] = vtmp[ntrans:ntrans+iend] - leakyV[:iend]
+                ax1.plot(t[idt:],singletI[i,ig,idt:],':r')
+                ax2.plot(t[idt:],vtmp[ntrans:ntrans+iend],':r')
+                ax2.plot(t[idt:],leakyV[:iend],':b')
+        if savePlot and plotData:
+            pyplot.savefig(directory+'/'+sfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
+            pyplot.close()
+        if idt == 0:
+            if not os.path.isfile(singletI0Filename):
+                singletI.dump(directory0+'/singletI0.npy')
+            singletI.dump(directory+'/singletI.npy')
+        else:
+            singletI.dump(directory+'/singletI.npy')
     if not singleOnly:
         print "doubletII"
         #Doublet
@@ -562,6 +593,7 @@ if testII:
         sel = [0, 1]
         singletI0 = np.load(singletI0Filename)
         singletI = np.load(directory+'/singletI.npy')
+        leakyV = np.load(directory+'/leakyV.npy')
         doubletII = np.empty((nlocI,nlocI,ng*ng,run_nt))
         doubletII0 = np.empty((nlocI,nlocI,ng*ng,run_nt))
         dfiredII = np.empty((nlocI,nlocI,ng,ng))
@@ -593,10 +625,12 @@ if testII:
                         gList = [igList[ig],jgList[jg]]
                         RList = np.zeros((2,2))
                         RList[0,:] = getGH(dt,gList[0])
-                        cell, vSL, sL = prepCell(gList, loc, pos, 2, vrest)
+                        cell, vSL, sL, _  = prepCell(gList, loc, pos, 2, vrest)
+                        if nc:
+                            cell.set_volt(v0)
                         print '#### g: ', gList[0], ' at loc: ', loc[0]
                         print '#### g: ', gList[1], ' at loc: ', loc[1]
-                        vtmp, dfiredII[i,j,ig,jg] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '')
+                        vtmp, dfiredII[i,j,ig,jg] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '', -1.0, 0, alphaR, nc)
                         vtmp = vtmp[ntrans:ntrans+iend] - leakyV[:iend]
                         doubletII[i,j,ig*ng+jg,idt:] = vtmp
                         addv = v1 + singletI0[j,jg,:iend]
@@ -608,7 +642,7 @@ if testII:
                         if v0 == vrest:
                             spikeTime0 = np.array([np.array([0.0]),np.array([dt])])  
                             RList = np.zeros((2,2))
-                            vtmp, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '')
+                            vtmp, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '', -1.0, 0, alphaR, nc)
                             vtmp = vtmp[ntrans+idt:ntrans+run_nt] - vrest
                             doubletII0[i,j,ig*ng+jg,idt:] = vtmp
                             addv = singletI0[j,jg,:iend] + singletI0[i,ig,idt:]
@@ -709,6 +743,7 @@ if testIE and not singleOnly:
     singletI0 = np.load(singletI0Filename)
     singletE0 = np.load(singletE0Filename)
     singletI = np.load(directory+'/singletI.npy')
+    leakyV = np.load(directory+'/leakyV.npy')
     doubletIE = np.empty((nlocI,nlocE,ng*ng,run_nt))
     doubletIE0 = np.empty((nlocI,nlocE,ng*ng,run_nt))
     dfiredIE = np.empty((nlocI,nlocE,ng,ng))
@@ -740,10 +775,12 @@ if testIE and not singleOnly:
                     gList = [igList[ig],jgList[jg]]
                     RList = np.zeros((2,2))
                     RList[0,:] = getGH(dt,gList[0])
-                    cell, vSL, sL = prepCell(gList, loc, pos, 2, vrest)
+                    cell, vSL, sL, _  = prepCell(gList, loc, pos, 2, vrest)
+                    if nc:
+                        cell.set_volt(v0)
                     print '#### g: ', gList[0], ' at loc: ', loc[0]
                     print '#### g: ', gList[1], ' at loc: ', loc[1]
-                    vtmp, dfiredIE[i,j,ig,jg] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '')
+                    vtmp, dfiredIE[i,j,ig,jg] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '', -1.0, 0, alphaR, nc)
                     vtmp = vtmp[ntrans:ntrans+iend] - leakyV[:iend]
                     doubletIE[i,j,ig*ng+jg,idt:] = vtmp
                     addv = v1 + singletE0[j,jg,:iend]
@@ -755,7 +792,7 @@ if testIE and not singleOnly:
                     if v0 == vrest:
                         spikeTime0 = np.array([np.array([0.0]),np.array([dt])])  
                         RList = np.zeros((2,2))
-                        vtmp, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '')
+                        vtmp, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '', -1.0, 0, alphaR, nc)
                         vtmp = vtmp[ntrans+idt:ntrans+run_nt] - vrest
                         doubletIE0[i,j,ig*ng+jg,idt:] = vtmp
                         addv = singletI0[i,ig,idt:] + singletE0[j,jg,:iend] 
@@ -857,6 +894,7 @@ if testEI and not singleOnly:
     singletI0 = np.load(singletI0Filename)
     singletE0 = np.load(singletE0Filename)
     singletE = np.load(directory+'/singletE.npy')
+    leakyV = np.load(directory+'/leakyV.npy')
     doubletEI = np.empty((nlocE,nlocI,ng*ng,run_nt))
     doubletEI0 = np.empty((nlocE,nlocI,ng*ng,run_nt))
     dfiredEI = np.empty((nlocE,nlocI,ng,ng))
@@ -890,8 +928,10 @@ if testEI and not singleOnly:
                     RList[0,:] = getGH(dt,gList[0])
                     print '#### g: ', gList[0], ' at loc: ', loc[0]
                     print '#### g: ', gList[1], ' at loc: ', loc[1]
-                    cell, vSL, sL = prepCell(gList, loc, pos, 2, vrest)
-                    vtmp, dfiredEI[i,j,ig,jg] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '')
+                    cell, vSL, sL, _  = prepCell(gList, loc, pos, 2, vrest)
+                    if nc:
+                        cell.set_volt(v0)
+                    vtmp, dfiredEI[i,j,ig,jg] = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime, 2, sel, trans, trans + end_t, 0, tstep, '', -1.0, 0, alphaR, nc)
                     vtmp = vtmp[ntrans:ntrans+iend] - leakyV[:iend]
                     doubletEI[i,j,ig*ng+jg,idt:] = vtmp
                     addv = v1 + singletI0[j,jg,:iend]
@@ -904,7 +944,7 @@ if testEI and not singleOnly:
                     if v0 == vrest:
                         spikeTime0 = np.array([np.array([0.0]),np.array([dt])])  
                         RList = np.zeros((2,2))
-                        vtmp, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '')
+                        vtmp, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikeTime0, 2, sel, trans, trans + run_t, 0, tstep, '', -1.0, 0, alphaR, nc)
                         vtmp = vtmp[ntrans+idt:ntrans+run_nt] - vrest
                         doubletEI0[i,j,ig*ng+jg,idt:] = vtmp
                         addv = singletE0[i,ig,idt:] + singletI0[j,jg,:iend] 

@@ -352,7 +352,8 @@ unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, double
             }
             int exponent;
             frexp(neuron.tin[i]/tstep, &exponent);
-            if (t_cross < neuron.tin[i]/tstep + pow(2,exponent-52)) {
+            //if (t_cross < neuron.tin[i]/tstep + pow(2,exponent-52)) {
+            if (i == input.t.size()) {
                 if (jl::debug) {
                     cout << " unlikely, cross upon or before input" << endl;
                 }

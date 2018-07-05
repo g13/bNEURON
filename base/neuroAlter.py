@@ -7,7 +7,7 @@ import sys
 import matplotlib
 matplotlib.use('Agg')
 #matplotlib.use('Qt5Agg')
-from matplotlib import pyplot
+from matplotlib import pyplot, ticker
 f = open('pylog','w')
 f.close()
 
@@ -61,10 +61,12 @@ def run(cell, v0, vBack, tref, vThres, synList, RList, n, trans, oneGo, t0, alph
         cell.cp_init()
         if trans > 0:
             print "starting with copied voltage (and gating states), trans should be 0 if not intentional"
+        print '    cell cp_initiated'
+        print >>f, '    cell cp_initiated'
     else:
         cell.init()
-    print '    cell initiated'
-    print >>f, '    cell initiated'
+        print '    cell initiated'
+        print >>f, '    cell initiated'
     steps = 0
     tsps = np.empty(int((h.tstop-t0)/h.dt/2))
     tsp = -tref
@@ -386,7 +388,9 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
         vHold = None
 
     if plotSlice: 
-        pyplot.figure('slice',figsize=(8,4))
+        fig = pyplot.figure('slice',figsize=(8,4))
+        ax = fig.add_subplot(1,1,1)
+        ax.minorticks_on()
         labels = ['dend['+str(loc[x])+']' for x in range(n)]
         #istart = ntrans
         istart = 1 
@@ -394,9 +398,9 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
             #pyplot.plot(t1[ntrans:]-trans,v1[ntrans:],'k')
             ymax=-60
             if not oneGo:
-                vline, = pyplot.plot(t1[istart:]-trans,v1[istart:],'k')
+                vline, = ax.plot(t1[istart:]-trans,v1[istart:],'k')
             else:
-                vline, = pyplot.plot(t1[istart:]-trans,v1[istart:],'k')
+                vline, = ax.plot(t1[istart:]-trans,v1[istart:],'k')
             if np.amax(v1) > ymax:
                 ymax = np.amax(v1)
             dline = []
@@ -405,15 +409,17 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
                 dv = dv[:v1.size]
                 #pyplot.plot(t1[ntrans:]-trans,dv[ntrans:],':')
                 if not oneGo:
-                    dl, = pyplot.plot(t1[istart:]-trans,dv[istart:],':')
+                    dl, = ax.plot(t1[istart:]-trans,dv[istart:],':')
                 else:
-                    dl, = pyplot.plot(t1[istart:]-trans,dv[istart:],':')
+                    dl, = ax.plot(t1[istart:]-trans,dv[istart:],':')
                 dline.append(dl)
                 if np.amax(dv) > ymax:
                     ymax = np.amax(dv)
-            #pyplot.ylim(-80,np.amin([-30,ymax]))
+            ax.set_ylim(-80,np.amin([-40,ymax]))
             #pyplot.ylim(-69,-62)
             pyplot.legend(dline,labels)
+            ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
+            ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
         else:
             nt = ntrans
             dendVec = np.empty((3*cell.ndend,ntotal),dtype='float')
@@ -440,7 +446,7 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
             iend = t1.size
             #istart = nt 
             t2 = t1[istart:iend]
-            pyplot.plot(t2-istart*tstep,v1[istart:iend])
+            ax.plot(t2-istart*tstep,v1[istart:iend])
             dA = dendAverage[istart:iend]
             dE = denderrbar[:,istart:iend]
             select = np.arange(0,t2.size,10)
@@ -450,29 +456,29 @@ def proceed(cell, v0, synList, RList, vecStimList, spikeTrain, n, trans, tend, v
             print '    dA',dA.shape
             dE = dE[:,select]
             print '    dE',dE.shape
-            pyplot.plot(t2,dA,'--k')
-            pyplot.plot(t2,dE[0,:],':k')
-            pyplot.plot(t2,dE[1,:],':k')
-            pyplot.errorbar(t2,dA,np.absolute(np.vstack((dA,dA))-dE))
+            ax.plot(t2,dA,'--k')
+            ax.plot(t2,dE[0,:],':k')
+            ax.plot(t2,dE[1,:],':k')
+            ax.errorbar(t2,dA,np.absolute(np.vstack((dA,dA))-dE))
             qdendlow = np.percentile(mdend,5, axis = 0)
             qdendhigh = np.percentile(mdend,95, axis = 0)
             denderrbar = np.vstack((qdendlow,qdendhigh))
             dE = denderrbar[:,istart:]
             dE = dE[:,select]
-            pyplot.errorbar(t2+0.2,dA,np.absolute(np.vstack((dA,dA))-dE),ls = 'None')
+            ax.errorbar(t2+0.2,dA,np.absolute(np.vstack((dA,dA))-dE),ls = 'None')
             qdendlow = np.percentile(mdend,25, axis = 0)
             qdendhigh = np.percentile(mdend,75, axis = 0)
             denderrbar = np.vstack((qdendlow,qdendhigh))
             dE = denderrbar[:,istart:]
             dE = dE[:,select]
-            pyplot.errorbar(t2+0.4,dA,np.absolute(np.vstack((dA,dA))-dE),ls = 'None')
+            ax.errorbar(t2+0.4,dA,np.absolute(np.vstack((dA,dA))-dE),ls = 'None')
             qdendlow = np.percentile(mdend,45, axis = 0)
             qdendhigh = np.percentile(mdend,55, axis = 0)
             denderrbar = np.vstack((qdendlow,qdendhigh))
             dE = denderrbar[:,istart:]
             dE = dE[:,select]
-            pyplot.errorbar(t2+0.6,dA,np.absolute(np.vstack((dA,dA))-dE),ls = 'None')
-            pyplot.ylim(v0-0.25,v0+0.25)
+            ax.errorbar(t2+0.6,dA,np.absolute(np.vstack((dA,dA))-dE),ls = 'None')
+            ax.set_ylim(v0-0.25,v0+0.25)
         pyplot.savefig(fign+'.png',format='png',bbox_inches='tight',dpi=900)
         pyplot.close()
         print fign,'.png saved'
@@ -743,9 +749,9 @@ def bproceed(cell, v0, synList, gList, RList, vecStimList, spikeTrain, n, sel, t
     print gList
     h.dt = tstep
     v = h.Vector()
+    dendv = h.Vector()
     if pos != -1.0: # must be singlet
         assert(len(sel) == 1)
-        dendv = h.Vector()
         dendv.record(cell.dend[loc](pos)._ref_v)
     t = h.Vector()
     v.record(cell.soma(0.5)._ref_v)
@@ -984,7 +990,7 @@ if __name__ == '__main__':
     clampDend = False
     monitorDend = False 
     pas = False 
-    plotSv = False
+    plotSv = True 
     plotSleak = False
     vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
     trans = 0
@@ -993,7 +999,8 @@ if __name__ == '__main__':
     pyplot.figure('v',figsize=((8,4)))
     ax1 = pyplot.subplot(1,2,1)
     ax2 = pyplot.subplot(1,2,2)
-    for i in xrange(vRange.size):
+    #for i in xrange(vRange.size):
+    for i in xrange(1):
         v_pre = vRange[i]
         cell.set_volt(v_pre)
         vtrace[:,i], fired, tsp, ntrans = proceed(cell, v_pre, synList, RList0, vecStimList, vecTuple, n, trans, trans+run_t, vBack, tref, vThres, oneGo, t0, tstep, loc, pos, dendVclamp, alphaR, getDendV, monitorDend, pas, plotSv, 'v-'+str(-v_pre), True)

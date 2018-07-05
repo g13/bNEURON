@@ -23,6 +23,7 @@ input_args_CA1::input_args_CA1() {
         ("method,d",po::value<int>(&i)->default_value(-1), "0-5 for sim,bi,jb,jl,li,b0 !!")
         ("getDendV",po::value<bool>(&getDendV)->default_value(false), "record dendV at syn input locations")
         ("tIn",po::value<bool>(&tIn)->default_value(false), "record and output poisson input time")
+        ("setV",po::value<bool>(&setV)->default_value(false), "if true cross with uniform membrane potential = vThres (preTran)")
         ("spikeShape",po::value<bool>(&spikeShape)->default_value(true),"if false, crossing is spiking")
         ("sliceDebugPlot",po::value<bool>(&sliceDebugPlot)->default_value(false),"plot every cross")
         ("pas",po::value<bool>(&pas)->default_value(false),"if true, crossing is spiking and reset")

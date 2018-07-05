@@ -1,7 +1,8 @@
 #!/bin/bash
 n128=0
 dir0=library
-theme='pasB'
+nc=1
+theme='pasT_nc'
 dir=$dir0/$theme
 
 if [ -d "./$dir" ]; then
@@ -28,5 +29,6 @@ cp -r x86_64 $dir
 cd $dir
 python -m py_compile getNib_mpi.py
 export theme
+export nc
 sbatch --export=ALL getNib_mpi.slurm
 sbatch --export=ALL getNib_mpi_0.slurm

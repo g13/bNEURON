@@ -27,6 +27,7 @@ struct input_args_CA1 : input_args {
     bool dtSquare;
     bool getDendV;
     bool tIn;
+    bool setV;
     unsigned int vInit;
     std::bitset<7> mode;
     vector<double> clusterClampRatio;

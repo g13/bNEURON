@@ -15,7 +15,7 @@ date
 source activate py2
 
 echo $theme
-python getNib_mpi.py --theme=${theme} --vid=0 -r
-
+echo $nc
+python getNib_mpi.py --theme=${theme} --vid=0 -r --nc=$nc
 date
 hostname

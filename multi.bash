@@ -1,5 +1,5 @@
 #!/bin/bash
-n128=1
+n128=0
 dir0='gainCurve'
 getDendV=true
 
@@ -69,7 +69,7 @@ do
         break
     fi
 done
-echo $jobList
+#echo $jobList
 export ext
 export getDendV
 sbatch --export=ALL --dependency=afterok$jobList plot.slurm

@@ -1,7 +1,8 @@
 #!/bin/bash
 n128=1
 dir0='biRelation'
-theme='activeTrunk'
+theme='actT_nc'
+nc=1
 dir=$dir0'/'$theme
 if [ -d "./$dir" ]; then
     rm -r $dir/*
@@ -23,4 +24,5 @@ cp $dir0/drawCK.py $dir
 cp base/neuroAlter.py $dir
 cp -R x86_64 $dir/
 cd $dir
-sbatch confirmK.slurm
+export nc
+sbatch --export=ALL confirmK.slurm

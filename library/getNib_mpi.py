@@ -64,7 +64,7 @@ def getNear(seq, target):
                     break;
     return istart, jnext, ratio
 
-def getJ(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,s,savePlot,plotData,directory,rdpi):
+def getJ(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,s,savePlot,plotData,directory,rdpi,alphaR,nc):
     print "j = ", j
     bfire = np.empty(ndt)
     kv = np.zeros((ndt,run_nt))
@@ -93,7 +93,7 @@ def getJ(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vS
         #if jdt == ndt-1:
         relit = run_nt - idtRange[jdt]
         relt = run_t-dtt
-        v,fired = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + relt , 0, tstep, '')
+        v,fired = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + relt , 0, tstep, '', -1.0, 0, alphaR, nc)
         v = v[ntrans:ntrans+relit]
         #else:
         #    relit = tol_nt - idtRange[jdt]
@@ -145,7 +145,7 @@ def getJ(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vS
     s.send(np.array([kv,bfire,j]))
     print 'j',j, '\'s out'
 
-def getI(i,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,s,savePlot,plotData,directory,rdpi):
+def getI(i,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,s,savePlot,plotData,directory,rdpi,alphaR,nc):
     print " i = ", i
     jobs = []
     recv = []
@@ -153,7 +153,7 @@ def getI(i,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,
     bfire = np.empty((n,ndt))
     for j in xrange(n):
         r, send = mp.Pipe(False)
-        p = mp.Process(target = getJ, args = (i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,send,savePlot,plotData,directory,rdpi))
+        p = mp.Process(target = getJ, args = (i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,send,savePlot,plotData,directory,rdpi,alphaR,nc))
         jobs.append(p)
         recv.append(r)
         p.start()
@@ -171,7 +171,7 @@ def getI(i,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vSL,
     s.send(np.array([kv,bfire,i]))
     print 'i',i,'\'s out'
         
-def getJ0(i,j,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,vrest,v1,s,savePlot,plotData,directory,rdpi):
+def getJ0(i,j,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,vrest,v1,s,savePlot,plotData,directory,rdpi,alphaR):
     kv0 = np.zeros((run_nt))
     print " j = ", j
     if i == j:
@@ -191,9 +191,9 @@ def getJ0(i,j,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,
     if idt == 0 and i == j:
         gList0 = gList.copy()
         gList0[i] = 2*gList[i];
-        v, _ = bproceed(cell, v0, sL, gList0, RList, vSL, spikes, n, sel, trans, trans + run_t , 0, tstep, '')
+        v, _ = bproceed(cell, v0, sL, gList0, RList, vSL, spikes, n, sel, trans, trans + run_t , 0, tstep, '', -1.0, 0, alphaR)
     else:
-        v, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + run_t , 0, tstep, '')
+        v, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + run_t , 0, tstep, '', -1.0, 0, alphaR)
     v = v[ntrans+idtRange[idt]:ntrans+run_nt]
     #else:
     #    relit = tol_nt - idtRange[idt]
@@ -229,14 +229,14 @@ def getJ0(i,j,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,
     s.send(np.array([kv0,j]))
     print 'j',j, '\'s out'
 
-def getI0(i,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,vrest,v1,s,savePlot,plotData,directory,rdpi):
+def getI0(i,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,vrest,v1,s,savePlot,plotData,directory,rdpi,alphaR):
     kv0 = np.zeros((n,run_nt))
     print " i0 = ", i
     jobs = []
     recv = []
     for j in xrange(n):
         r, send = mp.Pipe(False)
-        p = mp.Process(target = getJ0, args = (i,j,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,vrest,v1,send,savePlot,plotData,directory,rdpi))
+        p = mp.Process(target = getJ0, args = (i,j,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,vrest,v1,send,savePlot,plotData,directory,rdpi,alphaR))
         jobs.append(p)
         recv.append(r)
         p.start()
@@ -252,25 +252,25 @@ def getI0(i,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,to
     s.send(np.array([kv0,i]))
     print 'i0 ',i,'s out'
 
-def getSinglets(i,idt,dt,gList,loc,pos,cell,v0,sL,vSL,n,trans,ntrans,relt,tstep,relit,run_nt,idtRange,leakyV,leakyDendV,spikes,s):
+def getSinglets(i,idt,dt,gList,loc,pos,cell,v0,sL,vSL,n,trans,ntrans,relt,tstep,relit,run_nt,idtRange,leakyV,leakyDendV,spikes,s,alphaR,nc):
     print " i = ", i
     sel = [i]
     RList = np.zeros((n,2))
     RList[i,:] = getGH(dt,gList[i])
-    v1tmp, fired, dendv = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + relt, 0, tstep, '', pos[i], loc[i])
+    v1tmp, fired, dendv = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + relt, 0, tstep, '', pos[i], loc[i], alphaR, nc)
     dendv = dendv[ntrans:ntrans+relit] - leakyDendV[:relit]
     v1tmp = v1tmp[ntrans:ntrans+relit] - leakyV[:relit]
     tmax = idtRange[idt] + np.argmax(v1tmp)
     s.send(np.array([v1tmp,dendv,tmax,fired,i]))
     print "i", i, "\'s out"
 
-def getExtralets(i,idt,iextraRange,gList,dt,v0,cell,sL,vSL,spikes,tstep,n,trans,ntrans,run_nt,relt,relit,leakyV,s):
+def getExtralets(i,idt,iextraRange,gList,dt,v0,cell,sL,vSL,spikes,tstep,n,trans,ntrans,run_nt,relt,relit,leakyV,s,alphaR,nc):
     print " i = ", i
     extralet = np.zeros((run_nt),dtype='double')
     sel = [i]
     RList = np.zeros((n,2))
     RList[i,:] = getGH(dt,gList[i])
-    evtmp, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + relt, 0, tstep, '')
+    evtmp, _ = bproceed(cell, v0, sL, gList, RList, vSL, spikes, n, sel, trans, trans + relt, 0, tstep, '', -1.0, 0, alphaR, nc)
     extralet[iextraRange[idt]:] = evtmp[ntrans:ntrans+relit] - leakyV[:relit]
     s.send(np.array([extralet,i]))
     print "i", i, "\'s out"
@@ -308,10 +308,10 @@ def getNib(argv):
     #locE = np.random.randint(75,134,6)
     #===========================================================
     #locE = np.array([79, 82, 83, 108, 124, 129],dtype='int')
-    #locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
-    #locI = np.array([14, 28, 30],dtype='int')
-    locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
-    locI = np.array([14, 28, 40],dtype='int')
+    locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
+    locI = np.array([14, 28, 30],dtype='int')
+    #locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
+    #locI = np.array([14, 28, 40],dtype='int')
     vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
     #===========================================================
     #vRange = np.array([-74,-70,-65,-61],dtype='double')
@@ -333,10 +333,10 @@ def getNib(argv):
     #locI[-1] = swap
 
     g0 = 32.0*1e-3
-    #gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
-    #gI = -g0*np.array([10.0, 10.0, 10.0])
-    gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
-    gI = -g0*np.array([6.0, 10.0, 8.0])
+    gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
+    gI = -g0*np.array([10.0, 10.0, 10.0])
+    #gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
+    #gI = -g0*np.array([6.0, 10.0, 8.0])
     #gE = (1e-1 + np.random.random_sample(locE.size) * (1-1e-1)) * (0.10/2.0)
     posE = np.array([0.3,0.3,0.9,0.6,0.4,0.2])
     posI = np.array([0.7,0.2,0.5])
@@ -359,7 +359,7 @@ def getNib(argv):
     assert(vrest in vRange)
     usage = 'getNib.py --theme=<theme name> --vid=<vid> --trans=<vClamp time> -p<plotData> -s<savePlot> -r<vrest only>// all the items in lists should be separated by comma without space'
     try:
-        opts, args = getopt.getopt(argv,'psr',['theme=','vid=','trans=','mode='])
+        opts, args = getopt.getopt(argv,'psr',['theme=','vid=','trans=','mode=','nc='])
     except getopt.GetoptError:
         print "error reading args"
         print argv
@@ -376,6 +376,7 @@ def getNib(argv):
         sys.exit(2)
     if '--mode' not in opt0:
         print 'using default mode ' + str(mode)
+    nc = False
     for opt, arg in opts:
         if opt == '--vid':
             vid = int(arg)
@@ -393,6 +394,11 @@ def getNib(argv):
         elif opt == '-h':
             print usage
             sys.exit()
+        elif opt == '--nc':
+            nc =bool(int(arg))
+    if nc:
+        print "no clamping is set, trans now is 0"
+    alphaR = True
     if vrestOnly:
         v0 = vrest
     else:
@@ -428,7 +434,9 @@ def getNib(argv):
         theme = theme+'-V'+str(vid)
 
     cell, vecStimList, synList, _ = prepCell(gList, loc, pos, n, vrest)
-    leakyV, leakyDendV = leaky(cell, v0, synList, RList, vecStimList, n, trans, run_t + trans, tstep, loc, pos)
+    if nc:
+        cell.set_volt(v0)
+    leakyV, leakyDendV = leaky(cell, v0, synList, RList, vecStimList, n, trans, run_t + trans, tstep, loc, pos, alphaR, nc)
     leakyV = leakyV[ntrans:ntrans+run_nt]
     leakyDendV = leakyDendV[:,ntrans:ntrans+run_nt]
     print leakyV.size
@@ -459,7 +467,7 @@ def getNib(argv):
         recv = []
         for i in xrange(n):
             r, send = mp.Pipe(False)
-            p = mp.Process(target = getSinglets, args = (i,idt,dt,gList,loc,pos,cell,v0,synList,vecStimList,n,trans,ntrans,relt,tstep,relit,run_nt,idtRange,leakyV,leakyDendV[i,:],spikes,send))
+            p = mp.Process(target = getSinglets, args = (i,idt,dt,gList,loc,pos,cell,v0,synList,vecStimList,n,trans,ntrans,relt,tstep,relit,run_nt,idtRange,leakyV,leakyDendV[i,:],spikes,send,alphaR,nc))
             jobs.append(p)
             recv.append(r)
             p.start()
@@ -524,7 +532,7 @@ def getNib(argv):
             for i in xrange(n):
                 print " i = ", i
                 r, send = mp.Pipe(False)
-                p = mp.Process(target = getExtralets, args = (i,idt,iextraRange,gList,dt,v0,cell,synList,vecStimList,spikes,tstep,n,trans,ntrans,run_nt,relt,relit,leakyV,send))
+                p = mp.Process(target = getExtralets, args = (i,idt,iextraRange,gList,dt,v0,cell,synList,vecStimList,spikes,tstep,n,trans,ntrans,run_nt,relt,relit,leakyV,send,alphaR,nc))
                 jobs.append(p)
                 recv.append(r)
                 p.start()
@@ -549,7 +557,7 @@ def getNib(argv):
             recv = []
             for i in xrange(n):
                 r, send = mp.Pipe(False)
-                p = mp.Process(target = getI, args = (i,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,synList,vecStimList,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,send,savePlot,plotData,directory,rdpi))
+                p = mp.Process(target = getI, args = (i,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,synList,vecStimList,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,leakyV,extralet,v1,send,savePlot,plotData,directory,rdpi,alphaR,nc))
                 jobs.append(p)
                 recv.append(r)
                 p.start()
@@ -578,7 +586,7 @@ def getNib(argv):
             recv = []
             for i in xrange(n):
                 r, send = mp.Pipe(False)
-                p = mp.Process(target = getI0, args = (i,dt,idt,idtRange,ndt,vid,gList,v0,cell,synList,vecStimList,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,vrest,v1,send,savePlot,plotData,directory,rdpi))
+                p = mp.Process(target = getI0, args = (i,dt,idt,idtRange,ndt,vid,gList,v0,cell,synList,vecStimList,n,trans,ntrans,run_t,tol_t,tstep,run_nt,tol_nt,vrest,v1,send,savePlot,plotData,directory,rdpi,alphaR))
                 jobs.append(p)
                 recv.append(r)
                 p.start()

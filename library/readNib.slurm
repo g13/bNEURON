@@ -12,7 +12,7 @@ module load matlab
 
 date
 
-theme='pasB'
+theme='pasT_nc'
 echo $theme
 matlab -nodesktop -nosplash -r "readNib4('$theme');exit;"
 
