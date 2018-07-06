@@ -4,8 +4,11 @@ import numpy as np
 # total passive +/- h
 
 class RealisticNeuron(object):
-    def init(self):
-        self.current_balance()
+    def init(self,vrest = None):
+        if vrest == None:
+            self.current_balance(self.Vrest)
+        else:
+            self.current_balance(vrest)
     #
     def copy_state(self):
         print "    copy state from cell"
@@ -156,7 +159,7 @@ class RealisticNeuron(object):
         print "dend average at", avgDend/nDendSeg
     #
     def cp_init(self):
-        self.current_balance()
+        self.current_balance(self.Vrest)
         self.paste_volt()
         h.finitialize()
         if self.include_states:
@@ -5265,9 +5268,10 @@ class RealisticNeuron(object):
                 sec.ehd_hd = -30
             h.pop_section()
     #
-    def current_balance(self):
+    def current_balance(self,vrest):
         self.set_ion_reversals()
-        h.finitialize(self.Vrest)
+        h.finitialize(vrest)
+        print "cell resting potential set to", vrest
         h.fcurrent()
         self.default_epas()
         #if h.cvode.active():
