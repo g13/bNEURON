@@ -1,3 +1,4 @@
+#coding:utf-8
 from neuron import h
 h.load_file('stdlib.hoc')
 h.load_file('stdrun.hoc')
@@ -38,18 +39,18 @@ def run(cell, v0, vThres, cpi):
         if (cell.soma(0.5).v <= vThres+7.5):
             firing = 0
 
-    print  'stopping with v', cell.soma(0.5).v
-    print >>f, 'stopping with v', cell.soma(0.5).v
+    print  'stopping with v', cell.soma(0.5).v, 'v0:', v0, 'with', cpi
+    print >>f, 'stopping with v', cell.soma(0.5).v, 'v0:', v0, 'with', cpi
     f.close()
     return nc
 #
-def bproceed(cell, v0, synList, gList, vecStimList, spikeTrain, n, sel, tend, tstep, name, pos, loc, alphaR = True, cpi = False):
+def bproceed(cell, v0, vThres, synList, gList, vecStimList, spikeTrain, n, sel, tend, tstep, name, pos, loc, alphaR = True, cpi = False):
     f = open('pylog','a')
     h.tstop = tend
     ntend = int(round(tend/tstep))+1
     h.dt = tstep
-    print "tend = ", tend, ', v0 = ', v0
-    print >> f, "tend = ", tend, ', v0 = ', v0
+    print 'tend = ', tend, ', v0 = ', v0
+    print >> f, 'tend = ', tend, ', v0 = ', v0
 
     print 'gList:'
     print gList
@@ -87,40 +88,49 @@ def bproceed(cell, v0, synList, gList, vecStimList, spikeTrain, n, sel, tend, ts
     fired = run(cell, v0, vThres, cpi)
 
     v1 = v.as_numpy()
-    dendv1 = np.empty((ntend,n))
+    dendv1 = np.empty((n,ntend))
     for i in xrange(n):
         dvtmp = dendv[i].as_numpy()
-        dendv1[:,i] = dvtmp
+        dendv1[i,:] = dvtmp
     
     if name:
         t1 = t.as_numpy()
         fig = pyplot.figure(name,figsize=(8,4))
         ax = fig.add_subplot(1,1,1)
         ax.plot(t1,v1)
-        ax.plot(t1,dendv1)
+        ax.plot(t1,dendv1.T)
         pyplot.savefig(name+'.png',format='png',bbox_inches='tight',dpi=900)
         pyplot.close()
     f.close()
     return v1.copy(), fired, dendv1
 
-def getLeaky(vi,vRange,cell,gList,loc,pos,sL,vSL,n,tstep,run_t,alphaR,sender):
+def getLeaky(vi,vRange,cell,vThres,gList,loc,pos,sL,vSL,n,tstep,run_t,alphaR,sender):
     spikeTrain = [np.array([])]
     sel = []
     v0 = vRange[vi]
-    leakyV, fired, leakyDendv = bproceed(cell, v0, sL, gList, vSL, spikeTrain, n, sel, run_t, tstep, '', pos, loc, alphaR)
+    cell.set_volt(v0)
+    leakyV, fired, leakyDendv = bproceed(cell, v0, vThres, sL, gList, vSL, spikeTrain, n, sel, run_t, tstep, '', pos, loc, alphaR, True)
     if fired:
-        print "spontaneously fired"
+        print 'spontaneously fired'
         assert(not fired)
-    sender.send(np.array([vi, leakyV, leakyDendv]))
+    print 'leaky', vi,
+    sender.send(np.array([vi, leakyV, leakyDendv],dtype='object'))
+    print 'sent'
 
-def getSinglets(i,v0,cell,gList,loc,pos,sL,vSL,n,tstep,run_t,alphaR,sender,normVrest=False,leakyV0=[],leakyDendV0=[]):
+def getSinglets(i,vi,v0,cell,vThres,gList,loc,pos,sL,vSL,n,tstep,run_t,alphaR,sender,normVrest,leakyV,leakyDendV,fmt):
     sel = [i]
     spikeTrain = [np.array([0])]
 
-    V, fired, dendV = bproceed(cell, v0, sL, gList, vSL, spikeTrain, n, sel, run_t, tstep, '', pos, loc, alphaR, cpi = normVrest)
+    V, fired, dendV = bproceed(cell, v0, vThres, sL, gList, vSL, spikeTrain, n, sel, run_t, tstep, '', pos, loc, alphaR, cpi = normVrest)
     if fired:
-        print "single input leads to fire"
-        assert(not fired)
+        print 'single input leads to fire'
+        if normVrest:
+            fign = 'singletSpike0-v'+str(vi)+'-'+str(i)
+        else:
+            fign = 'singletSpike-v'+str(vi)+'-'+str(i)
+        pyplot.figure(fign,figsize=(8,4))
+        pyplot.plot(np.arange(V.size)*tstep,V)
+        pyplot.savefig(fign+'.'+fmt,format=fmt,bbox_inches='tight',dpi=600)
     if normVrest:
         V = V - leakyV
         dendV = dendV - leakyDendV
@@ -128,35 +138,49 @@ def getSinglets(i,v0,cell,gList,loc,pos,sL,vSL,n,tstep,run_t,alphaR,sender,normV
         V = V - v0
         dendV = dendV - v0
     tMax = np.abs(V).argmax()
-    sender.send([i,V,dendV,tMax])
+    print 'singlet'+str(vi)+'-'+str(i),
+    sender.send(np.array([i,V,dendV,tMax,fired],dtype='object'))
+    print 'sent'
 
-def getSingletsV(vi,vRange,cell,gList,loc,pos,sL,vSL,n,tstep,run_t,run_nt,alphaR,sender,normVrest=False,leakyV=[],leakyDendV=[]):
+def getSingletsV(vi,vRange,cell,vThres,gList,loc,pos,sL,vSL,n,tstep,run_t,run_nt,alphaR,sender,normVrest,leakyV,leakyDendV,fmt):
     v0 = vRange[vi]
     if normVrest:
         cell.set_volt(v0)
-    V = np.empty((run_nt,n))
-    dendV = np.empty((run_nt,n,n))
-    tMax = np.empty(n)
+    V = np.empty((n,run_nt))
+    dendV = np.empty((n,n,run_nt))
+    tMax = np.empty(n,dtype='int')
+    sFire = np.empty(n,dtype='int')
 
     jobs = []
     receivers = []
     for i in xrange(n):
-        receiver, sender = mp.Pipe(False)
-        job = mp.Process(target=getSinglets, args = (i,v0,cell,gList,loc,pos,sL,vSL,n,tstep,run_t,alphaR,sender,normVrest,leakyV,leakyDendV))
+        (receiver, sub_sender) = mp.Pipe(False)
+        job = mp.Process(target=getSinglets, args = (i,vi,v0,cell,vThres,gList,loc,pos,sL,vSL,n,tstep,run_t,alphaR,sub_sender,normVrest,leakyV,leakyDendV,fmt))
         jobs.append(job)
         receivers.append(receiver)
         job.start()
-    gather_and_distribute_results(receivers, jobs, getSinglets.__name__, n, 0, V, dendV, tMax)
+    print 'waiting V' + str(vi)
+    try:
+        gather_and_distribute_results(receivers, jobs, getSinglets.__name__ + str(vi), n, 0, V, dendV, tMax, sFire)
+    except EOFError:
+        print "尼玛", vi
+    else:
+        print "finished", vi
 
-    sender.send([vi,V,dendV,tMax])
+    print 'singletV'+str(vi),
+    sender.send(np.array([vi,V,dendV,tMax,sFire],dtype='object'))
+    print 'sent'
+    sender.close()
 
 def gather_and_distribute_results(receivers, jobs, targetName, n, sortingInd = 0, *data):
-    print "gather " + targetName + " results"
+    print targetName, 'results',
     # block job until data recevied
-    result = [receiver.recv() for receiver in receivers]
+    result = np.array([receiver.recv() for receiver in receivers])
+    print 'gathered',
     # wait for all jobs to finish
     for job in jobs:
         job.join()
+    print 'jobs joined',
     # sort received result indices
     ind = np.array([result[i][sortingInd] for i in xrange(n)])
     argi = np.argsort(ind)
@@ -170,26 +194,28 @@ def gather_and_distribute_results(receivers, jobs, targetName, n, sortingInd = 0
             if len(array.shape) == 1:
                 array[i] = result[iSorted][j]
             else:
-                array[:,i] = result[iSorted][j]
+                array[i,:] = result[iSorted][j]
             j = j + 1
+    print 'data distributed'
 
-def generate(datafn,alphaR,normVrest,vRange,gList,loc,pos,vrest,vThres,run_t,tstep,theme='',fmt=''):
+def generateData(datafn,alphaR,normVrest,vRange,gList,loc,pos,vrest,vThres,run_t,tstep,fmt,theme):
     run_nt = int(round(run_t/tstep))+1
     nv = vRange.size
     n = loc.size
     cell, vSL, sL, _ = prepCell(gList, loc, pos, n, vrest, alphaR)
-    V = np.empty((run_nt,n,nv))
-    dendV = np.empty((run_nt,n,n,nv))
-    tMax = np.empty((n,nv))
+    V = np.empty((nv,n,run_nt))
+    dendV = np.empty((nv,n,n,run_nt))
+    tMax = np.empty((nv,n),dtype='int')
+    sFire = np.empty((nv,n),dtype='int')
     if normVrest:
-        leakyV0 = np.empty((run_nt,nv))
-        leakyDendV0 = np.empty((run_nt,n,nv))
-        print "get Leaky"
+        leakyV = np.empty((nv,run_nt))
+        leakyDendV = np.empty((nv,n,run_nt))
+        print 'get Leaky'
         jobs = []
         receivers = []
         for vi in xrange(nv):
             receiver, sender = mp.Pipe(False)
-            job = mp.Process(target=getLeaky, args = (vi,vRange,cell,gList,loc,pos,sL,vSL,n,v0,tstep,run_t,alphaR,sender))
+            job = mp.Process(target=getLeaky, args = (vi,vRange,cell,gList,loc,pos,sL,vSL,n,tstep,run_t,alphaR,sender))
             jobs.append(job)
             receivers.append(receiver)
             job.start()
@@ -197,49 +223,65 @@ def generate(datafn,alphaR,normVrest,vRange,gList,loc,pos,vrest,vThres,run_t,tst
         fign = 'leakyV' + theme 
         fig = pyplot.figure(fign, figsize=(8,4))
         ax = fig.add_subplot(1,1,1)
-        ax.plot(np.arange(run_nt)*tstep,leakyV,'k')
-        ax.plot(np.arange(run_nt)*tstep,leakyDendV,':')
+        ax.plot(np.arange(run_nt)*tstep,leakyV.T,'k')
+        prop_cycle = pyplot.rcParams['axes.prop_cycle']
+        colors = prop_cycle.by_key()['color']
+        for vi in xrange(nv):
+            ax.set_prop_cycle('color',colors)
+            ax.plot(np.arange(run_nt)*tstep,leakyDendV[vi,:,:].T,':')
         pyplot.savefig(fign+'.'+fmt,format=fmt,bbox_inches='tight',dpi=900)
-    else:
-        leakyV = []
-        leakyDendV = []
 
-    print "get singlets"
+    print 'get singlets'
     jobs = []
     receivers = []
     for vi in xrange(nv):
         receiver, sender = mp.Pipe(False)
-        job = mp.Process(target=getSingletsV, args = (vi,vRange,cell,gList,loc,pos,sL,vSL,n,tstep,run_t,run_nt,alphaR,sender,normVrest,leakyV,leakyDendV))
+        if normVrest:
+            lV = leakyV[vi,:]
+            lDV = leakyDendV[vi,:]
+        else:
+            lV = []
+            lDV = []
+        job = mp.Process(target=getSingletsV, args = (vi,vRange,cell,vThres,gList,loc,pos,sL,vSL,n,tstep,run_t,run_nt,alphaR,sender,normVrest,lV,lDV,fmt))
         jobs.append(job)
         receivers.append(receiver)
         job.start()
-    gather_and_distribute_results(receivers, jobs, getSingletsV.__name__, nv, 0, V, dendV, tMax)
+    print 'waiting for all jobs'
+    try:
+        gather_and_distribute_results(receivers, jobs, getSingletsV.__name__, nv, 0, V, dendV, tMax, sFire)
+    except EOFError:
+        print "尼玛"
+    else:
+        print "finished"
 
     if normVrest:
         with open(datafn, 'w') as leakySingleData:
-            np.savez(leakySingleData, V0=V, dendV0=dendV, tMax0=tMax, leakyV0=leakyV, leakyDendV0=leakyDendV)
+            np.savez(leakySingleData, V0=V, dendV0=dendV, tMax0=tMax, sFire0=sFire, leakyV0=leakyV, leakyDendV0=leakyDendV)
     else:
         with open(datafn, 'w') as leakySingleData:
-            np.savez(leakySingleData, V=V, dendV=dendV, tMax=tMax)
+            np.savez(leakySingleData, V=V, dendV=dendV, tMax=tMax, sFire=sFire)
+    return V, tMax
 
 if __name__ == '__main__':
     compare = True
+    generateNew = True
     fmt = 'png'
     g0 = 32.0*5e-4
+    maxE = 5
     tstep = 1.0/10.0
-    run_t = 200.0
+    run_t = 340.0
 
-    locE = np.array([60, 72],dtype='int')
-    locI = np.array([14, 28],dtype='int')
-    #locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
-    #locI = np.array([14, 28, 30],dtype='int')
-    gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
-    gI = -g0*np.array([10.0, 10.0, 10.0])
+    #locE = np.array([60],dtype='int')
+    #locI = np.array([14],dtype='int')
+    locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
+    locI = np.array([14, 28, 30],dtype='int')
+    #gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
+    #gI = -g0*np.array([10.0, 10.0, 10.0])
 
     #locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
     #locI = np.array([14, 28, 40],dtype='int')
-    #gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
-    #gI = -g0*np.array([6.0, 10.0, 8.0])
+    gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
+    gI = -g0*np.array([6.0, 10.0, 8.0])
 
     posE = np.array([0.3,0.3,0.9,0.6,0.4,0.2])
     posI = np.array([0.7,0.2,0.5])
@@ -251,17 +293,18 @@ if __name__ == '__main__':
     loc = np.concatenate((locE, locI))
     gList = np.concatenate((gE, gI))
     vrest = -70.0
-    vThres = -60.0
+    vThres = -54.0
     alphaR = True 
-    vRange = np.array([-74,-70,-66],dtype='double')
+    #vRange = np.array([-74,-62],dtype='double')
+    vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
     theme = 'test'
     datafn = 'leakySingle-' + theme + '.npz'
     datafn0 = 'leakySingle0-' + theme + '.npz'
 
     # plot
     print 'read data'
-    if not os.path.isfile(datafn):
-        generate(datafn,alphaR,False,vRange,gList,loc,pos,vrest,vThres,run_t,tstep)
+    if not os.path.isfile(datafn) or generateNew:
+        V, tMax = generateData(datafn,alphaR,False,vRange,gList,loc,pos,vrest,vThres,run_t,tstep,fmt,theme)
     else:
         lsData = np.load(datafn)
         V = lsData['V']
@@ -269,8 +312,8 @@ if __name__ == '__main__':
         if compare:
             tMax = lsData['tMax']
     if compare:
-        if not os.path.isfile(datafn0):
-            generate(datafn0,alphaR,True,vRange,gList,loc,pos,vrest,vThres,run_t,tstep,theme,fmt)
+        if not os.path.isfile(datafn0) or generateNew:
+            V0, tMax0 = generateData(datafn0,alphaR,True,vRange,gList,loc,pos,vrest,vThres,run_t,tstep,fmt,theme)
         else:
             lsData = np.load(datafn0)
             V0 = lsData['V0']
@@ -278,15 +321,16 @@ if __name__ == '__main__':
             print V0.shape
             print tMax0.shape
     run_nt = int(round(run_t/tstep))+1
+    t = np.arange(run_nt)*tstep
     nv = vRange.size
     n = loc.size
-    print 'plot', fign
     prop_cycle = pyplot.rcParams['axes.prop_cycle']
     colors = prop_cycle.by_key()['color']
     if compare:
         fign = 'singlet'
     else:
         fign = 'singlet_compare'
+    print 'plot', fign
     fig = pyplot.figure(fign, figsize=(8,4))
     if compare:
         ax1 = fig.add_subplot(2,2,1)
@@ -294,25 +338,34 @@ if __name__ == '__main__':
         ax1 = fig.add_subplot(1,1,1)
     for vi in xrange(nv):
         ax1.set_prop_cycle('color',colors)
-        ax1.plot(t,V[:,:,vi],lw=(vi+1)*0.5)
+        ax1.plot(t,V[vi,:,:].T,lw=(vi+1)*0.5)
+    ymin = np.amin(V)
+    ymax = np.amax(V)
+    ax1.set_ylim((ymin-np.abs(ymin)*0.15,np.amin([ymax+np.abs(ymax)*0.15,maxE])))
     ax1.set_title('sv')
     if compare:
         ax2 = fig.add_subplot(2,2,2)
         for vi in xrange(nv):
             ax2.set_prop_cycle('color',colors)
-            ax2.plot(t,V[:,:,vi]-V0[:,:,vi],lw=(vi+1)*0.5)
+            ax2.plot(t,(V[vi,:,:]-V0[vi,:,:]).T,lw=(vi+1)*0.5)
+        ymin = np.amin(V-V0)
+        ymax = np.amax(V-V0)
+        ax2.set_ylim((ymin-np.abs(ymin)*0.15,np.amin([ymax+np.abs(ymax)*0.15,maxE])))
         ax2.set_title('dv')
 
         ax3 = fig.add_subplot(2,2,3)
         for vi in xrange(nv):
             ax3.set_prop_cycle('color',colors)
-            ax3.plot(t,V0[:,:,vi],lw=(vi+1)*0.5)
+            ax3.plot(t,V0[vi,:,:].T,lw=(vi+1)*0.5)
+        ymin = np.amin(V0)
+        ymax = np.amax(V0)
+        ax3.set_ylim((ymin-np.abs(ymin)*0.15,np.amin([ymax+np.abs(ymax)*0.15,maxE])))
         ax3.set_title('sv_from_rest')
 
         ax4 = fig.add_subplot(2,2,4)
         for vi in xrange(nv):
             ax4.set_prop_cycle('color',colors)
-            ax4.plot(np.ones(n)+vi,tMax[:,vi]-tMax0[:,vi],'*')
+            ax4.plot(np.ones(n)+vi,tMax[vi,:]-tMax0[vi,:],'*')
         ax4.set_title('dtMax')
 
     pyplot.savefig(fign+'.'+fmt,format=fmt,bbox_inches='tight',dpi=900)
