@@ -12,7 +12,7 @@ matplotlib.use('Agg')
 #matplotlib.use('Qt5Agg')
 from matplotlib import pyplot#, ticker
 
-def run(cell, v0, vThres, cpi):
+def run(cell, v0, vThres, cpi, untilTol = False):
     f = open('pylog','a')
     if cpi:
         cell.cp_init()
@@ -26,7 +26,8 @@ def run(cell, v0, vThres, cpi):
     tsp = 0
     firing = 0 
     h.t = 0
-    while (int(round(h.t/h.dt)) < int(round(h.tstop/h.dt))):
+    tol = 2e-14
+    while (int(round(h.t/h.dt)) < int(round(h.tstop/h.dt))) or (untilTol and np.abs(cell.soma(0.5).v - vold) > tol):
         h.fadvance()
         if cell.soma(0.5).v > vThres+15 and cell.soma(0.5).v < vold and not firing:
             tsp = h.t
@@ -42,12 +43,11 @@ def run(cell, v0, vThres, cpi):
     print  'stopping with v', cell.soma(0.5).v, 'v0:', v0, 'with', cpi
     print >>f, 'stopping with v', cell.soma(0.5).v, 'v0:', v0, 'with', cpi
     f.close()
-    return nc
+    return nc, int(round(h.t/h.dt))+1
 #
-def bproceed(cell, v0, vThres, synList, gList, vecStimList, spikeTrain, n, sel, tend, tstep, name, pos, loc, alphaR = True, cpi = False):
+def bproceed(cell, v0, vThres, synList, gList, vecStimList, spikeTrain, n, sel, tend, tstep, name, pos, loc, alphaR = True, cpi = False, tol = True):
     f = open('pylog','a')
     h.tstop = tend
-    ntend = int(round(tend/tstep))+1
     h.dt = tstep
     print 'tend = ', tend, ', v0 = ', v0
     print >> f, 'tend = ', tend, ', v0 = ', v0
@@ -85,7 +85,7 @@ def bproceed(cell, v0, vThres, synList, gList, vecStimList, spikeTrain, n, sel, 
             else:
                 synList[i].gmax = 0
 
-    fired = run(cell, v0, vThres, cpi)
+    fired, ntend = run(cell, v0, vThres, cpi, tol)
 
     v1 = v.as_numpy()
     dendv1 = np.empty((n,ntend))
