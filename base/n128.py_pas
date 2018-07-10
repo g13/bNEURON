@@ -2,6 +2,7 @@ from neuron import h
 import numpy as np
 
 # partial passive
+
 class RealisticNeuron(object):
     def init(self,vrest = None):
         if vrest == None:
