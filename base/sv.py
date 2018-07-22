@@ -12,6 +12,10 @@ matplotlib.use('Agg')
 #matplotlib.use('Qt5Agg')
 from matplotlib import pyplot#, ticker
 
+def write_one(data_filename,data,mode='ab'):
+    with open(data_filename,mode) as data_file:
+        data.tofile(data_file)
+
 def run(cell, v0, vThres, cpi, untilTol = False):
     f = open('pylog','a')
     if cpi:
@@ -28,6 +32,7 @@ def run(cell, v0, vThres, cpi, untilTol = False):
     h.t = 0
     tol = 2e-14
     while (int(round(h.t/h.dt)) < int(round(h.tstop/h.dt))) or (untilTol and np.abs(cell.soma(0.5).v - vold) > tol):
+        vold = cell.soma(0.5).v
         h.fadvance()
         if cell.soma(0.5).v > vThres+15 and cell.soma(0.5).v < vold and not firing:
             tsp = h.t
@@ -36,16 +41,15 @@ def run(cell, v0, vThres, cpi, untilTol = False):
             nc = nc + 1
             print >>f, '    fired at', tsp, ', ', nc, 'spike(s) in total'
             print '    fired at', tsp, ', ', nc, 'spike(s) in total'
-        vold = cell.soma(0.5).v
         if (cell.soma(0.5).v <= vThres+7.5):
             firing = 0
 
-    print  'stopping with v', cell.soma(0.5).v, 'v0:', v0, 'with', cpi
-    print >>f, 'stopping with v', cell.soma(0.5).v, 'v0:', v0, 'with', cpi
+    print  'stopping with v', cell.soma(0.5).v, 'v0:', v0, 'with', cpi, 'and', untilTol, 'with', cell.soma(0.5).v-vold
+    print >>f, 'stopping with v', cell.soma(0.5).v, 'v0:', v0, 'with', cpi, 'and', untilTol, 'with', cell.soma(0.5).v-vold
     f.close()
     return nc, int(round(h.t/h.dt))+1
 #
-def bproceed(cell, v0, vThres, synList, gList, vecStimList, spikeTrain, n, sel, tend, tstep, name, pos, loc, alphaR = True, cpi = False, tol = True):
+def bproceed(cell, v0, vThres, synList, gList, vecStimList, spikeTrain, n, sel, tend, tstep, name, pos, loc, alphaR = True, cpi = False, tol = False):
     f = open('pylog','a')
     h.tstop = tend
     h.dt = tstep
@@ -198,7 +202,7 @@ def gather_and_distribute_results(receivers, jobs, targetName, n, sortingInd = 0
             j = j + 1
     print 'data distributed'
 
-def generateData(datafn,alphaR,normVrest,vRange,gList,loc,pos,vrest,vThres,run_t,tstep,fmt,theme):
+def generateSvData(datafn,alphaR,vRange,gList,loc,pos,vrest,vThres,run_t,tstep,fmt,theme,normVrest=False):
     run_nt = int(round(run_t/tstep))+1
     nv = vRange.size
     n = loc.size
@@ -215,7 +219,7 @@ def generateData(datafn,alphaR,normVrest,vRange,gList,loc,pos,vrest,vThres,run_t
         receivers = []
         for vi in xrange(nv):
             receiver, sender = mp.Pipe(False)
-            job = mp.Process(target=getLeaky, args = (vi,vRange,cell,gList,loc,pos,sL,vSL,n,tstep,run_t,alphaR,sender))
+            job = mp.Process(target=getLeaky, args = (vi,vRange,cell,vThres,gList,loc,pos,sL,vSL,n,tstep,run_t,alphaR,sender))
             jobs.append(job)
             receivers.append(receiver)
             job.start()
@@ -255,81 +259,62 @@ def generateData(datafn,alphaR,normVrest,vRange,gList,loc,pos,vrest,vThres,run_t
         print "finished"
 
     if normVrest:
-        with open(datafn, 'w') as leakySingleData:
-            np.savez(leakySingleData, V0=V, dendV0=dendV, tMax0=tMax, sFire0=sFire, leakyV0=leakyV, leakyDendV0=leakyDendV)
+        write_one(datafn+'.bin',V,mode='wb')
+        write_one(datafn+'.bin',tMax,mode='ab')
+        write_one(datafn+'.bin',sFire,mode='ab')
+        write_one(datafn+'.bin',leakyV,mode='ab')
+        write_one(datafn+'.bin',dendV,mode='ab')
+        write_one(datafn+'.bin',leakyDendV,mode='ab')
+        #with open(datafn+'.npz', 'w') as leakySingleData:
+        #    np.savez(leakySingleData, V0=V, dendV0=dendV, tMax0=tMax, sFire0=sFire, leakyV0=leakyV, leakyDendV0=leakyDendV)
     else:
-        with open(datafn, 'w') as leakySingleData:
-            np.savez(leakySingleData, V=V, dendV=dendV, tMax=tMax, sFire=sFire)
+        write_one(datafn+'.bin',V,mode='wb')
+        write_one(datafn+'.bin',tMax,mode='ab')
+        write_one(datafn+'.bin',sFire,mode='ab')
+        write_one(datafn+'.bin',dendV,mode='ab')
+        #with open(datafn+'.npz', 'w') as leakySingleData:
+        #    np.savez(leakySingleData, V=V, dendV=dendV, tMax=tMax, sFire=sFire)
     return V, tMax
 
-if __name__ == '__main__':
-    compare = True
-    generateNew = True
-    fmt = 'png'
-    g0 = 32.0*5e-4
-    maxE = 5
-    tstep = 1.0/10.0
-    run_t = 340.0
-
-    #locE = np.array([60],dtype='int')
-    #locI = np.array([14],dtype='int')
-    locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
-    locI = np.array([14, 28, 30],dtype='int')
-    #gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
-    #gI = -g0*np.array([10.0, 10.0, 10.0])
-
-    #locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
-    #locI = np.array([14, 28, 40],dtype='int')
-    gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
-    gI = -g0*np.array([6.0, 10.0, 8.0])
-
-    posE = np.array([0.3,0.3,0.9,0.6,0.4,0.2])
-    posI = np.array([0.7,0.2,0.5])
-    gE = gE[:locE.size]
-    gI = gI[:locI.size]
-    posE = posE[:locE.size]
-    posI = posI[:locI.size]
-    pos = np.concatenate((posE, posI))
-    loc = np.concatenate((locE, locI))
-    gList = np.concatenate((gE, gI))
-    vrest = -70.0
-    vThres = -54.0
-    alphaR = True 
-    #vRange = np.array([-74,-62],dtype='double')
-    vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
-    theme = 'test'
-    datafn = 'leakySingle-' + theme + '.npz'
-    datafn0 = 'leakySingle0-' + theme + '.npz'
+def plotSv(vRange,gList,loc,pos,vrest,vThres,run_t,tstep,fmt,theme,generateNew=True,alphaR=True,compare=False):
+    datafn = 'singlets-' + theme
+    if compare:
+        datafn0 = 'singlets0-' + theme
+    n = loc.size
+    run_nt = int(round(run_t/tstep))+1
+    nv = vRange.size
 
     # plot
     print 'read data'
-    if not os.path.isfile(datafn) or generateNew:
-        V, tMax = generateData(datafn,alphaR,False,vRange,gList,loc,pos,vrest,vThres,run_t,tstep,fmt,theme)
+    if not os.path.isfile(datafn+'.bin') or generateNew:
+        print 'data does not exist, generating =', str(generateNew)
+        V, tMax = generateSvData(datafn,alphaR,vRange,gList,loc,pos,vrest,vThres,run_t,tstep,fmt,theme)
     else:
-        lsData = np.load(datafn)
-        V = lsData['V']
-        print V.shape
-        if compare:
-            tMax = lsData['tMax']
+        with open(datafn+'.bin','rb') as datafile:
+            V = np.fromfile(datafile,dtype=float,count=n*run_nt*nv)
+            V = V.reshape(nv,n,run_nt)
+            if compare:
+                tMax = np.fromfile(datafile,dtype=int,count=n*nv)
+                tMax = tMax.reshape((nv,n))
     if compare:
-        if not os.path.isfile(datafn0) or generateNew:
-            V0, tMax0 = generateData(datafn0,alphaR,True,vRange,gList,loc,pos,vrest,vThres,run_t,tstep,fmt,theme)
+        if not os.path.isfile(datafn0+'.bin') or generateNew:
+            print 'data does not exist, generating', str(generateNew)
+            V0, tMax0 = generateSvData(datafn0,alphaR,vRange,gList,loc,pos,vrest,vThres,run_t,tstep,fmt,theme,True)
         else:
-            lsData = np.load(datafn0)
-            V0 = lsData['V0']
-            tMax0 = lsData['tMax0']
-            print V0.shape
-            print tMax0.shape
-    run_nt = int(round(run_t/tstep))+1
+            with open(datafn+'.bin','rb') as datafile:
+                V0 = np.fromfile(datafile,dtype=float,count=n*run_nt*nv)
+                V0 = V0.reshape((nv,n,run_nt))
+                if compare:
+                    tMax0 = np.fromfile(datafile,dtype=int,count=n*nv)
+                    tMax0 = tMax0.reshape((nv,n))
+
     t = np.arange(run_nt)*tstep
-    nv = vRange.size
-    n = loc.size
     prop_cycle = pyplot.rcParams['axes.prop_cycle']
     colors = prop_cycle.by_key()['color']
     if compare:
-        fign = 'singlet'
+        fign = 'singlets'
     else:
-        fign = 'singlet_compare'
+        fign = 'singlets_compare'
     print 'plot', fign
     fig = pyplot.figure(fign, figsize=(8,4))
     if compare:
@@ -341,6 +326,7 @@ if __name__ == '__main__':
         ax1.plot(t,V[vi,:,:].T,lw=(vi+1)*0.5)
     ymin = np.amin(V)
     ymax = np.amax(V)
+    maxE = 5
     ax1.set_ylim((ymin-np.abs(ymin)*0.15,np.amin([ymax+np.abs(ymax)*0.15,maxE])))
     ax1.set_title('sv')
     if compare:
@@ -370,3 +356,41 @@ if __name__ == '__main__':
 
     pyplot.savefig(fign+'.'+fmt,format=fmt,bbox_inches='tight',dpi=900)
     print 'saved', fign+'.'+fmt
+
+if __name__ == '__main__':
+    compare = True
+    generateNew = False 
+    fmt = 'png'
+    g0 = 32.0*5e-4
+    tstep = 1.0/10.0
+    run_t = 10
+    #run_t = 340.0
+
+    locE = np.array([60],dtype='int')
+    locI = np.array([14],dtype='int')
+    #locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
+    #locI = np.array([14, 28, 30],dtype='int')
+    #gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
+    #gI = -g0*np.array([10.0, 10.0, 10.0])
+
+    #locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
+    #locI = np.array([14, 28, 40],dtype='int')
+    gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
+    gI = -g0*np.array([6.0, 10.0, 8.0])
+
+    posE = np.array([0.3,0.3,0.9,0.6,0.4,0.2])
+    posI = np.array([0.7,0.2,0.5])
+    gE = gE[:locE.size]
+    gI = gI[:locI.size]
+    posE = posE[:locE.size]
+    posI = posI[:locI.size]
+    pos = np.concatenate((posE, posI))
+    loc = np.concatenate((locE, locI))
+    gList = np.concatenate((gE, gI))
+    vrest = -70.0
+    vThres = -54.0
+    alphaR = True 
+    vRange = np.array([-74,-62],dtype='double')
+    #vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
+    theme = 'test'
+    plotSv(vRange,gList,loc,pos,vrest,vThres,run_t,tstep,fmt,theme,generateNew,compare,alphaR)
