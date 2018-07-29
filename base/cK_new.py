@@ -285,9 +285,19 @@ def cK(cid, seed, fmt, run_t, tstep, rE, rI, testLinear, testBilinear, plotSindi
                 kv = bv.copy()
                 kv[:s1t] -= sv[j][:s1t]
                 kv[idt:idt+s2t] -= sv2[:s2t]
+                kv[idt+s2t:] = 0
                 addv = np.zeros(bv.size)
                 addv[:s1t] += sv[j][:s1t]
-                addv[idt:idt+s2t] += sv2[:s2t]
+                if newSv:
+                    if sv[i].size < s2t:
+                        sv2p = np.append(sv[i],np.zeros(s2t-sv[i].size))
+                    else:
+                        sv2p = sv[i][:s2t]
+                    print 'size: ', sv2.size, sv2p.size, s2t - sv[i].size, sv[i].size
+                    kv[idt:idt+s2t] = kv[idt:idt+s2t]*sv2p/sv2[:s2t]
+                    addv[idt:idt+s2t] += sv2p
+                else:
+                    addv[idt:idt+s2t] += sv2[:s2t]
                 
                 biv[jt:jt+et] += kv
 
@@ -527,19 +537,19 @@ if __name__ == '__main__':
     theme = 'oldSv'
     generateData = True 
     seed0 = 6723412
-    run_t = 90
+    run_t = 80
     tstep = 1.0/10.0
     nproc = 2
-    rE = 40
+    rE = 20
     rI = 10
     np.random.seed(seed0)
     seed = np.random.randint(234535,945678,nproc)
 
-    testLinear = True
-    plotSindivid = True
+    testLinear = False
+    plotSindivid = True 
     testBilinear = True
-    newSv = False 
-    plotBindivid = True
+    newSv = True
+    plotBindivid = True 
 
     run_nt = int(round(run_t/tstep))+1
     dataFn =np.empty(nproc,dtype=object)

@@ -1,9 +1,8 @@
 from neuroAlter import *
-import struct, sys, getopt, os, time
+import sys, getopt, os, time
 import numpy as np
 import multiprocessing as mp
 from neuron import h
-from shutil import copy
 h.load_file('stdlib.hoc')
 h.load_file('stdrun.hoc')
 
