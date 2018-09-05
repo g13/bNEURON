@@ -1,7 +1,7 @@
 #!/bin/bash
-n128=1
+n128=2
 dir0='biRelation'
-theme='actT_nc'
+theme='pasT_plot'
 nc=1
 dir=$dir0'/'$theme
 if [ -d "./$dir" ]; then

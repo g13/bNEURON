@@ -8,8 +8,8 @@ using std::cout;
 using std::endl;
 using std::vector;
 namespace lb{
-    const bool debug = true;
-    const bool debug2 = true;
+    const bool debug = false;
+    const bool debug2 = false;
 }
 
 template<typename T>
@@ -289,6 +289,6 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, doubl
 
 unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, int itrial, bool sliceDebugPlot, bool linear0);
 
-unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool kVStyle, bool dtSquare, int itrial, bool sliceDebugPlot);
+unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool dtSquare, int itrial, bool sliceDebugPlot);
 
 #endif

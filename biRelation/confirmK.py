@@ -4,6 +4,7 @@ import sys, os, getopt
 import matplotlib as mpl
 mpl.use('Agg')
 from matplotlib import pyplot, gridspec
+pyplot.style.use('publish_cms')
 from shutil import copy
 from datetime import datetime
 import time
@@ -59,17 +60,18 @@ def getKfig(fign,t,k,rs,intercept,coef,b,plim,directory,savePlot,EItype,fmt):
     ax0_0 = pyplot.subplot(gs[0])
     line0 = ax0_0.plot(t,k,lw=1.0,c='#E74C3C',label='k'+EItype)
     #line1 = ax0_0.plot(t,intercept,lw=1.5,c='darkorange',label='intercept');
-    ax0_0.set_ylim(ymin, ymax)
     ax0_0.set_ylabel('k'+EItype + r' $(mV^{-1})$')
     ax0_1 = ax0_0.twinx()
     lines0 = ax0_1.plot(t,coef.T,':g',lw=1.0)
     lines1 = ax0_1.plot(t,b.T,':c',lw=1.0)
+    zeroLine = ax0_1.plot(t,np.zeros(t.size),'k',lw=1.0)
     lines0[0].set_label(r'$v_'+EItype[0]+'v_'+EItype[1] + '$')
-    lines1[0].set_label(r'$v_{'+EItype+'}-'+ 'v_{'+EItype[0]+'}v_{'+EItype[1] + '}$')
+    lines1[0].set_label(r'$v_{'+EItype+'}-v_{'+EItype[0]+'}-v_{'+EItype[1] + '}$')
     ylen = ymax - ymin
-    tick0 = ymin + np.ceil(ylen*0.2/5) * 5
-    tick1 = ymax - np.ceil(ylen*0.2/5) * 5
+    tick0 = ymin + np.ceil(ylen*0.2)
+    tick1 = ymax - np.ceil(ylen*0.2)
     ax0_0.set_yticks([tick0, ymin+ylen/2.0, tick1])
+    ax0_0.set_ylim(ymin, ymax)
     
     #ax.spines['bottom'].set_visible(False)
     #ax.spines['right'].set_visible(False)
@@ -118,9 +120,9 @@ def getKfig(fign,t,k,rs,intercept,coef,b,plim,directory,savePlot,EItype,fmt):
     dy = (ymax-ymin)*0.035
     dx = (t[-1]-t[0])*0.015
     for i in icross:
-        ax0_0.arrow(t[i], ymin-1.1*dy, 0.0, +dy, color='g',width = 0.0, head_length=0.9*dy,head_width = dx, clip_on=False, length_includes_head = True)
+        ax0_0.arrow(t[i], ymin+1.1*dy, 0.0, +dy, color='g',width = 0.0, head_length=0.9*dy,head_width = dx, clip_on=False, length_includes_head = True)
     for j in jcross:
-        ax0_0.arrow(t[j], ymin-1.1*dy, 0.0, +dy, color='c',width = 0.0, head_length=0.9*dy,head_width = dx, clip_on=False, length_includes_head = True)
+        ax0_0.arrow(t[j], ymin+1.1*dy, 0.0, +dy, color='c',width = 0.0, head_length=0.9*dy,head_width = dx, clip_on=False, length_includes_head = True)
     #ax1_0.legend()
     #ax1_1.legend()
     if savePlot:
@@ -143,6 +145,7 @@ def getWfig(fign,k,coef,b,directory,savePlot,EItype,it=-1,fmt='png'):
     pyplot.xlabel(r'$v_'+EItype[0]+'v_'+EItype[1] + ' (mV^2)$')
     pyplot.title(r'$R^2 = ' + '%.2f'%rs + ', k = ' + '%.2f'%k[it] + '$')
     pyplot.ylabel('v'+EItype+ r' $(mV^{-1})$'+' at ' +str(it))
+    pyplot.legend(('data','fitted line'))
 
     if np.absolute(pred0).max()> np.absolute(coef).max()*3:
         if np.absolute(coef.max()) > np.absolute(coef.min()):
@@ -229,11 +232,11 @@ if nc:
 else:
     trans = 110
 #trans = 2 
-gList0 = np.array([4,8,16,32]) * 5e-4
+gList0 = np.array([4,8,16,32]) * 2e-3
 plim = 0.7
 #gList0 = np.array([1,3]) * 1e-4
-#testEE = True
-testEE = False 
+testEE = True
+#testEE = False 
 testII = True
 #testII = False 
 testIE = True
@@ -286,17 +289,19 @@ print "run steps: ", run_nt, tstep, "ms per step"
 np.random.seed(seed)
 #locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
 #locI = np.array([14, 28, 40],dtype='int')
-locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
-locI = np.array([14, 28, 30],dtype='int')
+#locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
+locE = np.array([80, 89, 91, 97, 121, 126],dtype='int')
+#locI = np.array([14, 28, 30],dtype='int')
+locI = np.array([25, 31, 43],dtype='int')
 nlocE = locE.size
 nlocI = locI.size
 posE = np.random.random_sample(nlocE)
 posI = np.random.random_sample(nlocI)
 ng = gList0.size
-#rE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])*1.0
-#rI = -7.0*np.array([1.0, 1.0, 1.0])
-rE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6])
-rI = -np.array([6.0, 10.0, 8.0])
+rE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])*1.0
+rI = -0.8*np.array([1.0, 1.0, 1.0])
+#rE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6])
+#rI = -np.array([6.0, 10.0, 8.0])
 rE = rE[:locE.size]
 rI = rI[:locI.size]
 idt = np.round(dt/tstep).astype('int')

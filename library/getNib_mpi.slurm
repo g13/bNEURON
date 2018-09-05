@@ -20,7 +20,7 @@ echo $theme
 echo $nc
 echo $SLURM_ARRAY_TASK_ID
 
-python getNib_mpi.py --theme=${theme} --vid=$(($SLURM_ARRAY_TASK_ID-1)) --nc=$nc
+python getNib_mpi.py --theme=${theme} --vid=$(($SLURM_ARRAY_TASK_ID-1)) --nc=$nc -s
 
 date
 hostname

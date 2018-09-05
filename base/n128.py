@@ -354,9 +354,9 @@ class RealisticNeuron(object):
             sec.cm = Cm
         #
         gna = 0.00   # 0.03
-        gkdr = 0.000 # 0.005
+        gkdr = 0.005 # 0.005
         ghd = 2.0e-5 # 2.0e-5
-        gka = 0.000  # 0.005
+        gka = 0.005  # 0.005
         gka_dist = gka # gka
         gka_prox = gka # gka
         gh_soma = ghd

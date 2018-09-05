@@ -293,7 +293,7 @@ int main(int argc, char **argv) {
         clock_gettime(clk_id,&tpS);
         if (inputArg.mode[5]) {
             cout << " bilinear0 begin: " << endl;
-            nc = bilinear0_nSyn(cell, spikeTrain, inputArg.dendClampRatio, biV0, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi0, vCrossb, vBackb, inputArg.afterCrossBehavior, inputArg.spikeShape, inputArg.kVStyle, inputArg.dtSquare,ii,inputArg.sliceDebugPlot);
+            nc = bilinear0_nSyn(cell, spikeTrain, inputArg.dendClampRatio, biV0, neuroLib, neuron, run_t, inputArg.ignoreT, tsp_bi0, vCrossb, vBackb, 1, inputArg.spikeShape, inputArg.dtSquare,ii,inputArg.sliceDebugPlot);
         } else {
             cout << " bilinear0 skipped" << endl;
             nc = 0;

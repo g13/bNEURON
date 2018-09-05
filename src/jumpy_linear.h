@@ -10,10 +10,10 @@ using std::endl;
 using std::vector;
 
 namespace jl {
-    const bool debug = true;
-    const bool debug2 = true;
+    const bool debug = false;
+    const bool debug2 = false;
 
-    inline double find_v_at_t(Input &input, nNL &neuroLib, Cross &cross, size head, size tail_l, double t, double tCross, double tol_tl, double tol_tb, double v) {
+    inline double find_v_at_t(Input &input, nNL &neuroLib, Cross &cross, size head, size tail_l, double t, double tCross, double tol_tl, double tol_tb, double v, bool spikeShape) {
         size i, j, idt;
         double dt;
         dt = t - tCross;
@@ -22,8 +22,10 @@ namespace jl {
                 v = add_vinit_contribution(neuroLib.vLeak, cross.vCross.back(), dt);
             } else {
                 if (cross.spiked.back()) {
-                    if (dt < neuroLib.nvASt) {
-                        v = add_vAS_contribution(neuroLib.vAS, cross.vAScross.back(), dt, cross.v0.back(), cross.vRest);
+                    if (spikeShape) {
+                        if (dt < neuroLib.nvASt) {
+                            v = add_vAS_contribution(neuroLib.vAS, cross.vAScross.back(), dt, cross.v0.back(), cross.vRest);
+                        }
                     }
                 } else {
                     if (dt < neuroLib.nvNSt) {
@@ -51,7 +53,7 @@ namespace jl {
         return v;
     }
 
-    inline double interp_for_t_cross(double v_right, double v_left, double t_right, double t_left, size head, size tail_l, double tCross, double tol_tl, double tol_tb, nNL &neuroLib, Cross &cross, Input &input, double v0, double vtol, double vC, double vB, double &v) {
+    inline double interp_for_t_cross(double v_right, double v_left, double t_right, double t_left, size head, size tail_l, double tCross, double tol_tl, double tol_tb, nNL &neuroLib, Cross &cross, Input &input, double v0, double vtol, double vC, double vB, double &v, bool spikeShape) {
         size ival = 0;
         double v1, v2, vC_;
         double t_cross1, t_cross2, t_cross;
@@ -80,7 +82,7 @@ namespace jl {
                 assert(t_cross1 >= t_left);
                 assert(t_right > t_left);
             }
-            v1 = find_v_at_t(input, neuroLib, cross, head, tail_l, t_cross1, tCross, tol_tl, tol_tb, v0);
+            v1 = find_v_at_t(input, neuroLib, cross, head, tail_l, t_cross1, tCross, tol_tl, tol_tb, v0, spikeShape);
             if (debug2) {
                 cout << v_left << ", " << v1 << ", " << v_right << endl;
                 ival++;
@@ -127,7 +129,7 @@ namespace jl {
             if (debug2) {
                 cout << " find v at " << t_cross2 << endl;
             }
-            v2 = find_v_at_t(input, neuroLib, cross, head, tail_l, t_cross2, tCross, tol_tl, tol_tb, v0);
+            v2 = find_v_at_t(input, neuroLib, cross, head, tail_l, t_cross2, tCross, tol_tl, tol_tb, v0, spikeShape);
             if (debug2) {
                 ival++;
             }
@@ -179,9 +181,9 @@ namespace jl {
         return t_cross;
     }
 
-    bool check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tol_tl, double tol_tb, double end_t, size tail_l, size head, jND &jnd, double &t_cross, double vC, double vB);
+    bool check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tol_tl, double tol_tb, double end_t, size tail_l, size head, jND &jnd, double &t_cross, double vC, double vB, bool spikeShape);
 
-    bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &neuroLib, nNS &neuron, size head, size &tail_l, size old_tail_l, double tol_tl, double tol_tb, double end_t, jND &jnd, double &t_cross, double vC, double vB, size corrSize);
+    bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &neuroLib, nNS &neuron, size head, size &tail_l, size old_tail_l, double tol_tl, double tol_tb, double end_t, jND &jnd, double &t_cross, double vC, double vB, size corrSize, bool spikeShape);
 
     void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tCross, double vCross, size i_prior, size &tail, size head, size corrSize, int afterCrossBehavior);
 }

@@ -1,7 +1,7 @@
 from neuron import h
 import numpy as np
 
-# total passive +/- h
+# total passive +/- h no HH
 
 class RealisticNeuron(object):
     def init(self,vrest = None):
@@ -287,7 +287,7 @@ class RealisticNeuron(object):
         Cm = 1
         RaAll = 80
         Vrest = self.Vrest
-        ghd = 2.0e-5 # 2.0e-5
+        ghd = 0.0e-5 # 2.0e-5
         gh_soma = ghd
         gh_end = 10.0*ghd
         # soma

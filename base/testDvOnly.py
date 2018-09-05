@@ -18,16 +18,16 @@ def test(vi,vRange,cell,vThres,gList,loc,pos,sL,vSL,n,tstep,run_t,alphaR,normVre
     untilTol = True
     if normVrest:
         cell.set_volt(v0)
-    V, _, _ = bproceed(cell, v0, vThres, sL, gList, vSL, spikeTrain, n, sel, run_t, tstep, fign, pos, loc, alphaR, normVrest, untilTol)
-    if fired:
-        print 'fired'
+    V, fired, _ = bproceed(cell, v0, vThres, sL, gList, vSL, spikeTrain, n, sel, run_t, tstep, fign, pos, loc, alphaR, normVrest, untilTol)
     print 'test', vi,
-    sender.send(np.array([vi, V[-1]-V[0]],dtype='object'))
+    sender.send(np.array([vi, V[-1]-V[0], fired, V.size],dtype='object'))
     print 'sent'
 
 def plotTest(vRange,cell,vSL,sL,pos,loc,gList,vThres,n,tstep,run_t,alphaR,normVrest,spikeTrain,sel,fign,fmt,datafn):
     nv = vRange.size
     dV = np.empty((nv))
+    fired = np.empty((nv))
+    length = np.empty((nv))
     jobs = []
     receivers = []
     for vi in xrange(nv):
@@ -36,17 +36,19 @@ def plotTest(vRange,cell,vSL,sL,pos,loc,gList,vThres,n,tstep,run_t,alphaR,normVr
         jobs.append(job)
         receivers.append(receiver)
         job.start()
-    gather_and_distribute_results(receivers, jobs, test.__name__, nv, 0, V, dendV)
+    gather_and_distribute_results(receivers, jobs, test.__name__, nv, 0, dV, fired, length)
     fig = pyplot.figure(fign,figsize=(8,4))
     ax = fig.add_subplot(1,1,1)
-    ax.plot(vRange,dV,'*',ms=2.0)
+    nonFiringDv = dV[fired==0]
+    ax.plot(vRange[:nonFiringDv.size],nonFiringDv,'s',ms=1.0,c='b')
+    ax.plot(vRange[nonFiringDv.size:],dV[fired>0],'o',ms=1.0,c='b')
     pyplot.savefig(fign+'.'+fmt,format=fmt,bbox_inches='tight',dpi=600)
     with open(datafn+'.npz','w') as datafile:
-        np.savez(datafile, dV=dV)
+        np.savez(datafile, dV=dV, fired=fired, length=length, vRange=vRange)
 
 if __name__ == '__main__':
     fmt = 'png'
-    datafn0 = 'dVonly-nonNormVrest'
+    datafn0 = 'dVonly_B'
     g0 = 32.0*2e-4
     maxE = 5
     tstep = 1.0/10.0
@@ -54,13 +56,13 @@ if __name__ == '__main__':
     
     #locE = np.array([],dtype='int')
     #locI = np.array([14],dtype='int')
-    locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
-    locI = np.array([14, 28, 30],dtype='int')
+    #locE = np.array([60, 72, 78, 84, 90, 98],dtype='int')
+    #locI = np.array([14, 28, 30],dtype='int')
     #gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
     #gI = -g0*np.array([10.0, 10.0, 10.0])
     
-    #locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
-    #locI = np.array([14, 28, 40],dtype='int')
+    locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
+    locI = np.array([14, 28, 40],dtype='int')
     gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
     gI = -g0*np.array([6.0, 10.0, 8.0])
     
@@ -79,7 +81,7 @@ if __name__ == '__main__':
     #vRange = np.array([-62],dtype='double')
     #vRange = np.array([-63,-62,-61,-60,-59,-58],dtype='double')
     #vRange = np.array([-62.0,-61.5,-61.0,-60.5,-60.0],dtype='double')
-    vRange = np.arange(-61.40,-60.95,0.005)
+    vRange = np.arange(-63.0,-57.9,0.1)
     normVrest = False
     run_nt = int(round(run_t/tstep))+1
     nv = vRange.size

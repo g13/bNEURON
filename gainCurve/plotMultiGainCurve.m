@@ -98,8 +98,6 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
             for i = 1:nTrial
                 subplot(nTrial,2,(i-1)*2+1)
                 hold on
-                i
-                im
                 rasterSize(i,im) = fread(RasterFid,1,sizeSize);
 
                 if rasterSize(i,im) > 0
@@ -149,7 +147,7 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
     if plotSubthreshold || plotAuto
         dendV = cell(nTrial,n);
         v = cell(nTrial,7);
-        if plotInput
+        if plotInput || plotAuto
             tInfid = fopen(tInFn,'r');
         end
         disp(tstep);
@@ -213,6 +211,9 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
             end
             fclose(jNDfid);
         end
+        if plotAuto
+            hAuto = figure;
+        end
         for i=1:nTrial
             run_nt = round(runTime(i)/tstep) + 1;
             disp(['this is ', num2str(i), 'th trial']);
@@ -238,17 +239,32 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
                     val = 0.8;
                     for j=1:n
                         hue = (double(j)-1.0)/(double(n)-1.0)*(2.0/3.0);
-                        size(t0)
-                        size(dendV{i,j})
                         dline(j) = plot(t0,dendV{i,j},'--','Color',hsv2rgb([hue,sat,val]));
                     end
                 end
             end
-            for im = [2,3,6,7]
+            for im = 2:7
                 if method(im)
-                    handle = plot(t,v{i,im},lcolor{im});
-                    handles = [handles, handle];
-                    [minV0, maxV0] = minmax(v{i,im},minV0,maxV0);
+                    if im == 4 || im == 5
+                        if method(4) && im == 4
+                            handle = plot(jbt{i},v{i,4},'.b','MarkerSize',3);
+                            for j=1:jbnCross(i)
+                                plot(jbCrossT{i}{j}, jbCrossV{i}{j},':b');
+                            end
+                            handles = [handles, handle];
+                        end
+                        if method(5) && im == 5
+                            handle = plot(jlt{i},v{i,5},'.r','MarkerSize',3);
+                            for j=1:jlnCross(i)
+                                plot(jlCrossT{i}{j}, jlCrossV{i}{j},':r');
+                            end
+                            handles = [handles, handle];
+                        end
+                    else
+                        handle = plot(t,v{i,im},lcolor{im});
+                        handles = [handles, handle];
+                        [minV0, maxV0] = minmax(v{i,im},minV0,maxV0);
+                    end
                 end
             end
             vStretch = maxV0-minV0;
@@ -256,28 +272,19 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
             maxV = maxV0+vStretch*0.1;
             yl = [minV,maxV];
             ylim(yl);
-            if method(4) 
-                handle = plot(jbt{i},v{i,4},'.b','MarkerSize',3);
-                for j=1:jbnCross(i)
-                    plot(jbCrossT{i}{j}, jbCrossV{i}{j},':b');
-                end
-                handles = [handles, handle];
-            end
-            if method(5) 
-                handle = plot(jlt{i},v{i,5},'.r','MarkerSize',3);
-                for j=1:jlnCross(i)
-                    plot(jlCrossT{i}{j}, jlCrossV{i}{j},':r');
-                end
-                handles = [handles, handle];
-            end
             if plotDendV && p.getDendV && method(1)
                 handles = [handles, dline];
                 labels = [label(method), strcat('dend[',cellstr(num2str(loc))',']')];
+            else
+                labels = label(method);
             end
             legend(handles,labels);
-            if plotInput
+            if plotInput || plotAuto
                 ntmp = fread(tInfid,[1,1],sizeSize);
                 tin = fread(tInfid,[ntmp,1],'double');
+                disp(size(tin));
+            end
+            if plotInput
                 tID = fread(tInfid,[ntmp,1],sizeSize);
                 tID = tID + 1;
                 pE = (tID <= nE);
@@ -294,18 +301,18 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
                 plot(tI,minV*ones(1,Iin),'.b');
                 for j=1:Ein
                     iv = ceil(tE(j)/tstep);
-                    if iv==0, iv=iv+1,end
+                    if iv==0, iv=iv+1; end
                     jv = iv + 1;
-                    vEtar = v{i,in}(iv) + mod(tE(j),tstep)/tstep * (v{i,in}(jv)-v{i,in}(iv));
+                    vEtar = v{i,1}(iv) + mod(tE(j),tstep)/tstep * (v{i,1}(jv)-v{i,1}(iv));
                     plot([tE(j),tE(j)],[minV,vEtar],':r');
                     text(tE(j),minV+(vEtar-minV)*0.3,num2str(Eid(j)),'Color','r','FontSize',textFontSize);
                     text(tE(j),minV+(vEtar-minV)*0.1,num2str(j),'Color','r','FontSize',textFontSize);
                  
                     iv = ceil((tE(j)+ldur)/tstep);
-                    if iv==0, iv=iv+1,end
+                    if iv==0, iv=iv+1; end
                     if iv+1 < run_nt
                         jv = iv + 1;
-                        vEtar = v{i,in}(iv) + mod(tE(j),tstep)/tstep * (v{i,in}(jv)-v{i,in}(iv));
+                        vEtar = v{i,1}(iv) + mod(tE(j),tstep)/tstep * (v{i,1}(jv)-v{i,1}(iv));
                         plot([tE(j),tE(j)]+ldur,[vEtar,maxV],':r');
                         text(tE(j)+ldur,maxV-(maxV-vEtar)*0.3,num2str(Eid(j)),'Color','r','FontSize',textFontSize);
                         text(tE(j)+ldur,maxV-(maxV-vEtar)*0.1,num2str(j),'Color','r','FontSize',textFontSize);
@@ -313,18 +320,18 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
                 end
                 for j=1:Iin
                     iv = ceil(tI(j)/tstep);
-                    if iv==0, iv=iv+1,end
+                    if iv==0, iv=iv+1; end
                     jv = iv + 1;
-                    vItar(j) = v{i,in}(iv) + mod(tI(j),tstep)/tstep * (v{i,in}(jv)-v{i,in}(iv));
+                    vItar(j) = v{i,1}(iv) + mod(tI(j),tstep)/tstep * (v{i,1}(jv)-v{i,1}(iv));
                     plot([tI(j),tI(j)],[minV,vItar(j)],':b');
                     text(tI(j),minV+(vItar(j)-minV)*0.3,num2str(Iid(j)),'Color','b','FontSize',textFontSize);
                     text(tI(j),minV+(vItar(j)-minV)*0.1,num2str(j),'Color','b','FontSize',textFontSize);
                         
                     iv = ceil((tI(j)+ldur)/tstep);
-                    if iv==0, iv=iv+1,end
+                    if iv==0, iv=iv+1; end
                     if iv+1 < run_nt
                         jv = iv + 1;
-                        vtar = v{i,in}(iv) + mod(tI(j),tstep)/tstep * (v{i,in}(jv)-v{i,in}(iv));
+                        vtar = v{i,1}(iv) + mod(tI(j),tstep)/tstep * (v{i,1}(jv)-v{i,1}(iv));
                         plot([tI(j),tI(j)]+ldur,[vtar,maxV],':b');
                         text(tI(j)+ldur,maxV-(maxV-vtar)*0.3,num2str(Iid(j)),'Color','b','FontSize',textFontSize);
                         text(tI(j)+ldur,maxV-(maxV-vtar)*0.1,num2str(j),'Color','b','FontSize',textFontSize);
@@ -366,46 +373,64 @@ function plotMultiGainCurve(inputFn, ext, plotSubthreshold, plotInput, plotDendV
             if ~isempty(ext)
                 saveas(gcf,[p.theme,'-trial',num2str(i),'.',ext],format);
             end
+            if plotAuto
+                figure(hAuto);
+
+                if length(tin) > 0
+                    iv = ceil(tin(1)/tstep);
+                else
+                    iv = 0;
+                end
+                if iv == 0
+                    iv = 1;
+                end
+                for im=[1,2,3,6,7]
+                    if method(im)
+                        [auto,psd,normed] = autoCorr(v{i,im}(iv:end));
+                        if im == 1
+                            truth = normed;
+                        end
+                        l = length(auto);
+                        ns = 2/tstep+1;
+                        auto = [auto(l/2+1:l);auto(1:l/2)];
+                        tt = linspace(0,(length(normed)-1)*tstep, length(normed));
+                        tau = linspace(-l/2*tstep,l/2*tstep,l);
+                        subplot(nTrial,3,(i-1)*3+1)
+                        title(['Trial ',num2str(i)]);
+                        semilogy(linspace(0,(l/2-1),l/2).*1000./tstep./l,smooth(psd(1:(l/2)),ns),lcolor{im});
+                        hold on
+                        xlabel('Hz')
+                        ylabel('Power')
+                        subplot(nTrial,3,(i-1)*3+2)
+                        plot(tau, auto, lcolor{im});
+                        hold on
+                        xlabel('delay \tau s');
+                        if im > 1
+                            subplot(nTrial,3,(i-1)*3+3)
+                            cross = truth .* normed;
+                            plot(tt, cross, lcolor{im});
+                            hold on
+                        end
+                    end
+                end
+                %xlabel('\tau');
+                %ylabel('autocorr');
+                %title(['Trial ',num2str(i)]);
+            end
+            disp(['trial ',num2str(i),' completed'])
         end
     end
     if plotAuto
-        figure;
-        for i=1:nTrial
-            %subplot(ceil(nTrial/2),2,i)
-            %hold on
-            for im=[1,2,3,6,7]
-                if method(im)
-                    [auto,psd,normed] = autoCorr(v{i,im});
-                    l = length(auto);
-                    ns = 2/tstep+1;
-                    auto = [auto(l/2+1:l);auto(1:l/2)];
-                    tau = linspace(-l/2*tstep,l/2*tstep,l);
-                    subplot(nTrial,3,(i-1)*3+1)
-                    plot(linspace(0,(length(normed)-1)*tstep,length(normed)), normed, lcolor{im});
-                    hold on
-                    title(['Trial ',num2str(i)]);
-                    subplot(nTrial,3,(i-1)*3+2)
-                    semilogy(linspace(0,(l/2-1),l/2).*1000./tstep./l,smooth(psd(1:(l/2)),ns),lcolor{im});
-                    hold on
-                    xlabel('Hz')
-                    subplot(nTrial,3,(i-1)*3+3)
-                    plot(tau, auto,lcolor{im});
-                    hold on
-                end
-            end
-            %xlabel('\tau');
-            %ylabel('autocorr');
-            %title(['Trial ',num2str(i)]);
-        end
         if ~isempty(ext)
-            saveas(gcf,[p.theme,'-autoCorr.',ext],format);
+            saveas(hAuto,[p.theme,'-autoCorr.',ext],format);
         end
-        if plotInput
-            fclose(tInfid);
-        end
+    end
+    if plotInput || plotAuto
+        fclose(tInfid);
     end
 end
 function [auto,psd,normedData] = autoCorr(data)
+    disp(length(data))
     normedData = (data-mean(data))./std(data);
     L = length(normedData);
     l = 2^nextpow2(L);
@@ -423,7 +448,7 @@ function files = extractfn(type,fnstr,theme,n)
         files{j} = files0{i};
     end
 end
-function [minV0, maxV0] = minmax(v,minV0,maxV0);
+function [minV0, maxV0] = minmax(v,minV0,maxV0)
     nv = min(v);
     if nv < minV0
         minV0 = nv;

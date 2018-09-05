@@ -1,8 +1,8 @@
 #!/bin/bash
-n128=0
+n128=2
 dir0=library
 nc=1
-theme='pasT_nc'
+theme='pas-plot2'
 dir=$dir0/$theme
 
 if [ -d "./$dir" ]; then

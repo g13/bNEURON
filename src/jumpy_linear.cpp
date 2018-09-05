@@ -1,6 +1,6 @@
 #include "jumpy_linear.h"
 
-bool jl::check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tol_tl, double tol_tb, double end_t, size tail_l, size head, jND &jnd, double &t_cross, double vC, double vB) {
+bool jl::check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tol_tl, double tol_tb, double end_t, size tail_l, size head, jND &jnd, double &t_cross, double vC, double vB, bool spikeShape) {
     // check all tmax after head and find the v > vC
     size i, j;
     double t, dt;
@@ -24,7 +24,7 @@ bool jl::check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, 
                 t = nt;
             }
         }
-        v = jl::find_v_at_t(input, neuroLib, cross, head, tail_l, t, tCross, tol_tl, tol_tb, neuron.vReset);
+        v = jl::find_v_at_t(input, neuroLib, cross, head, tail_l, t, tCross, tol_tl, tol_tb, neuron.vReset, spikeShape);
         if (v > vC) {
             lcrossed = true;
             break;    
@@ -41,7 +41,7 @@ bool jl::check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, 
                 cout << "t_left " << jnd.t.back() << ", t_right " << t << endl;
                 cout << "v_left " << jnd.v.back() << ", v_right " << v << endl;
             }
-            t_cross = jl::interp_for_t_cross(v, jnd.v.back(), t, jnd.t.back(), head, tail_l, tCross, tol_tl, tol_tb, neuroLib, cross, input, neuron.vRest, neuron.vTol, vC, vB, v_pass);
+            t_cross = jl::interp_for_t_cross(v, jnd.v.back(), t, jnd.t.back(), head, tail_l, tCross, tol_tl, tol_tb, neuroLib, cross, input, neuron.vRest, neuron.vTol, vC, vB, v_pass, spikeShape);
             if (jl::debug) {
                 cout << "t_left " << jnd.t.back() << " t_cross " << t_cross << ", t_right " << t << endl;
                 cout << "v_left " << jnd.v.back() << " v_cross " << v_pass << ", v_right " << v << endl;
@@ -62,7 +62,7 @@ bool jl::check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, 
     return false;
 }
 
-bool jl::update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &neuroLib, nNS &neuron, size head, size &tail_l, size old_tail_l, double tol_tl, double tol_tb, double end_t, jND &jnd, double &t_cross, double vC, double vB, size corrSize) {
+bool jl::update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &neuroLib, nNS &neuron, size head, size &tail_l, size old_tail_l, double tol_tl, double tol_tb, double end_t, jND &jnd, double &t_cross, double vC, double vB, size corrSize, bool spikeShape) {
     size i, j, idt;
     double dt;
     double tstep = neuroLib.tstep;
@@ -94,10 +94,12 @@ bool jl::update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nN
             }
         } else {
             if (cross.spiked.back()) {
-                if (dt < neuroLib.nvASt) {
-                    v = add_vAS_contribution(neuroLib.vAS, cross.vAScross.back(), dt, cross.v0.back(), cross.vRest);
-                    if (jb::debug) {
-                        cout << " vAS = " << v << endl;
+                if (spikeShape) {
+                    if (dt < neuroLib.nvASt) {
+                        v = add_vAS_contribution(neuroLib.vAS, cross.vAScross.back(), dt, cross.v0.back(), cross.vRest);
+                        if (jb::debug) {
+                            cout << " vAS = " << v << endl;
+                        }
                     }
                 }
             } else {
@@ -138,7 +140,7 @@ bool jl::update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nN
             cout << "t_left " << jnd.t.back() << ", t_right " << input.t[head] << endl;
             cout << "v_left " << jnd.v.back() << ", v_right " << v << endl;
         }
-        t_cross = jl::interp_for_t_cross(v, jnd.v.back(), input.t[head], jnd.t.back(), head-1, tail_l, tCross, tol_tl, tol_tb, neuroLib, cross, input, neuron.vRest, neuron.vTol, vC, vB, v_pass);
+        t_cross = jl::interp_for_t_cross(v, jnd.v.back(), input.t[head], jnd.t.back(), head-1, tail_l, tCross, tol_tl, tol_tb, neuroLib, cross, input, neuron.vRest, neuron.vTol, vC, vB, v_pass, spikeShape);
         if (jl::debug) {
             cout << "t_left " << jnd.t.back() << " t_cross " << t_cross << ", t_right " << input.t[head] << endl;
             cout << "v_left " << jnd.v.back() << " v_cross " << v_pass << ", v_right " << v << endl;
@@ -182,7 +184,7 @@ bool jl::update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nN
         }
     }
     // check all tmax after head and find the upper limit of vmax
-    return check_crossing(input, neuroLib, cross, neuron, tol_tl, tol_tb, end_t, tail_l, head, jnd, t_cross, vC, vB);
+    return check_crossing(input, neuroLib, cross, neuron, tol_tl, tol_tb, end_t, tail_l, head, jnd, t_cross, vC, vB, spikeShape);
 }
 
 void jl::update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tCross, double vCross, size i_prior, size &tail, size head, size corrSize, int afterCrossBehavior) {
@@ -304,7 +306,7 @@ unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, double
     double iend = end_t/tstep;
     size ndt = neuroLib.ndt;
     double tol_tl = neuroLib.nt;
-    double tol_tb = neuroLib.idtRange[ndt-2] + neuroLib.nt - neuroLib.idtRange[ndt-1] - round(ignore_t/tstep);
+    double tol_tb = neuroLib.idtRange[ndt-1] - round(ignore_t/tstep);
     cout << "linear corr length " << tol_tl << endl;
     cout << "after cross linear corr length " << tol_tb << endl;
     assert(tol_tb > 0);
@@ -342,7 +344,7 @@ unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, double
                 move_corr_window_i(input.t, tail_l, input.t[i], tol_tl);
             }
         }
-        crossed = jl::update_vinit_of_new_input_check_crossing(input, cross, neuroLib, neuron, i, tail_l, old_tail_l, tol_tl, tol_tb, end_t, jnd, t_cross, vC, vB, corrSize);
+        crossed = jl::update_vinit_of_new_input_check_crossing(input, cross, neuroLib, neuron, i, tail_l, old_tail_l, tol_tl, tol_tb, end_t, jnd, t_cross, vC, vB, corrSize, spikeShape);
         ii = 0;
         while (crossed) {
             ii++;
@@ -465,7 +467,7 @@ unsigned int nsyn_jLinear(Cell &cell, vector<vector<double>> &spikeTrain, double
                 cout << " updated" << endl;
                 cout << " tail_l " << old_tail_l << " -> " << tail_l << endl;
             }
-            crossed = jl::check_crossing(input, neuroLib, cross, neuron, tol_tl, tol_tb, end_t, tail_l, i, jnd, t_cross, vC, vB);
+            crossed = jl::check_crossing(input, neuroLib, cross, neuron, tol_tl, tol_tb, end_t, tail_l, i, jnd, t_cross, vC, vB, spikeShape);
             if (jl::debug) {
                 cout << "------------" << endl;
             }

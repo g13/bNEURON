@@ -36,6 +36,7 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, doubl
 
     bool crossed;
     size ncross = 0;
+
     unsigned int spikeCount = 0;
 
     vector<size> s0(neuroLib.nSyn,0);
@@ -245,7 +246,7 @@ unsigned int bilinear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, doubl
                                     }
                                     //cout << "vs + tl " << vs << " + " << tl << " < " << run_nt << "\n";
                                     interpkV(v, vs, neuroLib.kV, neuroLib.vRange, neuroLib.idtRange, neuroLib.nv, ndt, vTarget, dtTarget, dtTarget1, tl, neuron.inID[j], neuron.inID[i], dtSquare);
-                                } 
+                                }
                             }
                         }
                         if (lb::debug) {
@@ -562,7 +563,7 @@ unsigned int linear_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, double 
     return spikeCount;
 }
 
-unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool kVStyle, bool dtSquare, int itrial, bool sliceDebugPlot){
+unsigned int bilinear0_nSyn(Cell &cell, vector<vector<double>> &spikeTrain, double rd, vector<double> &v, nNL &neuroLib, nNS &neuron, double run_t, double ignore_t, vector<double> &tsp, double vCross, double vBack, int afterCrossBehavior, bool spikeShape, bool dtSquare, int itrial, bool sliceDebugPlot){
     double vTarget, dtTarget;
     size tl, vs, ve, vc, i, ii, j, k, ith, ith_old, i_b = 0;
     size nin = neuron.tin.size(), nv = neuroLib.nv, ndt = neuroLib.ndt;

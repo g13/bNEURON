@@ -3,7 +3,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=20G
-#SBATCH --time=24:00:00
+#SBATCH --time=8:00:00
 #SBATCH -a 1-4
 #SBATCH -o cK_%A_%a.out
 #SBATCH --job-name=cK
@@ -16,6 +16,7 @@ module list
 date
 source activate py2
 echo $nc
+nc=1
 v0=-74
 dV=4
 seed=238660

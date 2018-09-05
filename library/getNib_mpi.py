@@ -5,8 +5,12 @@ import multiprocessing as mp
 from neuron import h
 h.load_file('stdlib.hoc')
 h.load_file('stdrun.hoc')
+import matplotlib as mpl
+mpl.use('Agg')
+from matplotlib import pyplot, gridspec
+pyplot.style.use('publish_cms')
 
-figfmt = 'png'
+fmt = 'eps'
 taue0 = 0.0988142
 taue1 = 8.33333
 taui0 = 0.988142  
@@ -75,7 +79,7 @@ def getJ(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vS
         sel = [i, j]
     if plotData:
         dtfigname = 'kv-v'+str(vid)+'-i'+str(i)+'-j'+str(j)+'-dt'+str(idt)
-        dtfig = pyplot.figure(dtfigname,figsize = (8,4))
+        dtfig = pyplot.figure(dtfigname,figsize = (7.5,7.5))
     for jdt in xrange(idt,ndt):
         print " jdt = ", jdt
         dtt = dtRange[jdt]
@@ -129,17 +133,19 @@ def getJ(i,j,dt,idt,dtRange,idtRange,iextraRange,ndt,vid,gList,pos,v0,cell,sL,vS
             t = np.arange(run_nt)*tstep
             tSel = np.arange(idtRange[jdt],idtRange[jdt]+relit)
             ax1 = dtfig.add_subplot(111)         
-            ax1.plot(t[tSel],v,'c',lw=0.6)
-            ax1.plot(t[tSel],v1[jdt,i,tSel],'r',lw=0.4)
-            ax1.plot(t[tSel],v2,'b',lw=0.2)
-            ax1.plot(t[tSel],addv,':g',lw=0.2)
-            ax1.plot(t[tSel],kvtmp,':k')
+            ax1.plot(t[tSel],v,'c',lw=1.0)
+            ax1.plot(t[tSel],v1[jdt,i,tSel],'r',lw=1.0)
+            ax1.plot(t[tSel],v2,'b',lw=1.0)
+            ax1.plot(t[tSel],addv,':g',lw=1.0)
+            ax1.plot(t[tSel],kvtmp,':k',lw=1.0)
+            ax1.set_xlim(t[tSel[0]],t[tSel[-1]])
+            ax1.legend(label=(r'$\hat{V}_{S}$',r'$\hat{V}_{p}$',r'$\hat{V}_{q}$',r'$\hat{V}_{p}+\hat{V}_{q}$','$\hat{V}_{S}-\hat{V}_{p}-\hat{V}_{q}$'))
             if idt == jdt:
                 v10 = v1[jdt,i,tSel]
                 pyplot.title('k = '+str(kvtmp[it]/(v10[it]+v2[it])))
     if savePlot and plotData:
         pyplot.figure(dtfigname)
-        pyplot.savefig(directory+'/'+dtfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+        pyplot.savefig(directory+'/'+dtfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
         pyplot.close(dtfigname)
     s.send(np.array([kv,bfire,j]))
     print 'j',j, '\'s out'
@@ -214,16 +220,16 @@ def getJ0(i,j,dt,idt,idtRange,ndt,vid,gList,v0,cell,sL,vSL,n,trans,ntrans,run_t,
     t = np.arange(run_nt)*tstep
     if plotData:
         dtfign0 = 'kv0-v'+str(vid)+'-i'+str(i)+'-j'+str(j)+'-dt'+str(idt)
-        dtfig0 = pyplot.figure(dtfign0,figsize = (8,4))
+        dtfig0 = pyplot.figure(dtfign0,figsize = (7.5,7.5))
         ax1 = dtfig0.add_subplot(111)         
-        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],v,'c',lw=0.2)
-        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],v10,'r',lw=0.2)
-        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],v2,'b',lw=0.1)
-        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],addv,'g',lw=0.1)
-        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],kvtmp,':k')
+        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],v,'c',lw=1.0)
+        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],v10,'r',lw=1.0)
+        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],v2,'b',lw=1.0)
+        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],addv,'g',lw=1.0)
+        ax1.plot(t[idtRange[idt]:idtRange[idt]+relit],kvtmp,':k',lw=1.0)
         pyplot.title('k = '+str(kvtmp[it]/(v10[it]+v2[it])))
         if savePlot:
-            pyplot.savefig(directory+'/'+dtfign0+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+            pyplot.savefig(directory+'/'+dtfign0+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
             pyplot.close(dtfign0)
     s.send(np.array([kv0,j]))
     print 'j',j, '\'s out'
@@ -278,16 +284,17 @@ def getNib(argv):
     seed = 231278
     tstep = 1.0/10.0
     #==================
-    run_t = 340.0
+    run_t = 360.0
     trans = 180.0
     #==================
-    #run_t = 100.0
+    #run_t = 120.0
     #trans = 10.0
-    rdpi = 300
+    rdpi = 600
     
     #dtRange = np.array([0,70,140],dtype='float')
     #dtRange = np.array([0,2,4,6,8,10,12,15,20,25,30,50,70,140,210],dtype='float')
-    dtRange = np.array([0,4,8,15,20,25,30,50,70,140,210],dtype='float')
+    #dtRange = np.array([0,4,8,15,20,25,30,50,70,140,210,280],dtype='float')
+    dtRange = np.array([0],dtype='float')
     #===========================================================
     #dtRangeE = np.array([6,8,10,12,15,17,19,21,23,26,30],dtype='float')
     #dtRangeI = np.array([0,0.5,1,1.5,2,4,40,50,60,70,80,90,110,125,150,175],dtype='float')
@@ -311,11 +318,12 @@ def getNib(argv):
     locI = np.array([14, 28, 30],dtype='int')
     #locE = np.array([79, 82, 83, 98, 120, 124],dtype='int')
     #locI = np.array([14, 28, 40],dtype='int')
-    vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
+    #vRange = np.array([-74,-70,-67,-65,-63,-62,-61,-60,-59,-58],dtype='double')
+    vRange = np.array([-70,-63],dtype='double')
     #===========================================================
-    #vRange = np.array([-74,-70,-65,-61],dtype='double')
     #locE = np.array([72,79],dtype='int')
     #locI = np.array([14,40],dtype='int')
+    #vRange = np.array([-74,-70,-65,-61],dtype='double')
 
     #vRange = np.arange(-74,-59)
     #vRange = np.array([-74,-70,-63],dtype='double')
@@ -332,8 +340,8 @@ def getNib(argv):
     #locI[-1] = swap
 
     g0 = 32.0*1e-3
-    gE = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * g0
-    gI = -g0*np.array([10.0, 10.0, 10.0])
+    gE = g0 * np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) 
+    gI = -g0 * np.array([7.0, 7.0, 7.0])
     #gE = np.array([0.6, 0.6, 0.2, 0.6, 0.15, 0.6]) * g0
     #gI = -g0*np.array([6.0, 10.0, 8.0])
     #gE = (1e-1 + np.random.random_sample(locE.size) * (1-1e-1)) * (0.10/2.0)
@@ -351,6 +359,10 @@ def getNib(argv):
     #gI = (1e-1 + np.random.random_sample(locI.size) * (1-1e-1)) * (-0.1/2.0)
     #posI = np.ones(locI.size)*0.5
 
+    posE = posE[:locE.size]
+    posI = posI[:locI.size]
+    gE = gE[:locE.size]
+    gI = gI[:locI.size]
     plotData = True 
     savePlot = True 
     vrestOnly = False
@@ -444,11 +456,11 @@ def getNib(argv):
             lfigname = 'leakyV-v'+str(vid)
         else:
             lfigname = 'leakyV-vrest'
-        pyplot.figure(lfigname, figsize = (8,4))
+        pyplot.figure(lfigname, figsize = (7.5,7.5))
         pyplot.plot(t,leakyV)
         pyplot.plot(t,leakyDendV.transpose(),':')
         if savePlot:
-            pyplot.savefig(directory+'/'+lfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+            pyplot.savefig(directory+'/'+lfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
             pyplot.close(lfigname)
     #    pyplot.show()
     v1 = np.zeros((ndt,n,run_nt))
@@ -490,7 +502,7 @@ def getNib(argv):
         if plotData:
             for i in xrange(n):
                 sfigname = 'singlets'+str(i)+'-v'+str(vid)
-                fig = pyplot.figure(sfigname,figsize = (8,4))
+                fig = pyplot.figure(sfigname,figsize = (7.5,7.5))
                 ax1 = fig.add_subplot(111)
                 ax2 = ax1.twinx()
                 for idt in xrange(ndt):
@@ -500,7 +512,7 @@ def getNib(argv):
                 ax1.set_ylabel('PSP(soma) mV')
                 ax2.set_ylabel('PSP(dend) mV')
                 if savePlot:
-                    pyplot.savefig(directory+'/'+sfigname+'.png',format='png',bbox_inches='tight',dpi=rdpi);
+                    pyplot.savefig(directory+'/'+sfigname+'.'+fmt,format=fmt,bbox_inches='tight',dpi=rdpi);
                     pyplot.close(sfigname)
         write_one(directory+'/'+theme+'.bin',leakyV,'wb')
         write_one(directory+'/'+theme+'.bin',leakyDendV,'ab')

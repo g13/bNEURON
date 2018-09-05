@@ -9,8 +9,8 @@
 using std::vector;
 using std::cout;
 namespace jb {
-    const bool debug = true;
-    const bool debug2 = true;
+    const bool debug = false;
+    const bool debug2 = false;
     template<typename T>
     inline void getNear(T *range, size n, double target, double &ratio, size &istart, size &jnext) {
         size i;
@@ -333,7 +333,7 @@ inline void add_input_i_j_bilinear_contribution(Input &input, nNL &neuroLib, siz
                           input.dt[j]-input.t[j], it, neuroLib.idtRange, neuroLib.ndt, input.ID[i], input.ID[j], debug, dtSquare);
 }
 
-inline double find_v_at_t(Input &input, nNL &neuroLib, Cross &cross, size head, size tail_l, size tail_b, double t, double tCross, double tol_tl, double tol_tb, double v, bool debug, bool dtSquare) {
+inline double find_v_at_t(Input &input, nNL &neuroLib, Cross &cross, size head, size tail_l, size tail_b, double t, double tCross, double tol_tl, double tol_tb, double v, bool debug, bool dtSquare, bool spikeShape) {
     size i, j, idt;
     double dt;
     dt = t - tCross;
@@ -345,10 +345,12 @@ inline double find_v_at_t(Input &input, nNL &neuroLib, Cross &cross, size head, 
             }
         } else {
             if (cross.spiked.back()) {
-                if (dt < neuroLib.nvASt) {
-                    v = add_vAS_contribution(neuroLib.vAS, cross.vAScross.back(), dt, cross.v0.back(), cross.vRest);
-                    if (jb::debug) {
-                        cout << " vAS = " << v << "\n";
+                if (spikeShape) {
+                    if (dt < neuroLib.nvASt) {
+                        v = add_vAS_contribution(neuroLib.vAS, cross.vAScross.back(), dt, cross.v0.back(), cross.vRest);
+                        if (jb::debug) {
+                            cout << " vAS = " << v << "\n";
+                        }
                     }
                 }
             } else {
@@ -429,11 +431,11 @@ inline void getLR(double &v_left, double v1, double v2, double &v_right, double 
     }
 }
 
-double interp_for_t_cross(double v_right, double v_left, double t_right, double t_left, size head, size tail_l, size tail_b, double tCross, double tol_tl, double tol_tb, nNL &neuroLib, Cross &cross, Input &input, double v0, double vtol, double vC, double &v, bool debug, bool dtSquare);
+double interp_for_t_cross(double v_right, double v_left, double t_right, double t_left, size head, size tail_l, size tail_b, double tCross, double tol_tl, double tol_tb, nNL &neuroLib, Cross &cross, Input &input, double v0, double vtol, double vC, double &v, bool debug, bool dtSquare, bool spikeShape);
 
-bool check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tol_tl, double tol_tb, double end_t, size tail_l, size tail_b, size head, jND &jnd, double &t_cross, double vC, bool debug, bool dtSquare);
+bool check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tol_tl, double tol_tb, double end_t, size tail_l, size tail_b, size head, jND &jnd, double &t_cross, double vC, bool debug, bool dtSquare, bool spikeShape);
 
-bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &neuroLib, nNS &neuron, size head, size &tail_l, size &tail_b, size old_tail_l, size old_tail_b, double tol_tl, double tol_tb, double end_t, jND &jnd, double &t_cross, double vC, size corrSize, bool debug, bool dtSquare);
+bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &neuroLib, nNS &neuron, size head, size &tail_l, size &tail_b, size old_tail_l, size old_tail_b, double tol_tl, double tol_tb, double end_t, jND &jnd, double &t_cross, double vC, size corrSize, bool debug, bool dtSquare, bool spikeShape);
 
 void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tCross, double vCross, size i_prior, size &tail_l, size &tail_b, size head, size corrSize, int afterCrossBehavior);
 

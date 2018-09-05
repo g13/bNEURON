@@ -3,7 +3,7 @@
 #SBATCH --ntasks=1
 #SBATCH --mem-per-cpu=10G
 #SBATCH --cpus-per-task=7
-#SBATCH --time=0:15:00
+#SBATCH --time=24:00:00
 #SBATCH -a 1-7
 #SBATCH -o m_%A_%a.out
 #SBATCH --job-name=multi

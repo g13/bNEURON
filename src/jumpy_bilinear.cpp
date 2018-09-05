@@ -1,6 +1,6 @@
 #include "jumpy_bilinear.h"
 
-double interp_for_t_cross(double v_right, double v_left, double t_right, double t_left, size head, size tail_l, size tail_b, double tCross, double tol_tl, double tol_tb, nNL &neuroLib, Cross &cross, Input &input, double v0, double vtol, double vC, double vB, double &v, bool debug, bool dtSquare) {
+double interp_for_t_cross(double v_right, double v_left, double t_right, double t_left, size head, size tail_l, size tail_b, double tCross, double tol_tl, double tol_tb, nNL &neuroLib, Cross &cross, Input &input, double v0, double vtol, double vC, double vB, double &v, bool debug, bool dtSquare, bool spikeShape) {
     size ival = 0;
     double v1, v2, vC_;
     double t_cross1, t_cross2, t_cross;
@@ -29,7 +29,7 @@ double interp_for_t_cross(double v_right, double v_left, double t_right, double 
             assert(t_cross1 >= t_left);
             assert(t_right > t_left);
         }
-        v1 = find_v_at_t(input, neuroLib, cross, head, tail_l, tail_b, t_cross1, tCross, tol_tl, tol_tb, v0, debug, dtSquare);
+        v1 = find_v_at_t(input, neuroLib, cross, head, tail_l, tail_b, t_cross1, tCross, tol_tl, tol_tb, v0, debug, dtSquare, spikeShape);
         if (jb::debug2) {
             cout << v_left << ", " << v1 << ", " << v_right << endl;
             ival++;
@@ -77,7 +77,7 @@ double interp_for_t_cross(double v_right, double v_left, double t_right, double 
         if (jb::debug2) {
             cout << " find v at " << t_cross2 << endl;
         }
-        v2 = find_v_at_t(input, neuroLib, cross, head, tail_l, tail_b, t_cross2, tCross, tol_tl, tol_tb, v0, debug, dtSquare);
+        v2 = find_v_at_t(input, neuroLib, cross, head, tail_l, tail_b, t_cross2, tCross, tol_tl, tol_tb, v0, debug, dtSquare, spikeShape);
         if (jb::debug2) {
             ival++;
         }
@@ -129,7 +129,7 @@ double interp_for_t_cross(double v_right, double v_left, double t_right, double 
     return t_cross;
 }
 
-bool check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tol_tl, double tol_tb, double end_t, size tail_l, size tail_b, size head, jND &jnd, double &t_cross, double vC, double vB, bool debug, bool dtSquare) {
+bool check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tol_tl, double tol_tb, double end_t, size tail_l, size tail_b, size head, jND &jnd, double &t_cross, double vC, double vB, bool debug, bool dtSquare, bool spikeShape) {
     // check all tmax after head and find the v > vC
     size i, j;
     double t, dt;
@@ -153,7 +153,7 @@ bool check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, doub
                 t = nt;
             }
         }
-        v = find_v_at_t(input, neuroLib, cross, head, tail_l, tail_b, t, tCross, tol_tl, tol_tb, neuron.vReset, debug, dtSquare);
+        v = find_v_at_t(input, neuroLib, cross, head, tail_l, tail_b, t, tCross, tol_tl, tol_tb, neuron.vReset, debug, dtSquare, spikeShape);
         if (v > vC) {
             lcrossed = true;
             break;    
@@ -170,7 +170,7 @@ bool check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, doub
                 cout << "t_left " << jnd.t.back() << ", t_right " << t << endl;
                 cout << "v_left " << jnd.v.back() << ", v_right " << v << endl;
             }
-            t_cross = interp_for_t_cross(v, jnd.v.back(), t, jnd.t.back(), head, tail_l, tail_b, tCross, tol_tl, tol_tb, neuroLib, cross, input, neuron.vRest, neuron.vTol, vC, vB, v_pass, debug, dtSquare);
+            t_cross = interp_for_t_cross(v, jnd.v.back(), t, jnd.t.back(), head, tail_l, tail_b, tCross, tol_tl, tol_tb, neuroLib, cross, input, neuron.vRest, neuron.vTol, vC, vB, v_pass, debug, dtSquare, spikeShape);
             if (jb::debug) {
                 cout << "t_left " << jnd.t.back() << " t_cross " << t_cross << ", t_right " << t << endl;
                 cout << "v_left " << jnd.v.back() << " v_cross " << v_pass << ", v_right " << v << endl;
@@ -191,7 +191,7 @@ bool check_crossing(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, doub
     return false;
 }
 
-bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &neuroLib, nNS &neuron, size head, size &tail_l, size &tail_b, size old_tail_l, size old_tail_b, double tol_tl, double tol_tb, double end_t, jND &jnd, double &t_cross, double vC, double vB, size corrSize, bool debug, bool dtSquare) {
+bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &neuroLib, nNS &neuron, size head, size &tail_l, size &tail_b, size old_tail_l, size old_tail_b, double tol_tl, double tol_tb, double end_t, jND &jnd, double &t_cross, double vC, double vB, size corrSize, bool debug, bool dtSquare, bool spikeShape) {
     size i, j, idt;
     double dt;
     double tstep = neuroLib.tstep;
@@ -223,10 +223,12 @@ bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &n
             }
         } else {
             if (cross.spiked.back()) {
-                if (dt < neuroLib.nvASt) {
-                    v = add_vAS_contribution(neuroLib.vAS, cross.vAScross.back(), dt, cross.v0.back(), cross.vRest);
-                    if (jb::debug) {
-                        cout << " vAS = " << v << endl;
+                if (spikeShape) {
+                    if (dt < neuroLib.nvASt) {
+                        v = add_vAS_contribution(neuroLib.vAS, cross.vAScross.back(), dt, cross.v0.back(), cross.vRest);
+                        if (jb::debug) {
+                            cout << " vAS = " << v << endl;
+                        }
                     }
                 }
             } else {
@@ -323,7 +325,7 @@ bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &n
             cout << "t_left " << jnd.t.back() << ", t_right " << input.t[head] << endl;
             cout << "v_left " << jnd.v.back() << ", v_right " << v << endl;
         }
-        t_cross = interp_for_t_cross(v, jnd.v.back(), input.t[head], jnd.t.back(), head-1, tail_l, tail_b, tCross, tol_tl, tol_tb, neuroLib, cross, input, neuron.vRest, neuron.vTol, vC, vB, v_pass, debug, dtSquare);
+        t_cross = interp_for_t_cross(v, jnd.v.back(), input.t[head], jnd.t.back(), head-1, tail_l, tail_b, tCross, tol_tl, tol_tb, neuroLib, cross, input, neuron.vRest, neuron.vTol, vC, vB, v_pass, debug, dtSquare, spikeShape);
         if (jb::debug) {
             cout << "t_left " << jnd.t.back() << " t_cross " << t_cross << ", t_right " << input.t[head] << endl;
             cout << "v_left " << jnd.v.back() << " v_cross " << v_pass << ", v_right " << v << endl;
@@ -367,7 +369,7 @@ bool update_vinit_of_new_input_check_crossing(Input &input, Cross &cross, nNL &n
         }
     }
     // check all tmax after head and find the upper limit of vmax
-    return check_crossing(input, neuroLib, cross, neuron, tol_tl, tol_tb, end_t, tail_l, tail_b, head, jnd, t_cross, vC, vB, debug, dtSquare);
+    return check_crossing(input, neuroLib, cross, neuron, tol_tl, tol_tb, end_t, tail_l, tail_b, head, jnd, t_cross, vC, vB, debug, dtSquare, spikeShape);
 }
 
 void update_info_after_cross(Input &input, nNL &neuroLib, Cross &cross, nNS &neuron, double tCross, double vCross, size i_prior, size &tail_l, size &tail_b, size head, size corrSize, int afterCrossBehavior) {
@@ -495,7 +497,8 @@ unsigned int nsyn_jBilinear(Cell &cell, vector<vector<double>> &spikeTrain, doub
     double iend = end_t/tstep;
     size ndt = neuroLib.ndt;
     double tol_tl = neuroLib.nt;
-    double tol_tb = neuroLib.idtRange[ndt-2] + neuroLib.nt - neuroLib.idtRange[ndt-1] - round(ignore_t/tstep);
+    //double tol_tb = neuroLib.idtRange[ndt-2] + neuroLib.nt - neuroLib.idtRange[ndt-1] - round(ignore_t/tstep);
+    double tol_tb = neuroLib.idtRange[ndt-1] - round(ignore_t/tstep);
     cout << "linear corr length " << tol_tl << endl;
     cout << "bilinear corr length " << tol_tb << endl;
     assert(tol_tb > 0);
@@ -545,7 +548,7 @@ unsigned int nsyn_jBilinear(Cell &cell, vector<vector<double>> &spikeTrain, doub
             cout << " tail_l " << old_tail_l << " -> " << tail_l << endl;
             cout << " tail_b " << old_tail_b << " -> " << tail_b << endl;
         }
-        crossed = update_vinit_of_new_input_check_crossing(input, cross, neuroLib, neuron, i, tail_l, tail_b, old_tail_l, old_tail_b, tol_tl, tol_tb, end_t, jnd, t_cross, vC, vB, corrSize, debug, dtSquare);
+        crossed = update_vinit_of_new_input_check_crossing(input, cross, neuroLib, neuron, i, tail_l, tail_b, old_tail_l, old_tail_b, tol_tl, tol_tb, end_t, jnd, t_cross, vC, vB, corrSize, debug, dtSquare, spikeShape);
         ii = 0;
         while (crossed) {
             ii++;
@@ -676,7 +679,7 @@ unsigned int nsyn_jBilinear(Cell &cell, vector<vector<double>> &spikeTrain, doub
                 cout << " tail_l " << old_tail_l << " -> " << tail_l << endl;
                 cout << " tail_b " << old_tail_b << " -> " << tail_b << endl;
             }
-            crossed = check_crossing(input, neuroLib, cross, neuron, tol_tl, tol_tb, end_t, tail_l, tail_b, i, jnd, t_cross, vC, vB, debug, dtSquare);
+            crossed = check_crossing(input, neuroLib, cross, neuron, tol_tl, tol_tb, end_t, tail_l, tail_b, i, jnd, t_cross, vC, vB, debug, dtSquare, spikeShape);
             if (jb::debug) {
                 cout << "------------" << endl;
             }
